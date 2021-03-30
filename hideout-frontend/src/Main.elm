@@ -29,6 +29,7 @@ init flags url navKey =
     ( { route = getRoute url
       , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
+      , letterInput = ""
       }
     , Task.attempt GotViewport Dom.getViewport
     )
@@ -56,6 +57,9 @@ update msg model =
                 Ok viewport ->
                     ( { model | viewport = Ok viewport }, Cmd.none )
 
+        LetterInput str ->
+            ( { model | letterInput = str }, Cmd.none )
+
         Nop ->
             ( model, Cmd.none )
 
@@ -65,6 +69,9 @@ view model =
     let
         viewportWidth =
             Result.withDefault 1920.0 <| Result.map (.scene >> .width) model.viewport
+
+        viewportHeight =
+            Result.withDefault 1080.0 <| Result.map (.scene >> .height) model.viewport
     in
     { title = "Disposable Messages"
     , body =
@@ -108,26 +115,32 @@ view model =
                         Element.column
                             [ Element.width Element.fill ]
                             [ Element.paragraph
-                                [ Font.size 24 ]
+                                [ Element.paddingEach { bottom = 40, top = 0, left = 0, right = 0 }
+                                , Font.size 24
+                                ]
                                 [ Element.text "Type away your message below.." ]
                             , Element.row
                                 [ Element.width Element.fill ]
-                                [ Input.text
+                                [ Input.multiline
                                     [ Element.width Element.fill
+                                    , Element.scrollbarY
                                     , Background.color bgColor
                                     ]
-                                    { onChange = \str -> Nop
-                                    , text = "test input"
+                                    { onChange = LetterInput
+                                    , text = model.letterInput
                                     , placeholder = Nothing
                                     , label = Input.labelAbove [] Element.none
+                                    , spellcheck = False
                                     }
                                 , Element.el [ Element.width <| Element.px 100 ] Element.none
                                 , Element.el
-                                    [ Element.width Element.fill ]
+                                    [ Element.width Element.fill
+                                    , Element.alignTop
+                                    ]
                                   <|
                                     Element.html <|
                                         Html.div [] <|
-                                            Markdown.toHtml Nothing "# Test head\n test *test* **test**"
+                                            Markdown.toHtml Nothing model.letterInput
                                 ]
                             ]
 

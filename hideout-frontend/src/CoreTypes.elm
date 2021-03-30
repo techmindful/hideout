@@ -11,6 +11,7 @@ type alias Model =
     { route : Route
     , viewport : Result Dom.Error Dom.Viewport
     , navKey : Nav.Key
+    , letterInput : String
     }
 
 
@@ -18,4 +19,5 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | GotViewport (Result Dom.Error Dom.Viewport)
+    | LetterInput String
     | Nop
