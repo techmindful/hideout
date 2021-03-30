@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Consts.Colors exposing (..)
 import Consts.Styles exposing (..)
@@ -12,6 +13,7 @@ import Element.Input as Input
 import Html
 import Markdown
 import Route exposing (..)
+import Task
 import Url exposing (Url)
 import Url.Parser
 import Utils.Utils as Utils exposing (..)
@@ -25,9 +27,10 @@ subscriptions _ =
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
     ( { route = getRoute url
+      , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
       }
-    , Cmd.none
+    , Task.attempt GotViewport Dom.getViewport
     )
 
 
@@ -45,12 +48,24 @@ update msg model =
         UrlChanged url ->
             ( { model | route = getRoute url }, Cmd.none )
 
+        GotViewport result ->
+            case result of
+                Err err ->
+                    ( { model | viewport = Err err }, Cmd.none )
+
+                Ok viewport ->
+                    ( { model | viewport = Ok viewport }, Cmd.none )
+
         Nop ->
             ( model, Cmd.none )
 
 
 view : Model -> Browser.Document Msg
 view model =
+    let
+        viewportWidth =
+            Result.withDefault 1920.0 <| Result.map (.scene >> .width) model.viewport
+    in
     { title = "Disposable Messages"
     , body =
         [ Element.layout
@@ -58,7 +73,9 @@ view model =
             , Font.color white
             ]
             (Element.el
-                [ Element.padding 60 ]
+                [ Element.width Element.fill
+                , Element.padding 60
+                ]
                 (case model.route of
                     Root ->
                         Element.textColumn
@@ -89,12 +106,12 @@ view model =
 
                     WriteLetter ->
                         Element.column
-                            []
+                            [ Element.width Element.fill ]
                             [ Element.paragraph
                                 [ Font.size 24 ]
                                 [ Element.text "Type away your message below.." ]
                             , Element.row
-                                []
+                                [ Element.width Element.fill ]
                                 [ Input.text
                                     [ Element.width Element.fill
                                     , Background.color bgColor
@@ -104,9 +121,13 @@ view model =
                                     , placeholder = Nothing
                                     , label = Input.labelAbove [] Element.none
                                     }
-                                , Element.html <|
-                                    Html.div [] <|
-                                        Markdown.toHtml Nothing "# Test head\n test *test* **test**"
+                                , Element.el [ Element.width <| Element.px 100 ] Element.none
+                                , Element.el
+                                    [ Element.width Element.fill ]
+                                  <|
+                                    Element.html <|
+                                        Html.div [] <|
+                                            Markdown.toHtml Nothing "# Test head\n test *test* **test**"
                                 ]
                             ]
 
