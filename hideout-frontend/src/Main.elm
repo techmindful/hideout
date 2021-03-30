@@ -3,8 +3,8 @@ module Main exposing (..)
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
-import Consts.Colors exposing (..)
-import Consts.Styles exposing (..)
+import Common.Colors exposing (..)
+import Common.Styles exposing (..)
 import CoreTypes exposing (..)
 import Element
 import Element.Background as Background
@@ -114,11 +114,15 @@ view model =
                     WriteLetter ->
                         Element.column
                             [ Element.width Element.fill ]
-                            [ Element.paragraph
+                            [ Element.textColumn
                                 [ Element.paddingEach { bottom = 40, top = 0, left = 0, right = 0 }
+                                , Element.spacingXY 0 20
                                 , Font.size 24
                                 ]
-                                [ Element.text "Type away your message below.." ]
+                                [ plainPara "Type away your message below. Markdown is supported."
+                                , plainPara "Send the letter after it's finished. It will be saved to a link, that can be visited only once. So don't click that link yourself. Just give it to your intended recipient."
+                                , plainPara "After the recipient has opened that link, the server will send the letter to their browser, and then delete it from itself. Therefore, nobody else can read that letter."
+                                ]
                             , Element.row
                                 [ Element.width Element.fill ]
                                 [ Input.multiline
@@ -142,6 +146,14 @@ view model =
                                         Html.div [] <|
                                             Markdown.toHtml Nothing model.letterInput
                                 ]
+                            , Element.el
+                                [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+                              <|
+                                Input.button
+                                    (buttonStyle 5)
+                                    { onPress = Just Nop
+                                    , label = Element.text "Send"
+                                    }
                             ]
 
                     NotFound ->

@@ -1,4 +1,4 @@
-module Consts.Colors exposing (..)
+module Common.Colors exposing (..)
 
 import Element exposing (rgb255)
 
