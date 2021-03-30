@@ -8,6 +8,9 @@ import CoreTypes exposing (..)
 import Element
 import Element.Background as Background
 import Element.Font as Font
+import Element.Input as Input
+import Html
+import Markdown
 import Route exposing (..)
 import Url exposing (Url)
 import Url.Parser
@@ -60,7 +63,7 @@ view model =
                     Root ->
                         Element.textColumn
                             []
-                            [ plainPara "Welcome to dispmsg - A Service for Disposable Messages!"
+                            [ plainPara "Welcome to Hideout - A Service for Disposable Messages!"
                             , Element.textColumn
                                 [ Element.paddingXY 0 40
                                 , Element.spacingXY 0 10
@@ -85,7 +88,27 @@ view model =
                         Element.text "Read letter"
 
                     WriteLetter ->
-                        Element.text "Write letter"
+                        Element.column
+                            []
+                            [ Element.paragraph
+                                [ Font.size 24 ]
+                                [ Element.text "Type away your message below.." ]
+                            , Element.row
+                                []
+                                [ Input.text
+                                    [ Element.width Element.fill
+                                    , Background.color bgColor
+                                    ]
+                                    { onChange = \str -> Nop
+                                    , text = "test input"
+                                    , placeholder = Nothing
+                                    , label = Input.labelAbove [] Element.none
+                                    }
+                                , Element.html <|
+                                    Html.div [] <|
+                                        Markdown.toHtml Nothing "# Test head\n test *test* **test**"
+                                ]
+                            ]
 
                     NotFound ->
                         Element.text "404"
