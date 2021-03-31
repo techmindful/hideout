@@ -5,6 +5,7 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)
+import Common.Urls exposing (..)
 import CoreTypes exposing (..)
 import Element
 import Element.Background as Background
@@ -68,8 +69,10 @@ update msg model =
             , Http.request
                 { method = "PUT"
                 , headers = []
-                , url = "http://localhost:8080/write-letter"
-                , body = Http.jsonBody <| Json.Encode.string model.letterInput
+                , url = writeLetterUrl
+                , body =
+                    Http.jsonBody <|
+                        Json.Encode.object [ ( "body", Json.Encode.string model.letterInput ) ]
                 , expect = Http.expectString GotLetterSendResp
                 , timeout = Nothing
                 , tracker = Nothing
