@@ -16,11 +16,14 @@ import qualified Network.Wai.Handler.Warp as Warp
 import           Network.Wai.Middleware.Cors ( cors, CorsResourcePolicy(..) )
 
 import           Data.Aeson ( FromJSON, ToJSON )
+import           Crypto.Random ( seedNew, seedToInteger )
+import           Crypto.Hash ( SHA256(..), hashWith )
 
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import           Control.Monad.STM ( atomically )
 import           Control.Concurrent.STM.TVar ( TVar, newTVar, readTVar, writeTVar )
+import qualified Data.ByteString.Char8 as ByteStrC8
 import           Data.Function ( (&) )
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
@@ -55,8 +58,14 @@ writeLetter letter = do
   appState <- ask
 
   liftIO $ do
+
     oldLetters <- atomically $ readTVar ( appState & letters )
-    let newLetters = Map.insert "test_id" letter oldLetters
+
+    seed <- seedNew
+    let seedStr = show $ seedToInteger seed
+        hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
+
+    let newLetters = Map.insert hash letter oldLetters
     atomically $ writeTVar ( appState & letters ) newLetters
     letters <- atomically $ readTVar ( appState & letters )
     putStrLn $ show letters
