@@ -19,6 +19,7 @@ import Route exposing (..)
 import Task
 import Url exposing (Url)
 import Url.Parser
+import UserStatus exposing (..)
 import Utils.Utils as Utils exposing (..)
 
 
@@ -32,6 +33,7 @@ init flags url navKey =
     ( { route = getRoute url
       , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
+      , userStatus = Other
       , letterInput = ""
       , tempResp = ""
       }
@@ -65,7 +67,7 @@ update msg model =
             ( { model | letterInput = str }, Cmd.none )
 
         LetterSend ->
-            ( model
+            ( { model | userStatus = SentLetter }
             , Http.request
                 { method = "PUT"
                 , headers = []
@@ -85,7 +87,7 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok letterId ->
-                    ( { model | tempResp = letterId }, Cmd.none )
+                    ( { model | userStatus = GotLetterId letterId }, Cmd.none )
 
         Nop ->
             ( model, Cmd.none )
@@ -139,20 +141,20 @@ view model =
                         Element.text "Read letter"
 
                     WriteLetter ->
-                        Element.column
-                            [ Element.width Element.fill ]
-                            [ Element.textColumn
-                                [ Element.paddingEach { bottom = 40, top = 0, left = 0, right = 0 }
-                                , Element.spacingXY 0 20
-                                , Font.size 24
-                                ]
-                                [ plainPara "Type away your message below. Markdown is supported."
-                                , plainPara "Send the letter after it's finished. It will be saved to a link, that can be visited only once. So don't click that link yourself. Just give it to your intended recipient."
-                                , plainPara "After the recipient has opened that link, the server will send the letter to their browser, and then delete it from itself. Therefore, nobody else can read that letter."
-                                ]
-                            , Element.row
-                                [ Element.width Element.fill ]
-                                [ Input.multiline
+                        let
+                            instruction =
+                                Element.textColumn
+                                    [ Element.paddingEach { bottom = 40, top = 0, left = 0, right = 0 }
+                                    , Element.spacingXY 0 20
+                                    , Font.size 24
+                                    ]
+                                    [ plainPara "Type away your message below. Markdown is supported."
+                                    , plainPara "Send the letter after it's finished. It will be saved to a link, that can be visited only once. So don't click that link yourself. Just give it to your intended recipient."
+                                    , plainPara "After the recipient has opened that link, the server will send the letter to their browser, and then delete it from itself. Therefore, nobody else can read that letter."
+                                    ]
+
+                            letterInputBox =
+                                Input.multiline
                                     [ Element.width Element.fill
                                     , Element.scrollbarY
                                     , Background.color bgColor
@@ -163,15 +165,28 @@ view model =
                                     , label = Input.labelAbove [] Element.none
                                     , spellcheck = False
                                     }
-                                , Element.el [ Element.width <| Element.px 100 ] Element.none
-                                , Element.el
+
+                            divider =
+                                Element.el [ Element.width <| Element.px 100 ] Element.none
+
+                            preview =
+                                Element.el
                                     [ Element.width Element.fill
                                     , Element.alignTop
                                     ]
-                                  <|
+                                <|
                                     Element.html <|
                                         Html.div [] <|
                                             Markdown.toHtml Nothing model.letterInput
+                        in
+                        Element.column
+                            [ Element.width Element.fill ]
+                            [ instruction
+                            , Element.row
+                                [ Element.width Element.fill ]
+                                [ letterInputBox
+                                , divider
+                                , preview
                                 ]
                             , Element.el
                                 [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]

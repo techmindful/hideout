@@ -17,8 +17,8 @@ routeParser =
     oneOf
         [ map Root top
         , map About <| s "about"
-        , map ReadLetter <| s "letter" </> string
-        , map WriteLetter <| s "letter"
+        , map ReadLetter <| s "read-letter" </> string
+        , map WriteLetter <| s "write-letter"
         ]
 
 

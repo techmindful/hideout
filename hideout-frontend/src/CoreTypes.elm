@@ -6,12 +6,14 @@ import Browser.Navigation as Nav
 import Http
 import Route exposing (..)
 import Url exposing (Url)
+import UserStatus exposing (..)
 
 
 type alias Model =
     { route : Route
     , viewport : Result Dom.Error Dom.Viewport
     , navKey : Nav.Key
+    , userStatus : UserStatus
     , letterInput : String
     , tempResp : String
     }
