@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2f1e473fa3c2b593d68005b67eebd7cff45c9e75438317e6f20929f8fba056ef
+-- hash: 2b2ff50f08fe3cecc90ca932b5b4080a6d3e4e2d315aa896d027485fac9e85b1
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -34,8 +34,11 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , containers
+    , mtl
     , servant
     , servant-server
+    , stm
     , wai
     , wai-cors
     , warp
@@ -51,9 +54,12 @@ executable hideout-backend-exe
   build-depends:
       aeson
     , base
+    , containers
     , hideout-backend
+    , mtl
     , servant
     , servant-server
+    , stm
     , wai
     , wai-cors
     , warp
@@ -70,12 +76,15 @@ test-suite hideout-backend-test
   build-depends:
       aeson
     , base
+    , containers
     , hideout-backend
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , mtl
     , servant
     , servant-server
+    , stm
     , wai
     , wai-cors
     , warp
