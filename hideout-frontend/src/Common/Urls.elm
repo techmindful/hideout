@@ -1,5 +1,19 @@
 module Common.Urls exposing (..)
 
+import Url.Builder exposing (..)
 
-writeLetterUrl =
-    "http://localhost:8080/write-letter"
+
+frontendUrl =
+    "http://localhost:8000"
+
+
+backendUrl =
+    "http://localhost:8080"
+
+
+frontendReadLetterUrl =
+    crossOrigin frontendUrl [ "read-letter" ] []
+
+
+backendWriteLetterUrl =
+    crossOrigin backendUrl [ "write-letter" ] []

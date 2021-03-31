@@ -38,7 +38,7 @@ instance ToJSON Letter
 
 
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] Letter
-      :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] NoContent
+      :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
 
 
 data AppState = AppState
@@ -50,27 +50,33 @@ readLetter letterId = do
   return (Letter "test")
 
 
-writeLetter :: Letter -> ReaderT AppState Servant.Handler NoContent
+writeLetter :: Letter -> ReaderT AppState Servant.Handler String
 writeLetter letter = do
 
   liftIO $ putStrLn "write"
 
   appState <- ask
 
-  liftIO $ do
+  letterId <- liftIO $ do
 
     oldLetters <- atomically $ readTVar ( appState & letters )
 
+    -- Get a random hash.
     seed <- seedNew
     let seedStr = show $ seedToInteger seed
         hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
 
+    -- Insert new letter into AppState.
     let newLetters = Map.insert hash letter oldLetters
     atomically $ writeTVar ( appState & letters ) newLetters
-    letters <- atomically $ readTVar ( appState & letters )
-    putStrLn $ show letters
 
-  return NoContent
+    -- Debug print
+    letters <- atomically $ readTVar ( appState & letters )
+    putStrLn $ "Current letters:\n----------\n" ++  show letters
+
+    return hash
+
+  return letterId
 
 
 server :: Servant.ServerT API (ReaderT AppState Servant.Handler)

@@ -9,6 +9,7 @@ import Common.Urls exposing (..)
 import CoreTypes exposing (..)
 import Element
 import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html
@@ -16,6 +17,7 @@ import Http
 import Json.Encode
 import Markdown
 import Route exposing (..)
+import String.Extra exposing (unquote)
 import Task
 import Url exposing (Url)
 import Url.Parser
@@ -30,10 +32,20 @@ subscriptions _ =
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
-    ( { route = getRoute url
+    let
+        route =
+            getRoute url
+    in
+    ( { route = route
       , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
-      , userStatus = Other
+      , userStatus =
+            case route of
+                WriteLetter ->
+                    WritingLetter
+
+                _ ->
+                    Other
       , letterInput = ""
       , tempResp = ""
       }
@@ -53,7 +65,22 @@ update msg model =
                     ( model, Nav.load urlStr )
 
         UrlChanged url ->
-            ( { model | route = getRoute url }, Cmd.none )
+            let
+                route =
+                    getRoute url
+            in
+            ( { model
+                | route = route
+                , userStatus =
+                    case route of
+                        WriteLetter ->
+                            WritingLetter
+
+                        _ ->
+                            model.userStatus
+              }
+            , Cmd.none
+            )
 
         GotViewport result ->
             case result of
@@ -71,7 +98,7 @@ update msg model =
             , Http.request
                 { method = "PUT"
                 , headers = []
-                , url = writeLetterUrl
+                , url = backendWriteLetterUrl
                 , body =
                     Http.jsonBody <|
                         Json.Encode.object [ ( "body", Json.Encode.string model.letterInput ) ]
@@ -184,18 +211,47 @@ view model =
                             [ instruction
                             , Element.row
                                 [ Element.width Element.fill ]
-                                [ letterInputBox
+                                [ case model.userStatus of
+                                    WritingLetter ->
+                                        letterInputBox
+
+                                    SentLetter ->
+                                        Element.text "Letter is sent. Waiting for the letter ID from server..."
+
+                                    GotLetterId letterId ->
+                                        Element.textColumn
+                                            [ lineSpacing
+                                            , Element.padding 10
+                                            , Border.width 2
+                                            , Border.rounded 6
+                                            ]
+                                            [ plainPara "Your letter can be read (only once) at: "
+                                            , plainPara <|
+                                                frontendReadLetterUrl
+                                                    ++ "/"
+                                                    ++ unquote letterId
+                                            ]
+
+                                    _ ->
+                                        plainPara "Error: Unaddressed UserStatus case. Can you report this to the server owner?"
                                 , divider
                                 , preview
                                 ]
-                            , Element.el
-                                [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
-                              <|
-                                Input.button
-                                    (buttonStyle 5)
-                                    { onPress = Just LetterSend
-                                    , label = Element.text "Send"
-                                    }
+                            , case model.userStatus of
+                                WritingLetter ->
+                                    Element.el
+                                        [ Element.paddingEach
+                                            { top = 20, bottom = 0, left = 0, right = 0 }
+                                        ]
+                                    <|
+                                        Input.button
+                                            (buttonStyle 5)
+                                            { onPress = Just LetterSend
+                                            , label = Element.text "Send"
+                                            }
+
+                                _ ->
+                                    Element.none
                             ]
 
                     NotFound ->
