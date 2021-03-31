@@ -155,7 +155,7 @@ view model =
                                     }
                                 , Element.link
                                     []
-                                    { url = "/letter"
+                                    { url = "/write-letter"
                                     , label = Element.text "> Write a letter."
                                     }
                                 ]
@@ -216,11 +216,16 @@ view model =
                                         letterInputBox
 
                                     SentLetter ->
-                                        Element.text "Letter is sent. Waiting for the letter ID from server..."
+                                        Element.paragraph
+                                            [ Element.width Element.fill ]
+                                            [ Element.text
+                                                "Letter is sent. Waiting for the letter ID from server..."
+                                            ]
 
                                     GotLetterId letterId ->
                                         Element.textColumn
-                                            [ lineSpacing
+                                            [ Element.width Element.fill
+                                            , lineSpacing
                                             , Element.padding 10
                                             , Border.width 2
                                             , Border.rounded 6
