@@ -25,6 +25,7 @@ dependencies:
 - servant-server
 - wai
 - warp
+- wai-cors
 
 library:
   source-dirs: src

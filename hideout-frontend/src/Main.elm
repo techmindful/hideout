@@ -68,7 +68,7 @@ update msg model =
             , Http.request
                 { method = "PUT"
                 , headers = []
-                , url = "localhost:8080/write-letter"
+                , url = "http://localhost:8080/write-letter"
                 , body = Http.jsonBody <| Json.Encode.string model.letterInput
                 , expect = Http.expectString GotLetterSendResp
                 , timeout = Nothing

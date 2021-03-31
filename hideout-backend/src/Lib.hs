@@ -1,7 +1,8 @@
-{-# LANGUAGE DataKinds       #-}
-{-# LANGUAGE DeriveGeneric   #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeOperators   #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module Lib
     ( startApp
@@ -12,6 +13,7 @@ import qualified Servant
 import           Servant ( (:>), (:<|>)(..), Capture, Get, NoContent(..), Put, ReqBody )
 import qualified Network.Wai as Wai
 import qualified Network.Wai.Handler.Warp as Warp
+import           Network.Wai.Middleware.Cors ( cors, CorsResourcePolicy(..) )
 
 import           Data.Aeson ( FromJSON, ToJSON )
 
@@ -51,7 +53,20 @@ api = Servant.Proxy
 
 
 app :: Servant.Application
-app = Servant.serve api server
+app =
+  cors ( \_ -> Just $ CorsResourcePolicy
+          { corsOrigins = Nothing
+          , corsMethods = [ "GET", "PUT" ]
+          , corsRequestHeaders = [ "Content-Type" ]
+          , corsExposedHeaders = Nothing
+          , corsMaxAge = Nothing  -- TODO: Change in production
+          , corsVaryOrigin = True
+          , corsRequireOrigin = False
+          , corsIgnoreFailures = False
+          }
+       )
+   ( Servant.serve api server )
+
 
 
 startApp :: IO ()
