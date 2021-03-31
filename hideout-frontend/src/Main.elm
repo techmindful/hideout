@@ -11,6 +11,8 @@ import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
 import Html
+import Http
+import Json.Encode
 import Markdown
 import Route exposing (..)
 import Task
@@ -30,6 +32,7 @@ init flags url navKey =
       , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
       , letterInput = ""
+      , tempResp = ""
       }
     , Task.attempt GotViewport Dom.getViewport
     )
@@ -59,6 +62,27 @@ update msg model =
 
         LetterInput str ->
             ( { model | letterInput = str }, Cmd.none )
+
+        LetterSend ->
+            ( model
+            , Http.request
+                { method = "PUT"
+                , headers = []
+                , url = "localhost:8080/write-letter"
+                , body = Http.jsonBody <| Json.Encode.string model.letterInput
+                , expect = Http.expectString GotLetterSendResp
+                , timeout = Nothing
+                , tracker = Nothing
+                }
+            )
+
+        GotLetterSendResp result ->
+            case result of
+                Err _ ->
+                    ( model, Cmd.none )
+
+                Ok letterId ->
+                    ( { model | tempResp = letterId }, Cmd.none )
 
         Nop ->
             ( model, Cmd.none )
@@ -151,7 +175,7 @@ view model =
                               <|
                                 Input.button
                                     (buttonStyle 5)
-                                    { onPress = Just Nop
+                                    { onPress = Just LetterSend
                                     , label = Element.text "Send"
                                     }
                             ]
