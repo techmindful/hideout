@@ -8,6 +8,7 @@ import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
 import Element
+import Element exposing ( Element )
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -15,6 +16,8 @@ import Element.Input as Input
 import Html
 import Http
 import Json.Encode
+import Json.Decode as JDec
+import Letter
 import Markdown
 import Route exposing (..)
 import String.Extra exposing (unquote)
@@ -32,24 +35,25 @@ subscriptions _ =
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
-    let
-        route =
-            getRoute url
+
+    let route = getRoute url
+        userStatus = routeToInitUserStatus route
+
+        getViewportCmd = Task.attempt GotViewport Dom.getViewport
     in
     ( { route = route
       , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
-      , userStatus =
-            case route of
-                WriteLetter ->
-                    WritingLetter
-
-                _ ->
-                    Other
+      , userStatus = userStatus
       , letterInput = ""
       , tempResp = ""
       }
-    , Task.attempt GotViewport Dom.getViewport
+    , Cmd.batch
+        [ getViewportCmd
+        , case userStatus of
+            ReadLetterReq letterId -> getLetterReq letterId
+            _ -> Cmd.none
+        ]
     )
 
 
@@ -65,21 +69,15 @@ update msg model =
                     ( model, Nav.load urlStr )
 
         UrlChanged url ->
-            let
-                route =
-                    getRoute url
+            let route = getRoute url
+                userStatus = routeToInitUserStatus route
             in
-            ( { model
-                | route = route
-                , userStatus =
-                    case route of
-                        WriteLetter ->
-                            WritingLetter
-
-                        _ ->
-                            model.userStatus
+            ( { model | route = route
+                      , userStatus = userStatus              
               }
-            , Cmd.none
+            , case userStatus of
+                ReadLetterReq letterId -> getLetterReq letterId
+                _ -> Cmd.none
             )
 
         GotViewport result ->
@@ -89,6 +87,9 @@ update msg model =
 
                 Ok viewport ->
                     ( { model | viewport = Ok viewport }, Cmd.none )
+
+        GotReadLetterResp result ->
+            ( { model | userStatus = ReadLetterResp result }, Cmd.none )
 
         LetterInput str ->
             ( { model | letterInput = str }, Cmd.none )
@@ -165,7 +166,23 @@ view model =
                         Element.text "About page"
 
                     ReadLetter id ->
-                        Element.text "Read letter"
+                        Element.column
+                            []
+                            [ case model.userStatus of
+                                ReadLetterReq _ ->
+                                    plainPara "Waiting for the letter from server.."
+
+                                ReadLetterResp result ->
+                                    case result of
+                                        Err err ->
+                                            plainPara <| Debug.toString err
+
+                                        Ok letter ->
+                                            plainPara letter.body
+
+                                _ -> plainPara "Error: Unaddressed UserStatus case!"
+                            ]
+                            
 
                     WriteLetter ->
                         let
@@ -192,9 +209,6 @@ view model =
                                     , label = Input.labelAbove [] Element.none
                                     , spellcheck = False
                                     }
-
-                            divider =
-                                Element.el [ Element.width <| Element.px 100 ] Element.none
 
                             preview =
                                 Element.el
@@ -232,9 +246,7 @@ view model =
                                             ]
                                             [ plainPara "Your letter can be read (only once) at: "
                                             , plainPara <|
-                                                frontendReadLetterUrl
-                                                    ++ "/"
-                                                    ++ unquote letterId
+                                                frontendReadLetterUrl ++ "/" ++ unquote letterId
                                             ]
 
                                     _ ->
@@ -266,6 +278,25 @@ view model =
         ]
     }
 
+
+divider : Element Msg
+divider =
+    Element.el [ Element.width <| Element.px 100 ] Element.none
+
+
+routeToInitUserStatus route =
+    case route of
+        ReadLetter letterId -> ReadLetterReq letterId
+        WriteLetter -> WritingLetter
+        _ -> Other
+
+
+getLetterReq : String -> Cmd Msg
+getLetterReq letterId =
+    Http.get
+        { url = backendReadLetterUrl ++ "/" ++ letterId
+        , expect = Http.expectJson GotReadLetterResp Letter.jsonDec
+        }
 
 main =
     Browser.application

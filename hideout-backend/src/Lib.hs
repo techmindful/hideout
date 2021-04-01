@@ -47,7 +47,17 @@ data AppState = AppState
 
 readLetter :: String -> ReaderT AppState Servant.Handler Letter
 readLetter letterId = do
-  return (Letter "test")
+
+  appState <- ask
+
+  letters <- liftIO $ atomically $ readTVar ( appState & letters )
+
+  let maybeLetter = Map.lookup letterId letters
+  case maybeLetter of
+    Nothing -> Servant.throwError Servant.err404
+    Just letter ->
+      return letter
+
 
 
 writeLetter :: Letter -> ReaderT AppState Servant.Handler String

@@ -4,6 +4,7 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Http
+import Letter exposing ( Letter )
 import Route exposing (..)
 import Url exposing (Url)
 import UserStatus exposing (..)
@@ -22,8 +23,9 @@ type alias Model =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
-    | GotViewport (Result Dom.Error Dom.Viewport)
+    | GotViewport ( Result Dom.Error Dom.Viewport )
+    | GotReadLetterResp ( Result Http.Error Letter )
     | LetterInput String
     | LetterSend
-    | GotLetterSendResp (Result Http.Error String)
+    | GotLetterSendResp ( Result Http.Error String )
     | Nop
