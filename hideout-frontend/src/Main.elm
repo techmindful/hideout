@@ -17,7 +17,7 @@ import Html
 import Http
 import Json.Encode
 import Json.Decode as JDec
-import Letter
+import Letter exposing (..)
 import Markdown
 import Route exposing (..)
 import String.Extra exposing (unquote)
@@ -102,7 +102,10 @@ update msg model =
                 , url = backendWriteLetterUrl
                 , body =
                     Http.jsonBody <|
-                        Json.Encode.object [ ( "body", Json.Encode.string model.letterInput ) ]
+                        Json.Encode.object
+                            [ ( "body", Json.Encode.string model.letterInput )
+                            , ( "maxReads", Json.Encode.int 1 )
+                            ]
                 , expect = Http.expectString GotLetterSendResp
                 , timeout = Nothing
                 , tracker = Nothing
@@ -177,8 +180,8 @@ view model =
                                         Err err ->
                                             plainPara <| Debug.toString err
 
-                                        Ok letter ->
-                                            plainPara letter.body
+                                        Ok letterMeta ->
+                                            plainPara letterMeta.letter.body
 
                                 _ -> plainPara "Error: Unaddressed UserStatus case!"
                             ]
@@ -295,7 +298,7 @@ getLetterReq : String -> Cmd Msg
 getLetterReq letterId =
     Http.get
         { url = backendReadLetterUrl ++ "/" ++ letterId
-        , expect = Http.expectJson GotReadLetterResp Letter.jsonDec
+        , expect = Http.expectJson GotReadLetterResp letterMetaJsonDec
         }
 
 main =

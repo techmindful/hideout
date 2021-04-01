@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
@@ -31,58 +32,68 @@ import           GHC.Generics ( Generic )
 
 
 data Letter = Letter
-  { body :: String }
+  { body     :: String
+  , maxReads :: Int
+  }
   deriving ( Generic, Show )
 instance FromJSON Letter
 instance ToJSON Letter
 
 
-type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] Letter
+data LetterMeta = LetterMeta
+  { letter  :: Letter
+  , reads   :: Int
+  }
+  deriving ( Generic, Show )
+instance FromJSON LetterMeta
+instance ToJSON LetterMeta
+
+
+type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
 
 
 data AppState = AppState
-  { letters :: TVar ( Map String Letter ) }
+  { letterMetas :: TVar ( Map String LetterMeta ) }
 
 
-readLetter :: String -> ReaderT AppState Servant.Handler Letter
+readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
 readLetter letterId = do
 
   appState <- ask
 
-  letters <- liftIO $ atomically $ readTVar ( appState & letters )
+  letterMetas <- liftIO $ atomically $ readTVar ( appState & letterMetas )
 
-  let maybeLetter = Map.lookup letterId letters
-  case maybeLetter of
+  let maybeLetterMeta = Map.lookup letterId letterMetas
+  case maybeLetterMeta of
     Nothing -> Servant.throwError Servant.err404
-    Just letter ->
-      return letter
+    Just letterMeta ->
+      return letterMeta
 
 
 
 writeLetter :: Letter -> ReaderT AppState Servant.Handler String
 writeLetter letter = do
 
-  liftIO $ putStrLn "write"
-
   appState <- ask
 
   letterId <- liftIO $ do
 
-    oldLetters <- atomically $ readTVar ( appState & letters )
+    oldLetterMetas <- atomically $ readTVar ( appState & letterMetas )
 
     -- Get a random hash.
     seed <- seedNew
     let seedStr = show $ seedToInteger seed
         hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
 
-    -- Insert new letter into AppState.
-    let newLetters = Map.insert hash letter oldLetters
-    atomically $ writeTVar ( appState & letters ) newLetters
+    -- Create a new LetterMeta, and insert it into AppState.
+    let newLetterMeta  = LetterMeta { letter = letter, reads = 0 }
+        newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
+    atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
     -- Debug print
-    letters <- atomically $ readTVar ( appState & letters )
-    putStrLn $ "Current letters:\n----------\n" ++  show letters
+    letterMetas <- atomically $ readTVar ( appState & letterMetas )
+    putStrLn $ "Current letter metas:\n----------\n" ++  show letterMetas
 
     return hash
 
@@ -117,6 +128,6 @@ app appState =
 
 startApp :: IO ()
 startApp = do
-  initLetters <- atomically $ newTVar Map.empty
-  let initAppState = AppState { letters = initLetters }
+  initLetterMetas <- atomically $ newTVar Map.empty
+  let initAppState = AppState { letterMetas = initLetterMetas }
   Warp.run 8080 $ app initAppState

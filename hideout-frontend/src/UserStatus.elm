@@ -7,7 +7,7 @@ import Http
 
 type UserStatus
     = ReadLetterReq String
-    | ReadLetterResp ( Result Http.Error Letter )
+    | ReadLetterResp ( Result Http.Error LetterMeta )
     | WritingLetter
     | SentLetter
     | GotLetterId String

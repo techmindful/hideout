@@ -4,7 +4,7 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Http
-import Letter exposing ( Letter )
+import Letter exposing (..)
 import Route exposing (..)
 import Url exposing (Url)
 import UserStatus exposing (..)
@@ -24,7 +24,7 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | GotViewport ( Result Dom.Error Dom.Viewport )
-    | GotReadLetterResp ( Result Http.Error Letter )
+    | GotReadLetterResp ( Result Http.Error LetterMeta )
     | LetterInput String
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
