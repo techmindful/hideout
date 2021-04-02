@@ -74,7 +74,14 @@ readLetter letterId = do
     Just oldLetterMeta -> do
 
       let newLetterMeta = oldLetterMeta & #readCount %~ ( (+1) :: Int -> Int )
-          newLetterMetas = Map.insert letterId newLetterMeta oldLetterMetas
+
+          -- Delete letter from memory if maxReadCount is reached.
+          -- Otherwise, increment the read count and update the Map.
+          newLetterMetas =
+            if newLetterMeta ^. #readCount == newLetterMeta ^. #letter . #maxReadCount then
+              Map.delete letterId oldLetterMetas
+            else
+              Map.insert letterId newLetterMeta oldLetterMetas
 
       liftIO $ atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
