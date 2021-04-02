@@ -104,7 +104,7 @@ update msg model =
                     Http.jsonBody <|
                         Json.Encode.object
                             [ ( "body", Json.Encode.string model.letterInput )
-                            , ( "maxReads", Json.Encode.int 1 )
+                            , ( "maxReadCount", Json.Encode.int 1 )
                             ]
                 , expect = Http.expectString GotLetterSendResp
                 , timeout = Nothing

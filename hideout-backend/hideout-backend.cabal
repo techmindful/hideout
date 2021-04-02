@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bbaea3af0bb5d968d94911ecae028b492dd2e9d7bc95eed97b8da9611c2c5b7c
+-- hash: a35ed1c5d45e02c422a278d8e5e1c77304451e7cb1991b5379fe720d12c39178
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -37,6 +37,8 @@ library
     , bytestring
     , containers
     , cryptonite
+    , generic-lens
+    , lens
     , mtl
     , servant
     , servant-server
@@ -59,7 +61,9 @@ executable hideout-backend-exe
     , bytestring
     , containers
     , cryptonite
+    , generic-lens
     , hideout-backend
+    , lens
     , mtl
     , servant
     , servant-server
@@ -83,10 +87,12 @@ test-suite hideout-backend-test
     , bytestring
     , containers
     , cryptonite
+    , generic-lens
     , hideout-backend
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , lens
     , mtl
     , servant
     , servant-server

@@ -1,9 +1,11 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# language DataKinds #-}
+{-# language DeriveGeneric #-}
+{-# language DuplicateRecordFields #-}
+{-# language OverloadedLabels #-}
+{-# language OverloadedStrings #-}
+{-# language ScopedTypeVariables #-}
+{-# language TemplateHaskell #-}
+{-# language TypeOperators #-}
 
 module Lib
     ( startApp
@@ -20,20 +22,22 @@ import           Data.Aeson ( FromJSON, ToJSON )
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
 
+import           Control.Lens ( (^.), (.~), (%~) )
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import           Control.Monad.STM ( atomically )
 import           Control.Concurrent.STM.TVar ( TVar, newTVar, readTVar, writeTVar )
 import qualified Data.ByteString.Char8 as ByteStrC8
 import           Data.Function ( (&) )
+import           Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
 import           GHC.Generics ( Generic )
 
 
 data Letter = Letter
-  { body     :: String
-  , maxReads :: Int
+  { body :: String
+  , maxReadCount :: Int
   }
   deriving ( Generic, Show )
 instance FromJSON Letter
@@ -42,7 +46,7 @@ instance ToJSON Letter
 
 data LetterMeta = LetterMeta
   { letter  :: Letter
-  , reads   :: Int
+  , readCount :: Int
   }
   deriving ( Generic, Show )
 instance FromJSON LetterMeta
@@ -62,13 +66,19 @@ readLetter letterId = do
 
   appState <- ask
 
-  letterMetas <- liftIO $ atomically $ readTVar ( appState & letterMetas )
+  oldLetterMetas <- liftIO $ atomically $ readTVar ( appState & letterMetas )
 
-  let maybeLetterMeta = Map.lookup letterId letterMetas
+  let maybeLetterMeta = Map.lookup letterId oldLetterMetas
   case maybeLetterMeta of
     Nothing -> Servant.throwError Servant.err404
-    Just letterMeta ->
-      return letterMeta
+    Just oldLetterMeta -> do
+
+      let newLetterMeta = oldLetterMeta & #readCount %~ ( (+1) :: Int -> Int )
+          newLetterMetas = Map.insert letterId newLetterMeta oldLetterMetas
+
+      liftIO $ atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
+
+      return newLetterMeta
 
 
 
@@ -87,7 +97,7 @@ writeLetter letter = do
         hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
 
     -- Create a new LetterMeta, and insert it into AppState.
-    let newLetterMeta  = LetterMeta { letter = letter, reads = 0 }
+    let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
         newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 

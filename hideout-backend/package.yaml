@@ -24,6 +24,8 @@ dependencies:
 - bytestring
 - cryptonite
 - containers
+- generic-lens
+- lens
 - mtl
 - servant
 - servant-server
