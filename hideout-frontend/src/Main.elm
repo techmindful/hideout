@@ -162,6 +162,11 @@ view model =
                                     { url = "/write-letter"
                                     , label = Element.text "> Write a letter."
                                     }
+                                , Input.button
+                                    []
+                                    { onPress = Nothing
+                                    , label = Element.text "> Start a chat."
+                                    }
                                 ]
                             ]
 

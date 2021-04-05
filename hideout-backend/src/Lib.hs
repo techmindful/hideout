@@ -53,8 +53,34 @@ instance FromJSON LetterMeta
 instance ToJSON LetterMeta
 
 
+data Message = Message
+  { body :: String }
+  deriving ( Generic, Show )
+instance FromJSON Message
+instance ToJSON Message
+
+
+data Chat = Chat
+  { messages :: [ Message ]
+  , maxJoinCount :: Int
+  }
+  deriving ( Generic, Show )
+instance FromJSON Chat
+instance ToJSON Chat
+
+
+data ChatMeta = ChatMeta
+  { chat :: Chat
+  , joinCount :: Int
+  }
+  deriving ( Generic, Show )
+instance FromJSON ChatMeta
+instance ToJSON ChatMeta
+
+
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
+      :<|> "new-chat" :> Get '[ Servant.JSON ] String
 
 
 data AppState = AppState
@@ -98,10 +124,7 @@ writeLetter letter = do
 
     oldLetterMetas <- atomically $ readTVar ( appState & letterMetas )
 
-    -- Get a random hash.
-    seed <- seedNew
-    let seedStr = show $ seedToInteger seed
-        hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
+    hash <- getRandomHash
 
     -- Create a new LetterMeta, and insert it into AppState.
     let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
@@ -117,9 +140,24 @@ writeLetter letter = do
   return letterId
 
 
-server :: Servant.ServerT API (ReaderT AppState Servant.Handler)
+newChat :: ReaderT AppState Servant.Handler String
+newChat = do
+
+  liftIO getRandomHash
+
+
+getRandomHash :: IO String
+getRandomHash = do
+  seed <- seedNew
+  let seedStr = show $ seedToInteger seed
+      hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
+  return hash
+
+
+server :: Servant.ServerT API ( ReaderT AppState Servant.Handler )
 server = readLetter
     :<|> writeLetter
+    :<|> newChat
 
 
 api :: Servant.Proxy API
