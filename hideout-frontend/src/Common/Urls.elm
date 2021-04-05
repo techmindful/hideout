@@ -16,3 +16,9 @@ backendReadLetterUrl = crossOrigin backendUrl [ "read-letter" ] []
 
 
 backendWriteLetterUrl = crossOrigin backendUrl [ "write-letter" ] []
+
+
+newChatUrl = crossOrigin backendUrl [ "new-chat" ] []
+
+
+chatUrl chatId = relative [ "chat", chatId ] []

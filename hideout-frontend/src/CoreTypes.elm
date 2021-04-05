@@ -28,4 +28,6 @@ type Msg
     | LetterInput String
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
+    | NewChat
+    | GotNewChatResp ( Result Http.Error String )
     | Nop

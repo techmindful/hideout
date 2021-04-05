@@ -120,6 +120,22 @@ update msg model =
                 Ok letterId ->
                     ( { model | userStatus = GotLetterId letterId }, Cmd.none )
 
+        NewChat ->
+            ( model
+            , Http.get
+                { url = newChatUrl
+                , expect = Http.expectString GotNewChatResp
+                }
+            )
+
+        GotNewChatResp result ->
+            case result of
+                Err _ ->
+                    ( model, Cmd.none )
+
+                Ok chatId ->
+                    ( model, Nav.pushUrl model.navKey <| chatUrl <| unquote chatId )
+
         Nop ->
             ( model, Cmd.none )
 
@@ -164,7 +180,7 @@ view model =
                                     }
                                 , Input.button
                                     []
-                                    { onPress = Nothing
+                                    { onPress = Just NewChat
                                     , label = Element.text "> Start a chat."
                                     }
                                 ]
@@ -278,6 +294,9 @@ view model =
                                 _ ->
                                     Element.none
                             ]
+
+                    Chat chatId ->
+                        Element.text "chatting"
 
                     NotFound ->
                         Element.text "404"

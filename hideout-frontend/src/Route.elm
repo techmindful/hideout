@@ -9,6 +9,7 @@ type Route
     | About
     | ReadLetter String
     | WriteLetter
+    | Chat String
     | NotFound
 
 
@@ -19,6 +20,7 @@ routeParser =
         , map About <| s "about"
         , map ReadLetter <| s "read-letter" </> string
         , map WriteLetter <| s "write-letter"
+        , map Chat <| s "chat" </> string
         ]
 
 
