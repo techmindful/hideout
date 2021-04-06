@@ -47,6 +47,7 @@ init flags url navKey =
       , navKey = navKey
       , userStatus = userStatus
       , letterInput = ""
+      , chatInput = ""
       , tempResp = ""
       }
     , Cmd.batch
@@ -137,6 +138,9 @@ update msg model =
                 Ok chatId ->
                     ( model, Nav.pushUrl model.navKey <| chatUrl <| unquote chatId )
 
+        ChatInput str ->
+            ( { model | chatInput = str }, Cmd.none )
+
         Nop ->
             ( model, Cmd.none )
 
@@ -158,6 +162,7 @@ view model =
             ]
             (Element.el
                 [ Element.width Element.fill
+                , Element.height Element.fill
                 , Element.padding 60
                 ]
                 (case model.route of
@@ -211,9 +216,42 @@ view model =
 
                     WriteLetter -> Views.WritingLetter.view model
 
-
                     Chat chatId ->
-                        Element.text "chatting"
+                        Element.row
+                            [ Element.width Element.fill
+                            , Element.height Element.fill
+                            , Element.spacingXY 60 0
+                            ]
+                            [ Element.column
+                                [ Element.width Element.fill
+                                , Element.height Element.fill
+                                ]
+                                [ Element.column
+                                    [ Element.width Element.fill
+                                    , Element.height Element.fill
+                                    ]
+                                    [ plainPara "Messages"
+                                    ]
+                                , Input.multiline
+                                    [ Background.color bgColor
+                                    , Element.height <| Element.px 200
+                                    ]
+                                    { onChange = ChatInput
+                                    , text = model.chatInput
+                                    , placeholder = Nothing
+                                    , label = Input.labelAbove [] Element.none
+                                    , spellcheck = False
+                                    }
+                                ]
+                            , Element.column
+                                [ Element.width <| Element.px 400
+                                , Element.height Element.fill
+                                , Element.paddingXY 30 20
+                                , Border.widthEach { left = 2, right = 0, top = 0, bottom = 0 }
+                                ]
+                                [ plainPara "Users"
+                                ]
+                            ]
 
                     NotFound ->
                         Element.text "404"
