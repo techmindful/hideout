@@ -84,7 +84,9 @@ type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] 
 
 
 data AppState = AppState
-  { letterMetas :: TVar ( Map String LetterMeta ) }
+  { letterMetas :: TVar ( Map String LetterMeta )
+  , chatMetas :: TVar ( Map String ChatMeta )
+  }
 
 
 readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
@@ -143,7 +145,23 @@ writeLetter letter = do
 newChat :: ReaderT AppState Servant.Handler String
 newChat = do
 
-  liftIO getRandomHash
+  appState <- ask
+
+  chatId <- liftIO $ do
+    
+    oldChatMetas <- atomically $ readTVar ( appState & chatMetas )
+
+    chatId <- getRandomHash
+
+    -- Create and insert new ChatMeta into AppState.
+    let newChat = Chat { messages = [], maxJoinCount = 2 }
+        newChatMeta = ChatMeta { chat = newChat, joinCount = 0 }
+        newChatMetas = Map.insert chatId newChatMeta oldChatMetas
+    atomically $ writeTVar ( appState & chatMetas ) newChatMetas
+
+    return chatId
+
+  return chatId
 
 
 getRandomHash :: IO String
@@ -184,5 +202,10 @@ app appState =
 startApp :: IO ()
 startApp = do
   initLetterMetas <- atomically $ newTVar Map.empty
-  let initAppState = AppState { letterMetas = initLetterMetas }
+  initChatMetas   <- atomically $ newTVar Map.empty
+  let initAppState = AppState {
+      letterMetas = initLetterMetas
+    , chatMetas   = initChatMetas
+    }
+
   Warp.run 8080 $ app initAppState
