@@ -16,7 +16,7 @@ type alias Model =
     , navKey : Nav.Key
     , userStatus : UserStatus
     , letterInput : String
-    , chatInput : String
+    , messageInput : String
     , tempResp : String
     }
 
@@ -30,6 +30,8 @@ type Msg
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
     | NewChat
-    | ChatInput String
     | GotNewChatResp ( Result Http.Error String )
+    | MessageInput String
+    | MessageSend
+    | GotMessageSendResp ( Result Http.Error () )
     | Nop

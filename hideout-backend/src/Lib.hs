@@ -80,7 +80,9 @@ instance ToJSON ChatMeta
 
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
-      :<|> "new-chat" :> Get '[ Servant.JSON ] String
+      :<|> "new-chat"     :> Get '[ Servant.JSON ] String
+      :<|> "send-message" :> Capture "chatId" String  :> ReqBody '[ Servant.JSON ] Message
+                          :> Put '[ Servant.JSON ] NoContent
 
 
 data AppState = AppState
@@ -164,6 +166,14 @@ newChat = do
   return chatId
 
 
+sendMessage :: String -> Message -> ReaderT AppState Servant.Handler NoContent
+sendMessage chatId message = do
+
+  liftIO $ putStrLn $ "msg recv from chat" ++ chatId
+
+  return NoContent
+
+
 getRandomHash :: IO String
 getRandomHash = do
   seed <- seedNew
@@ -176,6 +186,7 @@ server :: Servant.ServerT API ( ReaderT AppState Servant.Handler )
 server = readLetter
     :<|> writeLetter
     :<|> newChat
+    :<|> sendMessage
 
 
 api :: Servant.Proxy API

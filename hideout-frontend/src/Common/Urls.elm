@@ -22,3 +22,6 @@ newChatUrl = crossOrigin backendUrl [ "new-chat" ] []
 
 
 chatUrl chatId = relative [ "chat", chatId ] []
+
+
+sendMessageUrl chatId = crossOrigin backendUrl [ "send-message", chatId ] []

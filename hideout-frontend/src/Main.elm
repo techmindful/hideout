@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
+import Chat exposing (..)
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
@@ -15,7 +16,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html
 import Http
-import Json.Encode
+import Json.Encode as JEnc
 import Json.Decode as JDec
 import Letter exposing (..)
 import Markdown
@@ -47,7 +48,7 @@ init flags url navKey =
       , navKey = navKey
       , userStatus = userStatus
       , letterInput = ""
-      , chatInput = ""
+      , messageInput = ""
       , tempResp = ""
       }
     , Cmd.batch
@@ -104,9 +105,9 @@ update msg model =
                 , url = backendWriteLetterUrl
                 , body =
                     Http.jsonBody <|
-                        Json.Encode.object
-                            [ ( "body", Json.Encode.string model.letterInput )
-                            , ( "maxReadCount", Json.Encode.int 1 )
+                        JEnc.object
+                            [ ( "body", JEnc.string model.letterInput )
+                            , ( "maxReadCount", JEnc.int 1 )
                             ]
                 , expect = Http.expectString GotLetterSendResp
                 , timeout = Nothing
@@ -136,10 +137,39 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok chatId ->
-                    ( model, Nav.pushUrl model.navKey <| chatUrl <| unquote chatId )
+                    ( { model | userStatus = Chatting chatId "" }
+                    , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
+                    )
 
-        ChatInput str ->
-            ( { model | chatInput = str }, Cmd.none )
+        MessageInput str ->
+            ( { model | messageInput = str }, Cmd.none )
+
+        MessageSend ->
+            let chatId = case model.userStatus of
+                    Chatting id _ -> id
+                    _ -> ""  -- TODO: Handle error?
+            in
+            ( model
+            , Http.request
+                { method = "PUT"
+                , headers = []
+                , url = sendMessageUrl chatId
+                , body = Http.jsonBody <|
+                    JEnc.object
+                        [ ( "body", JEnc.string <| model.messageInput ) ]
+                , expect = Http.expectWhatever GotMessageSendResp
+                , timeout = Nothing
+                , tracker = Nothing
+                }
+            )
+
+        GotMessageSendResp result ->
+            case result of
+                Err _ ->
+                    ( model, Cmd.none )
+
+                Ok () ->
+                    ( model, Cmd.none )
 
         Nop ->
             ( model, Cmd.none )
@@ -236,12 +266,21 @@ view model =
                                     [ Background.color bgColor
                                     , Element.height <| Element.px 200
                                     ]
-                                    { onChange = ChatInput
-                                    , text = model.chatInput
+                                    { onChange = MessageInput
+                                    , text = model.messageInput
                                     , placeholder = Nothing
                                     , label = Input.labelAbove [] Element.none
                                     , spellcheck = False
                                     }
+                                , Element.row
+                                    [ Element.paddingXY 0 10 ]
+                                    [ Input.button
+                                        [ Element.padding 5
+                                        , Background.color <| Element.rgb255 0 100 0 ]
+                                        { onPress = Just MessageSend
+                                        , label = Element.text "Send"
+                                        }
+                                    ]
                                 ]
                             , Element.column
                                 [ Element.width <| Element.px 400
@@ -261,10 +300,12 @@ view model =
     }
 
 
+routeToInitUserStatus : Route -> UserStatus
 routeToInitUserStatus route =
     case route of
         ReadLetter letterId -> ReadLetterReq letterId
         WriteLetter -> WritingLetter
+        Chat chatId -> Chatting chatId ""
         _ -> Other
 
 

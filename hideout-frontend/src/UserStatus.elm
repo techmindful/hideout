@@ -10,5 +10,6 @@ type UserStatus
     | ReadLetterResp ( Result Http.Error LetterMeta )
     | WritingLetter
     | SentLetter
-    | GotLetterId String
+    | GotLetterId String  -- Got letter ID from server after sending the letter.
+    | Chatting String String
     | Other
