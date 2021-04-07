@@ -22,6 +22,7 @@ import Letter exposing (..)
 import Markdown
 import Route exposing (..)
 import String.Extra exposing (unquote)
+import Tagged exposing ( tag, untag )
 import Task
 import Url exposing (Url)
 import Url.Parser
@@ -137,7 +138,7 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok chatId ->
-                    ( { model | userStatus = Chatting chatId "" }
+                    ( { model | userStatus = Chatting ( tag chatId ) "" }
                     , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
                     )
 
@@ -147,13 +148,13 @@ update msg model =
         MessageSend ->
             let chatId = case model.userStatus of
                     Chatting id _ -> id
-                    _ -> ""  -- TODO: Handle error?
+                    _ -> tag ""          -- TODO: Handle error?
             in
             ( model
             , Http.request
                 { method = "PUT"
                 , headers = []
-                , url = sendMessageUrl chatId
+                , url = sendMessageUrl <| untag chatId
                 , body = Http.jsonBody <|
                     JEnc.object
                         [ ( "body", JEnc.string <| model.messageInput ) ]
@@ -305,7 +306,7 @@ routeToInitUserStatus route =
     case route of
         ReadLetter letterId -> ReadLetterReq letterId
         WriteLetter -> WritingLetter
-        Chat chatId -> Chatting chatId ""
+        Chat chatId -> Chatting ( tag chatId ) ""
         _ -> Other
 
 
