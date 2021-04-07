@@ -16,7 +16,6 @@ type alias Model =
     , navKey : Nav.Key
     , userStatus : UserStatus
     , letterInput : String
-    , messageInput : String
     , tempResp : String
     }
 

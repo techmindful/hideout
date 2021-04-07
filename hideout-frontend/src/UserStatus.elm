@@ -1,6 +1,6 @@
 module UserStatus exposing (..)
 
-import Chat exposing ( ChatId )
+import Chat exposing ( ChatId, MessageBody )
 import Letter exposing (..)
 import Http
 
@@ -11,5 +11,5 @@ type UserStatus
     | WritingLetter
     | SentLetter
     | GotLetterId String  -- Got letter ID from server after sending the letter.
-    | Chatting ChatId String
+    | Chatting ChatId MessageBody
     | Other
