@@ -169,7 +169,20 @@ newChat = do
 sendMessage :: String -> Message -> ReaderT AppState Servant.Handler NoContent
 sendMessage chatId message = do
 
-  liftIO $ putStrLn $ "msg recv from chat" ++ chatId
+  appState <- ask
+
+  oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
+  let maybeOldChatMeta = Map.lookup chatId oldChatMetas
+  case maybeOldChatMeta of
+    Nothing -> do
+      liftIO $ print "404"
+      Servant.throwError Servant.err404
+    Just oldChatMeta -> do
+      let newChatMeta = oldChatMeta & #chat . #messages %~ ( ( : ) message )
+          newChatMetas = Map.insert chatId newChatMeta oldChatMetas
+      liftIO $ atomically $ writeTVar ( appState & chatMetas ) newChatMetas
+
+      liftIO $ putStrLn $ show newChatMetas
 
   return NoContent
 

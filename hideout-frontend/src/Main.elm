@@ -139,7 +139,7 @@ update msg model =
 
                 Ok chatId ->
                     ( { model | chatStatus =
-                        { id = tag chatId
+                        { id = tag <| unquote chatId
                         , input = tag ""
                         }
                       }
