@@ -14,7 +14,7 @@
         node: document.getElementById("elm-app")
       })
 
-      var socket = new WebSocket( "wss://echo.websocket.org" );
+      var socket = new WebSocket( "ws://localhost:8080/send-message/123" );
       elmApp.ports.sendMessage.subscribe( function( message )
           {
             socket.send( message );

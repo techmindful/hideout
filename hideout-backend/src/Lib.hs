@@ -83,8 +83,7 @@ instance ToJSON ChatMeta
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
       :<|> "new-chat"     :> Get '[ Servant.JSON ] String
-      :<|> "send-message" :> Capture "chatId" String  :> ReqBody '[ Servant.JSON ] Message
-                          :> WebSocket
+      :<|> "send-message" :> Capture "chatId" String :> WebSocket
 
 
 data AppState = AppState
@@ -168,25 +167,29 @@ newChat = do
   return chatId
 
 
-sendMessage :: String -> Message -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
-sendMessage chatId message conn = do
+sendMessage :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
+sendMessage chatId conn = do
 
   appState <- ask
 
-  oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
-  let maybeOldChatMeta = Map.lookup chatId oldChatMetas
-  case maybeOldChatMeta of
-    Nothing -> do
-      liftIO $ print "404"
-      Servant.throwError Servant.err404
-    Just oldChatMeta -> do
-      let newChatMeta = oldChatMeta & #chat . #messages %~ ( ( : ) message )
-          newChatMetas = Map.insert chatId newChatMeta oldChatMetas
-      liftIO $ atomically $ writeTVar ( appState & chatMetas ) newChatMetas
+  message <- liftIO $ WebSock.receiveDataMessage conn
+  
+  liftIO $ putStrLn $ show message
 
-      liftIO $ putStrLn $ show newChatMetas
+  --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
+  --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
+  --case maybeOldChatMeta of
+  --  Nothing -> do
+  --    liftIO $ print "404"
+  --    Servant.throwError Servant.err404
+  --  Just oldChatMeta -> do
+  --    let newChatMeta = oldChatMeta & #chat . #messages %~ ( ( : ) message )
+  --        newChatMetas = Map.insert chatId newChatMeta oldChatMetas
+  --    liftIO $ atomically $ writeTVar ( appState & chatMetas ) newChatMetas
 
-  return ()
+  --    liftIO $ putStrLn $ show newChatMetas
+
+  --return ()
 
 
 getRandomHash :: IO String
