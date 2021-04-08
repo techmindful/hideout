@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Browser.Dom as Dom
@@ -31,9 +31,13 @@ import Utils.Utils as Utils exposing (..)
 import Views.WritingLetter
 
 
+port sendMessage : String -> Cmd msg
+port messageReceiver : ( String -> msg ) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    messageReceiver MessageRecv
 
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -157,17 +161,23 @@ update msg model =
 
         MessageSend ->
             ( model
-            , Http.request
-                { method = "PUT"
-                , headers = []
-                , url = sendMessageUrl <| untag model.chatStatus.id
-                , body = Http.jsonBody <|
-                    JEnc.object
-                        [ ( "body", JEnc.string <| untag model.chatStatus.input ) ]
-                , expect = Http.expectWhatever GotMessageSendResp
-                , timeout = Nothing
-                , tracker = Nothing
-                }
+            --, Http.request
+            --    { method = "PUT"
+            --    , headers = []
+            --    , url = sendMessageUrl <| untag model.chatStatus.id
+            --    , body = Http.jsonBody <|
+            --        JEnc.object
+            --            [ ( "body", JEnc.string <| untag model.chatStatus.input ) ]
+            --    , expect = Http.expectWhatever GotMessageSendResp
+            --    , timeout = Nothing
+            --    , tracker = Nothing
+            --    }
+            , sendMessage <| untag model.chatStatus.input
+            )
+
+        MessageRecv str ->
+            ( { model | tempResp = str }
+            , Cmd.none
             )
 
         GotMessageSendResp result ->
@@ -267,7 +277,7 @@ view model =
                                     [ Element.width Element.fill
                                     , Element.height Element.fill
                                     ]
-                                    [ plainPara "Messages"
+                                    [ plainPara model.tempResp
                                     ]
                                 , Input.multiline
                                     [ Background.color bgColor

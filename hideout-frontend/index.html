@@ -13,6 +13,16 @@
       var elmApp = Elm.Main.init({
         node: document.getElementById("elm-app")
       })
+
+      var socket = new WebSocket( "wss://echo.websocket.org" );
+      elmApp.ports.sendMessage.subscribe( function( message )
+          {
+            socket.send( message );
+          } );
+      socket.addEventListener( "message", function( event )
+        {
+          elmApp.ports.messageReceiver.send( event.data );
+        } );
     </script>
 
   </body>

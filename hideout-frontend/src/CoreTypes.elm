@@ -34,5 +34,6 @@ type Msg
     | GotNewChatResp ( Result Http.Error String )
     | MessageInput String
     | MessageSend
+    | MessageRecv String
     | GotMessageSendResp ( Result Http.Error () )
     | Nop
