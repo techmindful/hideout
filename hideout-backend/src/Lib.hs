@@ -25,6 +25,7 @@ import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
 
 import           Control.Lens ( (^.), (.~), (%~) )
+import           Control.Monad ( forever )
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import           Control.Monad.STM ( atomically )
@@ -168,7 +169,7 @@ newChat = do
 
 
 sendMessage :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
-sendMessage chatId conn = do
+sendMessage chatId conn = forever $ do
 
   appState <- ask
 
