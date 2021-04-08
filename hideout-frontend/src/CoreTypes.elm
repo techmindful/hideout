@@ -3,6 +3,7 @@ module CoreTypes exposing (..)
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
+import Chat exposing ( ChatStatus )
 import Http
 import Letter exposing (..)
 import Route exposing (..)
@@ -16,6 +17,7 @@ type alias Model =
     , navKey : Nav.Key
     , userStatus : UserStatus
     , letterInput : String
+    , chatStatus : ChatStatus
     , tempResp : String
     }
 

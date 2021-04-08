@@ -49,6 +49,7 @@ init flags url navKey =
       , navKey = navKey
       , userStatus = userStatus
       , letterInput = ""
+      , chatStatus = { id = tag "", input = tag "" }
       , tempResp = ""
       }
     , Cmd.batch
@@ -137,30 +138,32 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok chatId ->
-                    ( { model | userStatus = Chatting ( tag chatId ) ( tag "" ) }
+                    ( { model | chatStatus =
+                        { id = tag chatId
+                        , input = tag ""
+                        }
+                      }
                     , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
                     )
 
         MessageInput str ->
-            case model.userStatus of
-                Chatting chatId _ ->
-                    ( { model | userStatus = Chatting chatId ( tag str ) }, Cmd.none )
-                        
-                _ -> ( model, Cmd.none )  -- TODO: Handle error?
+            ( { model | chatStatus =
+                { id = model.chatStatus.id
+                , input = tag str
+                }
+              }
+            , Cmd.none
+            )
 
         MessageSend ->
-            let ( chatId, messageBody ) = case model.userStatus of
-                    Chatting id body -> ( id, body )
-                    _ -> ( tag "", tag "" )          -- TODO: Handle error?
-            in
             ( model
             , Http.request
                 { method = "PUT"
                 , headers = []
-                , url = sendMessageUrl <| untag chatId
+                , url = sendMessageUrl <| untag model.chatStatus.id
                 , body = Http.jsonBody <|
                     JEnc.object
-                        [ ( "body", JEnc.string <| untag messageBody ) ]
+                        [ ( "body", JEnc.string <| untag model.chatStatus.input ) ]
                 , expect = Http.expectWhatever GotMessageSendResp
                 , timeout = Nothing
                 , tracker = Nothing
@@ -271,9 +274,7 @@ view model =
                                     , Element.height <| Element.px 200
                                     ]
                                     { onChange = MessageInput
-                                    , text = case model.userStatus of
-                                        Chatting _ messageBody -> untag messageBody
-                                        _ -> "ERR"
+                                    , text = untag model.chatStatus.input
                                     , placeholder = Nothing
                                     , label = Input.labelAbove [] Element.none
                                     , spellcheck = False
@@ -311,7 +312,6 @@ routeToInitUserStatus route =
     case route of
         ReadLetter letterId -> ReadLetterReq letterId
         WriteLetter -> WritingLetter
-        Chat chatId -> Chatting ( tag chatId ) ( tag "" )
         _ -> Other
 
 

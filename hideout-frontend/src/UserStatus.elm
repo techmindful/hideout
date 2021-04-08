@@ -11,5 +11,4 @@ type UserStatus
     | WritingLetter
     | SentLetter
     | GotLetterId String  -- Got letter ID from server after sending the letter.
-    | Chatting ChatId MessageBody
     | Other
