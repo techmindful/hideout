@@ -161,18 +161,8 @@ update msg model =
 
         MessageSend ->
             ( model
-            --, Http.request
-            --    { method = "PUT"
-            --    , headers = []
-            --    , url = sendMessageUrl <| untag model.chatStatus.id
-            --    , body = Http.jsonBody <|
-            --        JEnc.object
-            --            [ ( "body", JEnc.string <| untag model.chatStatus.input ) ]
-            --    , expect = Http.expectWhatever GotMessageSendResp
-            --    , timeout = Nothing
-            --    , tracker = Nothing
-            --    }
-            , sendMessage <| untag model.chatStatus.input
+            , sendMessage <| JEnc.encode 3 <|
+                JEnc.object [ ( "body", JEnc.string <| untag model.chatStatus.input ) ]
             )
 
         MessageRecv str ->

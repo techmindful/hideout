@@ -20,6 +20,7 @@ import qualified Network.Wai.Handler.Warp as Warp
 import           Network.Wai.Middleware.Cors ( cors, CorsResourcePolicy(..) )
 import qualified Network.WebSockets as WebSock
 
+import qualified Data.Aeson as Aeson
 import           Data.Aeson ( FromJSON, ToJSON )
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
@@ -30,6 +31,7 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import           Control.Monad.STM ( atomically )
 import           Control.Concurrent.STM.TVar ( TVar, newTVar, readTVar, writeTVar )
+import qualified Data.ByteString.Lazy as LazyByteStr
 import qualified Data.ByteString.Char8 as ByteStrC8
 import           Data.Function ( (&) )
 import           Data.Generics.Labels
@@ -173,9 +175,16 @@ sendMessage chatId conn = forever $ do
 
   appState <- ask
 
-  message <- liftIO $ WebSock.receiveDataMessage conn
-  
-  liftIO $ putStrLn $ show message
+  dataMessage <- liftIO $ WebSock.receiveDataMessage conn
+  case dataMessage of
+    WebSock.Text t _ -> do
+      let maybeMessage :: Maybe Message
+          maybeMessage = Aeson.decode t
+      case maybeMessage of
+        Nothing -> Servant.throwError Servant.err400 { Servant.errBody = "Bad JSON Message" }
+        Just message -> liftIO $ putStrLn ( message ^. #body )
+
+    _ -> Servant.throwError Servant.err400 { Servant.errBody = "I'm receiving binary Message?" }
 
   --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
   --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
