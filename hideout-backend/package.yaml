@@ -29,10 +29,12 @@ dependencies:
 - mtl
 - servant
 - servant-server
+- servant-websockets
 - stm
 - wai
 - warp
 - wai-cors
+- websockets
 
 library:
   source-dirs: src

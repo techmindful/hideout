@@ -14,9 +14,11 @@ module Lib
     
 import qualified Servant
 import           Servant ( (:>), (:<|>)(..), Capture, Get, NoContent(..), Put, ReqBody )
+import           Servant.API.WebSocket ( WebSocket )
 import qualified Network.Wai as Wai
 import qualified Network.Wai.Handler.Warp as Warp
 import           Network.Wai.Middleware.Cors ( cors, CorsResourcePolicy(..) )
+import qualified Network.WebSockets as WebSock
 
 import           Data.Aeson ( FromJSON, ToJSON )
 import           Crypto.Random ( seedNew, seedToInteger )
@@ -82,7 +84,7 @@ type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] 
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
       :<|> "new-chat"     :> Get '[ Servant.JSON ] String
       :<|> "send-message" :> Capture "chatId" String  :> ReqBody '[ Servant.JSON ] Message
-                          :> Put '[ Servant.JSON ] NoContent
+                          :> WebSocket
 
 
 data AppState = AppState
@@ -166,8 +168,8 @@ newChat = do
   return chatId
 
 
-sendMessage :: String -> Message -> ReaderT AppState Servant.Handler NoContent
-sendMessage chatId message = do
+sendMessage :: String -> Message -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
+sendMessage chatId message conn = do
 
   appState <- ask
 
@@ -184,7 +186,7 @@ sendMessage chatId message = do
 
       liftIO $ putStrLn $ show newChatMetas
 
-  return NoContent
+  return ()
 
 
 getRandomHash :: IO String

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a35ed1c5d45e02c422a278d8e5e1c77304451e7cb1991b5379fe720d12c39178
+-- hash: 97ac81d4606e09e9822313c7b8b675ca670cb251f057c49b84a56aa7746498e6
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -42,10 +42,12 @@ library
     , mtl
     , servant
     , servant-server
+    , servant-websockets
     , stm
     , wai
     , wai-cors
     , warp
+    , websockets
   default-language: Haskell2010
 
 executable hideout-backend-exe
@@ -67,10 +69,12 @@ executable hideout-backend-exe
     , mtl
     , servant
     , servant-server
+    , servant-websockets
     , stm
     , wai
     , wai-cors
     , warp
+    , websockets
   default-language: Haskell2010
 
 test-suite hideout-backend-test
@@ -96,8 +100,10 @@ test-suite hideout-backend-test
     , mtl
     , servant
     , servant-server
+    , servant-websockets
     , stm
     , wai
     , wai-cors
     , warp
+    , websockets
   default-language: Haskell2010
