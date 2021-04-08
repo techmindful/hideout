@@ -181,10 +181,10 @@ sendMessage chatId conn = forever $ do
       let maybeMessage :: Maybe Message
           maybeMessage = Aeson.decode t
       case maybeMessage of
-        Nothing -> Servant.throwError Servant.err400 { Servant.errBody = "Bad JSON Message" }
+        Nothing -> liftIO $ putStrLn "Message can't be JSON-decoded."
         Just message -> liftIO $ putStrLn ( message ^. #body )
 
-    _ -> Servant.throwError Servant.err400 { Servant.errBody = "I'm receiving binary Message?" }
+    _ -> liftIO $ putStrLn "Data Message is in binary form."
 
   --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
   --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
