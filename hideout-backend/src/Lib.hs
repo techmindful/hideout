@@ -26,13 +26,14 @@ import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
 
 import           Control.Lens ( (^.), (.~), (%~) )
-import           Control.Monad ( forever )
+import           Control.Monad ( forever, forM_ )
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import qualified Control.Monad.STM as STM
 import           Control.Monad.STM ( atomically )
 import           Control.Concurrent.STM.TVar ( TVar, newTVar, readTVar, writeTVar )
 import qualified Data.ByteString.Lazy as LazyByteStr
+import qualified Data.ByteString as ByteStr
 import qualified Data.ByteString.Char8 as ByteStrC8
 import           Data.Function ( (&) )
 import           Data.Generics.Labels
@@ -173,36 +174,52 @@ newChat = do
 
 
 chatHandler :: WebSock.Connection -> ReaderT AppState Servant.Handler ()
-chatHandler conn = forever $ do
+chatHandler conn = do
 
   appState <- ask
 
-  -- Check for incoming message.
-  dataMessage <- liftIO $ WebSock.receiveDataMessage conn
-  case dataMessage of
-    WebSock.Text t _ -> do
-      let maybeMessage :: Maybe Message
-          maybeMessage = Aeson.decode t
-      case maybeMessage of
-        Nothing -> liftIO $ putStrLn "Message can't be JSON-decoded."
-        Just message -> liftIO $ putStrLn ( message ^. #body )
+  forever $ do
 
-    _ -> liftIO $ putStrLn "Data Message is in binary form."
+    -- Check for incoming message.
+    dataMessage <- liftIO $ WebSock.receiveDataMessage conn
+    case dataMessage of
+      WebSock.Text t _ -> do
+        let maybeMessage :: Maybe Message
+            maybeMessage = Aeson.decode t
+        case maybeMessage of
+          Nothing -> liftIO $ putStrLn "Message can't be JSON-decoded."
+          Just message -> do
 
-  --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
-  --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
-  --case maybeOldChatMeta of
-  --  Nothing -> do
-  --    liftIO $ print "404"
-  --    Servant.throwError Servant.err404
-  --  Just oldChatMeta -> do
-  --    let newChatMeta = oldChatMeta & #chat . #messages %~ ( ( : ) message )
-  --        newChatMetas = Map.insert chatId newChatMeta oldChatMetas
-  --    liftIO $ atomically $ writeTVar ( appState & chatMetas ) newChatMetas
+            -- Debug print message.
+            liftIO $ putStrLn ( message ^. #body )
 
-  --    liftIO $ putStrLn $ show newChatMetas
+            if message ^. #body == "join" then do
+              oldChatUsers <- liftIO $ atomically $ readTVar ( appState & chatUsers )
+              let newChatUsers = conn : oldChatUsers
+              liftIO $ atomically $ writeTVar ( appState & chatUsers ) newChatUsers
+            else
+              return ()
 
-  --return ()
+            chatUsers <- liftIO $ atomically $ readTVar ( appState & chatUsers )
+            liftIO $ forM_ chatUsers $
+              ( \conn -> WebSock.sendTextData conn ( ByteStrC8.pack $ message ^. #body ) )
+
+      _ -> liftIO $ putStrLn "Data Message is in binary form."
+
+    --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
+    --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
+    --case maybeOldChatMeta of
+    --  Nothing -> do
+    --    liftIO $ print "404"
+    --    Servant.throwError Servant.err404
+    --  Just oldChatMeta -> do
+    --    let newChatMeta = oldChatMeta & #chat . #messages %~ ( ( : ) message )
+    --        newChatMetas = Map.insert chatId newChatMeta oldChatMetas
+    --    liftIO $ atomically $ writeTVar ( appState & chatMetas ) newChatMetas
+
+    --    liftIO $ putStrLn $ show newChatMetas
+
+    --return ()
 
 
 getRandomHash :: IO String

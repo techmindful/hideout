@@ -63,7 +63,9 @@ init flags url navKey =
             _ -> Cmd.none
 
         , case route of
-            Chat chatIdStr -> sendMessage "join"
+            Chat chatIdStr ->
+                sendMessage <| JEnc.encode 0 <|
+                    JEnc.object [ ( "body", JEnc.string "join" ) ]
             _ -> Cmd.none
         ]
     )
@@ -93,7 +95,9 @@ update msg model =
                     _ -> Cmd.none
 
                 , case route of
-                    Chat chatIdStr -> sendMessage "join"
+                    Chat chatIdStr ->
+                        sendMessage <| JEnc.encode 0 <|
+                            JEnc.object [ ( "body", JEnc.string "join" ) ]
                     _ -> Cmd.none
                 ]
             )
