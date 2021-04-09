@@ -61,6 +61,10 @@ init flags url navKey =
         , case userStatus of
             ReadLetterReq letterId -> getLetterReq letterId
             _ -> Cmd.none
+
+        , case route of
+            Chat chatIdStr -> sendMessage "join"
+            _ -> Cmd.none
         ]
     )
 
@@ -83,9 +87,15 @@ update msg model =
             ( { model | route = route
                       , userStatus = userStatus              
               }
-            , case userStatus of
-                ReadLetterReq letterId -> getLetterReq letterId
-                _ -> Cmd.none
+            , Cmd.batch
+                [ case userStatus of
+                    ReadLetterReq letterId -> getLetterReq letterId
+                    _ -> Cmd.none
+
+                , case route of
+                    Chat chatIdStr -> sendMessage "join"
+                    _ -> Cmd.none
+                ]
             )
 
         GotViewport result ->

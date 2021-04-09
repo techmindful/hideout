@@ -29,6 +29,7 @@ import           Control.Lens ( (^.), (.~), (%~) )
 import           Control.Monad ( forever )
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
+import qualified Control.Monad.STM as STM
 import           Control.Monad.STM ( atomically )
 import           Control.Concurrent.STM.TVar ( TVar, newTVar, readTVar, writeTVar )
 import qualified Data.ByteString.Lazy as LazyByteStr
@@ -86,11 +87,12 @@ instance ToJSON ChatMeta
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
       :<|> "new-chat"     :> Get '[ Servant.JSON ] String
-      :<|> "send-message" :> Capture "chatId" String :> WebSocket
+      :<|> "chat"         :> WebSocket
 
 
 data AppState = AppState
   { letterMetas :: TVar ( Map String LetterMeta )
+  , chatUsers :: TVar [ WebSock.Connection ]
   , chatMetas :: TVar ( Map String ChatMeta )
   }
 
@@ -170,11 +172,12 @@ newChat = do
   return chatId
 
 
-sendMessage :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
-sendMessage chatId conn = forever $ do
+chatHandler :: WebSock.Connection -> ReaderT AppState Servant.Handler ()
+chatHandler conn = forever $ do
 
   appState <- ask
 
+  -- Check for incoming message.
   dataMessage <- liftIO $ WebSock.receiveDataMessage conn
   case dataMessage of
     WebSock.Text t _ -> do
@@ -214,7 +217,7 @@ server :: Servant.ServerT API ( ReaderT AppState Servant.Handler )
 server = readLetter
     :<|> writeLetter
     :<|> newChat
-    :<|> sendMessage
+    :<|> chatHandler
 
 
 api :: Servant.Proxy API
@@ -241,9 +244,11 @@ app appState =
 startApp :: IO ()
 startApp = do
   initLetterMetas <- atomically $ newTVar Map.empty
+  initChatUsers   <- atomically $ newTVar []
   initChatMetas   <- atomically $ newTVar Map.empty
   let initAppState = AppState {
       letterMetas = initLetterMetas
+    , chatUsers   = initChatUsers 
     , chatMetas   = initChatMetas
     }
 
