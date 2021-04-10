@@ -23,6 +23,11 @@
         {
           elmApp.ports.messageReceiver.send( event.data );
         } );
+
+      window.addEventListener( "beforeunload", function( event )
+        {
+          socket.close();
+        } ); 
     </script>
 
   </body>
