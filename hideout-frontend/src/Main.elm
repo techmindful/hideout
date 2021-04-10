@@ -64,8 +64,8 @@ init flags url navKey =
 
         , case route of
             Chat chatIdStr ->
-                sendMessage <| JEnc.encode 0 <|
-                    JEnc.object [ ( "body", JEnc.string "join" ) ]
+                sendMessage <| mkJoinMsg
+
             _ -> Cmd.none
         ]
     )
@@ -96,8 +96,8 @@ update msg model =
 
                 , case route of
                     Chat chatIdStr ->
-                        sendMessage <| JEnc.encode 0 <|
-                            JEnc.object [ ( "body", JEnc.string "join" ) ]
+                        sendMessage <| mkJoinMsg
+
                     _ -> Cmd.none
                 ]
             )
@@ -175,8 +175,7 @@ update msg model =
 
         MessageSend ->
             ( model
-            , sendMessage <| JEnc.encode 3 <|
-                JEnc.object [ ( "body", JEnc.string <| untag model.chatStatus.input ) ]
+            , sendMessage <| mkMessageMsg <| untag model.chatStatus.input
             )
 
         MessageRecv str ->

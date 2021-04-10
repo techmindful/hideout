@@ -60,15 +60,17 @@ instance FromJSON LetterMeta
 instance ToJSON LetterMeta
 
 
-data Message = Message
-  { body :: String }
+data Msg = Msg
+  { msgType :: String
+  , msgBody :: String
+  }
   deriving ( Generic, Show )
-instance FromJSON Message
-instance ToJSON Message
+instance FromJSON Msg
+instance ToJSON Msg
 
 
 data Chat = Chat
-  { messages :: [ Message ]
+  { msgs :: [ Msg ]
   , maxJoinCount :: Int
   }
   deriving ( Generic, Show )
@@ -163,7 +165,7 @@ newChat = do
     chatId <- getRandomHash
 
     -- Create and insert new ChatMeta into AppState.
-    let newChat = Chat { messages = [], maxJoinCount = 2 }
+    let newChat = Chat { msgs = [], maxJoinCount = 2 }
         newChatMeta = ChatMeta { chat = newChat, joinCount = 0 }
         newChatMetas = Map.insert chatId newChatMeta oldChatMetas
     atomically $ writeTVar ( appState & chatMetas ) newChatMetas
@@ -181,19 +183,22 @@ chatHandler conn = do
   forever $ do
 
     -- Check for incoming message.
-    dataMessage <- liftIO $ WebSock.receiveDataMessage conn
-    case dataMessage of
+    dataMsg <- liftIO $ WebSock.receiveDataMessage conn
+    case dataMsg of
       WebSock.Text t _ -> do
-        let maybeMessage :: Maybe Message
-            maybeMessage = Aeson.decode t
-        case maybeMessage of
+        let maybeMsg :: Maybe Msg
+            maybeMsg = Aeson.decode t
+        case maybeMsg of
           Nothing -> liftIO $ putStrLn "Message can't be JSON-decoded."
-          Just message -> do
+          Just msg -> do
+
+            let msgType = msg ^. #msgType
+                msgBody = msg ^. #msgBody
 
             -- Debug print message.
-            liftIO $ putStrLn ( message ^. #body )
+            liftIO $ putStrLn ( msgType )
 
-            if message ^. #body == "join" then do
+            if msgType == "join" then do
               oldChatUsers <- liftIO $ atomically $ readTVar ( appState & chatUsers )
               let newChatUsers = conn : oldChatUsers
               liftIO $ atomically $ writeTVar ( appState & chatUsers ) newChatUsers
@@ -202,7 +207,7 @@ chatHandler conn = do
 
             chatUsers <- liftIO $ atomically $ readTVar ( appState & chatUsers )
             liftIO $ forM_ chatUsers $
-              ( \conn -> WebSock.sendTextData conn ( ByteStrC8.pack $ message ^. #body ) )
+              ( \conn -> WebSock.sendTextData conn ( ByteStrC8.pack $ msgBody ) )
 
       _ -> liftIO $ putStrLn "Data Message is in binary form."
 
