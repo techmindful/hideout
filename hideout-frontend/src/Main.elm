@@ -32,16 +32,17 @@ import Views.Chat
 import Views.WritingLetter
 
 
-port wsReadyPort : ( String -> msg ) -> Sub msg
-port sendWsMsgPort : String -> Cmd msg
-port recvWsMsgPort : ( String -> msg ) -> Sub msg
+port port_InitWs : String -> Cmd msg
+port port_WsReady : ( String -> msg ) -> Sub msg
+port port_SendWsMsg : String -> Cmd msg
+port port_RecvWsMsg : ( String -> msg ) -> Sub msg
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ wsReadyPort OnWsReady
-        , recvWsMsgPort OnWsMsg
+        [ port_WsReady OnWsReady
+        , port_RecvWsMsg OnWsMsg
         ]
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -63,8 +64,13 @@ init flags url navKey =
       }
     , Cmd.batch
         [ getViewportCmd
+
         , case userStatus of
             ReadLetterReq letterId -> getLetterReq letterId
+            _ -> Cmd.none
+
+        , case route of
+            Chat chatIdStr -> port_InitWs chatIdStr
             _ -> Cmd.none
         ]
     )
@@ -93,15 +99,8 @@ update msg ( { chatStatus } as model ) =
                     ReadLetterReq letterId -> getLetterReq letterId
                     _ -> Cmd.none
 
-                , -- Send join msg if user lands on chat page,
-                  -- And ws is ready.
-                  case route of
-                    Chat chatIdStr ->
-                        if model.isWsReady then
-                            sendWsMsgPort <| Chat.mkJoinMsg <| tag chatIdStr
-                        else
-                            Cmd.none
-
+                , case route of
+                    Chat chatIdStr -> port_InitWs chatIdStr
                     _ -> Cmd.none
                 ]
             )
@@ -176,7 +175,7 @@ update msg ( { chatStatus } as model ) =
 
         MessageSend ->
             ( model
-            , sendWsMsgPort <| Chat.mkContentMsg <| model.chatStatus.input
+            , port_SendWsMsg <| Chat.mkContentMsg <| model.chatStatus.input
             )
 
         OnWsReady _ ->
@@ -184,7 +183,7 @@ update msg ( { chatStatus } as model ) =
             -- If ws is open after user lands on the chat page,
             -- Send the join msg.
             , case model.route of
-                Chat chatIdStr -> sendWsMsgPort <| Chat.mkJoinMsg <| tag chatIdStr
+                Chat chatIdStr -> port_SendWsMsg <| Chat.mkJoinMsg <| tag chatIdStr
                 _ -> Cmd.none
             )
 

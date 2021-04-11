@@ -11,6 +11,8 @@ module Lib
     ( startApp
     , app
     ) where
+
+import           Chat
     
 import qualified Servant
 import           Servant ( (:>), (:<|>)(..), Capture, Get, NoContent(..), Put, ReqBody )
@@ -61,51 +63,16 @@ instance FromJSON LetterMeta
 instance ToJSON LetterMeta
 
 
-data Msg = Msg
-  { msgType :: String
-  , msgBody :: String
-  }
-  deriving ( Generic, Show )
-instance FromJSON Msg
-instance ToJSON Msg
-
-
-data ChatUser = ChatUser
-  { userId :: Int
-  , name   :: String
-  , userConn   :: WebSock.Connection
-  }
-
-
-data Chat = Chat
-  { msgs :: [ Msg ]
-  , maxJoinCount :: Int
-  }
-  deriving ( Generic, Show )
-instance FromJSON Chat
-instance ToJSON Chat
-
-
-data ChatMeta = ChatMeta
-  { chat :: Chat
-  , joinCount :: Int
-  }
-  deriving ( Generic, Show )
-instance FromJSON ChatMeta
-instance ToJSON ChatMeta
-
-
 data AppState = AppState
   { letterMetas :: TVar ( Map String LetterMeta )
-  , chatUsers :: TVar [ ChatUser ]
-  , chatMetas :: TVar ( Map String ChatMeta )
+  , chats :: TVar ( Map ChatId Chat )
   }
 
 
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
       :<|> "new-chat"     :> Get '[ Servant.JSON ] String
-      :<|> "chat"         :> WebSocket
+      :<|> "chat"         :> Capture "chatId" String :> WebSocket
 
 
 readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
@@ -166,81 +133,108 @@ newChat = do
 
   appState <- ask
 
-  chatId <- liftIO $ do
+  newChatIdStr <- liftIO $ do
     
-    oldChatMetas <- atomically $ readTVar ( appState & chatMetas )
+    oldChats <- atomically $ readTVar ( appState & chats )
 
-    chatId <- getRandomHash
+    newChatIdStr <- getRandomHash
 
-    -- Create and insert new ChatMeta into AppState.
-    let newChat = Chat { msgs = [], maxJoinCount = 2 }
-        newChatMeta = ChatMeta { chat = newChat, joinCount = 0 }
-        newChatMetas = Map.insert chatId newChatMeta oldChatMetas
-    atomically $ writeTVar ( appState & chatMetas ) newChatMetas
+    -- Create and insert new Chat into AppState.
 
-    return chatId
+    let newChatId = ChatId newChatIdStr
+    
+    let newChat = Chat {
+          users = []
+        , msgs = []
+        , joinCount = 0
+        , maxJoinCount = 2
+        }
 
-  return chatId
+    let newChats = Map.insert newChatId newChat oldChats
+
+    atomically $ writeTVar ( appState & chats ) newChats
+
+    return newChatIdStr
+
+  return newChatIdStr
 
 
-chatHandler :: WebSock.Connection -> ReaderT AppState Servant.Handler ()
-chatHandler conn = do
+chatHandler :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
+chatHandler chatIdStr conn = do
 
   appState <- ask
 
-  initOldChatUsers <- liftIO $ atomically $ readTVar ( appState & chatUsers )
- 
-  let
-    
-    newUserId = length initOldChatUsers
+  let thisChatId = ChatId chatIdStr
 
-    newChatUser = ChatUser {
-      userId = newUserId
-    , name   = "User" ++ show newUserId
-    , userConn   = conn
-    }
+  let getChats = atomically $ readTVar ( appState & chats )
 
-    removeUser :: IO ()
-    removeUser = liftIO $ do
-      oldChatUsers <- atomically $ readTVar ( appState & chatUsers )
-      let newChatUsers = filter
-            ( \chatUser ->
-              ( chatUser & userId ) /= ( newChatUser & userId )
-            )
-            oldChatUsers
-      atomically $ writeTVar ( appState & chatUsers ) newChatUsers
+  oldChats <- liftIO getChats  
 
-    loop :: IO ()
-    loop = forever $ liftIO $ do
-        -- Check for incoming message.
-        dataMsg <- WebSock.receiveDataMessage conn
-        case dataMsg of
-          WebSock.Text byteStr _ -> do
-            let maybeMsg :: Maybe Msg
-                maybeMsg = Aeson.decode byteStr
-            case maybeMsg of
-              Nothing -> putStrLn "Message can't be JSON-decoded."
-              Just msg -> do
-                let msgType = msg ^. #msgType
-                    msgBody = msg ^. #msgBody
-                -- Debug print msg.
-                putStrLn $ show msg
-                -- Handle join.
-                if msgType == "join" then do
-                  oldChatUsers <- atomically $ readTVar ( appState & chatUsers )
-                  let newChatUsers = newChatUser : oldChatUsers
-                  atomically $ writeTVar ( appState & chatUsers ) newChatUsers
-                else
-                  return ()
-                -- Broadcast the msg.
-                chatUsers <- atomically $ readTVar ( appState & chatUsers )
-                forM_ chatUsers $
-                  ( \chatUser -> WebSock.sendTextData ( chatUser & userConn ) $ Aeson.encode msg )
+  let maybeOldChat = Map.lookup thisChatId oldChats
+  case maybeOldChat of
 
-          _ -> liftIO $ putStrLn "Data Message is in binary form."
+    Nothing -> liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
 
-  liftIO $ WebSock.withPingThread conn 30 ( return () ) $
-    flip finally removeUser loop
+    Just oldChat -> do
+
+      let
+        newUserId = UserId { chatId = thisChatId, index = length $ oldChat & users }
+
+        newChatUser = ChatUser {
+          userId = newUserId
+        , name   = "User" ++ show newUserId
+        , userConn = conn
+        }
+
+        removeUser :: IO ()
+        removeUser = liftIO $ do
+          oldChats <- getChats
+          let
+            removeUserFromChat =
+              \chat -> chat { users = filter
+                ( \chatUser ->
+                  ( chatUser & userId ) /= ( newChatUser & userId )
+                )
+                ( chat & users )
+              }
+            newChats = Map.adjust removeUserFromChat thisChatId oldChats
+          atomically $ writeTVar ( appState & chats ) newChats
+
+        loop :: IO ()
+        loop = forever $ liftIO $ do
+            -- Check for incoming message.
+            dataMsg <- WebSock.receiveDataMessage conn
+            case dataMsg of
+              WebSock.Text byteStr _ -> do
+                let maybeMsg :: Maybe Msg
+                    maybeMsg = Aeson.decode byteStr
+                case maybeMsg of
+                  Nothing -> putStrLn "Message can't be JSON-decoded."
+                  Just msg -> do
+                    let msgType = msg ^. #msgType
+                        msgBody = msg ^. #msgBody
+                    -- Debug print msg.
+                    putStrLn $ show msg
+                    -- Handle join.
+                    if msgType == "join" then do
+                      oldChats <- getChats
+                      let newChats =
+                            Map.adjust
+                              ( \chat -> chat { users = newChatUser : ( chat & users ) } )
+                              thisChatId
+                              oldChats
+                      atomically $ writeTVar ( appState & chats ) newChats
+                    else
+                      return ()
+                    -- Broadcast the msg.
+                    chats <- atomically $ readTVar ( appState & chats )
+                    forM_ ( oldChat & users ) $
+                      ( \chatUser -> WebSock.sendTextData ( chatUser & userConn ) $ Aeson.encode msg )
+
+              _ -> liftIO $ putStrLn "Data Message is in binary form."
+
+      liftIO $ WebSock.withPingThread conn 30 ( return () ) $
+        flip finally removeUser $ loop
 
     --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
     --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
@@ -297,12 +291,10 @@ app appState =
 startApp :: IO ()
 startApp = do
   initLetterMetas <- atomically $ newTVar Map.empty
-  initChatUsers   <- atomically $ newTVar []
-  initChatMetas   <- atomically $ newTVar Map.empty
+  initChats       <- atomically $ newTVar Map.empty
   let initAppState = AppState {
-      letterMetas = initLetterMetas
-    , chatUsers   = initChatUsers 
-    , chatMetas   = initChatMetas
+      letterMetas  = initLetterMetas
+    , chats        = initChats
     }
 
   Warp.run 8080 $ app initAppState

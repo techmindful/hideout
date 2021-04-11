@@ -14,21 +14,29 @@
         node: document.getElementById("elm-app")
       })
 
-      var socket = new WebSocket( "ws://localhost:8080/chat" );
-      elmApp.ports.sendWsMsgPort.subscribe( function( message )
-          {
-            socket.send( message );
-          } );
-      socket.addEventListener( "open",
-        function( event )
+      elmApp.ports.port_InitWs.subscribe( function( chatId )
         {
-          elmApp.ports.wsReadyPort.send( "wsReady" );
-        }
-      );
-      socket.addEventListener( "message",
-        function( event )
-        {
-          elmApp.ports.recvWsMsgPort.send( event.data );
+          var socket = new WebSocket( "ws://localhost:8080/chat/" + chatId );
+
+          socket.addEventListener( "open",
+            function( event )
+            {
+              elmApp.ports.port_WsReady.send( "wsReady" );
+            }
+          );
+
+          elmApp.ports.port_SendWsMsg.subscribe( function( msg )
+              {
+                socket.send( msg );
+              }
+          );
+
+          socket.addEventListener( "message",
+            function( event )
+            {
+              elmApp.ports.port_RecvWsMsg.send( event.data );
+            }
+          );
         }
       );
 
