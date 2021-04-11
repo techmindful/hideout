@@ -5,7 +5,6 @@ module Chat exposing
     , MessageBody
     , mkJoinMsg
     , mkMessageMsg
-    , msgView
     )
 
 import Element
@@ -46,9 +45,4 @@ mkChatMsg msgType msgBody =
         [ ( "msgType", JEnc.string msgType )
         , ( "msgBody", JEnc.string msgBody )
         ]
-
-
-msgView : Message -> Element m
-msgView msg =
-    plainPara <| untag msg.body
 

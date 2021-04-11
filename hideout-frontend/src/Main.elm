@@ -10,7 +10,6 @@ import Chat exposing
     , MessageBody
     , mkJoinMsg
     , mkMessageMsg
-    , msgView
     )
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)

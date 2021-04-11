@@ -7,7 +7,6 @@ import Chat exposing
     , MessageBody
     , mkJoinMsg
     , mkMessageMsg
-    , msgView
     )
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)
@@ -37,8 +36,9 @@ view model =
             [ Element.column
                 [ Element.width Element.fill
                 , Element.height Element.fill
+                , Element.spacingXY 0 30
                 ] <|
-                List.map Chat.msgView <| List.reverse model.chatStatus.msgs
+                List.map msgView <| List.reverse model.chatStatus.msgs
 
             , Input.multiline
                 [ Background.color bgColor
@@ -70,3 +70,16 @@ view model =
             ]
         ]
 
+msgView : Message -> Element m
+msgView msg =
+    Element.textColumn
+        [ Element.width Element.fill
+        , Element.spacingXY 0 10
+        ]
+        [ Element.paragraph
+            [ Font.bold ]
+            [ Element.text  "UserX" ]
+        , Element.paragraph
+            []
+            [ Element.text <| untag msg.body ]
+        ]
