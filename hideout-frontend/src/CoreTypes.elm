@@ -15,6 +15,7 @@ type alias Model =
     { route : Route
     , viewport : Result Dom.Error Dom.Viewport
     , navKey : Nav.Key
+    , isWsReady : Bool
     , userStatus : UserStatus
     , letterInput : String
     , chatStatus : ChatStatus
@@ -34,6 +35,6 @@ type Msg
     | GotNewChatResp ( Result Http.Error String )
     | MessageInput String
     | MessageSend
-    | MessageRecv String
+    | OnWsMsg String
     | GotMessageSendResp ( Result Http.Error () )
     | Nop

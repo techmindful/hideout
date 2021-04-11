@@ -19,15 +19,25 @@
           {
             socket.send( message );
           } );
-      socket.addEventListener( "message", function( event )
+      socket.addEventListener( "open",
+        function( event )
+        {
+          elmApp.ports.messageReceiver.send( "wsReady" );
+        }
+      );
+      socket.addEventListener( "message",
+        function( event )
         {
           elmApp.ports.messageReceiver.send( event.data );
-        } );
+        }
+      );
 
-      window.addEventListener( "beforeunload", function( event )
+      window.addEventListener( "beforeunload",
+        function( event )
         {
           socket.close();
-        } ); 
+        }
+      ); 
     </script>
 
   </body>

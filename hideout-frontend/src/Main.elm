@@ -45,7 +45,7 @@ port messageReceiver : ( String -> msg ) -> Sub msg
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver MessageRecv
+    messageReceiver OnWsMsg
 
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -59,6 +59,7 @@ init flags url navKey =
     ( { route = route
       , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
       , navKey = navKey
+      , isWsReady = False
       , userStatus = userStatus
       , letterInput = ""
       , chatStatus = { id = tag "", msgs = [], input = tag "" }
@@ -68,12 +69,6 @@ init flags url navKey =
         [ getViewportCmd
         , case userStatus of
             ReadLetterReq letterId -> getLetterReq letterId
-            _ -> Cmd.none
-
-        , case route of
-            Chat chatIdStr ->
-                sendMessage <| mkJoinMsg
-
             _ -> Cmd.none
         ]
     )
@@ -102,9 +97,14 @@ update msg ( { chatStatus } as model ) =
                     ReadLetterReq letterId -> getLetterReq letterId
                     _ -> Cmd.none
 
-                , case route of
+                , -- Send join msg if user lands on chat page,
+                  -- And ws is ready.
+                  case route of
                     Chat chatIdStr ->
-                        sendMessage <| mkJoinMsg
+                        if model.isWsReady then
+                            sendMessage <| mkJoinMsg
+                        else
+                            Cmd.none
 
                     _ -> Cmd.none
                 ]
@@ -183,14 +183,25 @@ update msg ( { chatStatus } as model ) =
             , sendMessage <| mkMessageMsg <| untag model.chatStatus.input
             )
 
-        MessageRecv str ->
-            ( { model |
-                chatStatus = { chatStatus |
-                    msgs = ( Message <| tag str ) :: chatStatus.msgs 
-                }
-              }
-            , Cmd.none
-            )
+        OnWsMsg str ->
+            case str of
+                "wsReady" ->
+                    ( { model | isWsReady = True }
+                    -- If ws is open after user lands on the chat page,
+                    -- Send the join msg.
+                    , case model.route of
+                        Chat chatId -> sendMessage <| mkJoinMsg
+                        _ -> Cmd.none
+                    )
+
+                _ ->
+                    ( { model |
+                        chatStatus = { chatStatus |
+                            msgs = ( Message <| tag str ) :: chatStatus.msgs 
+                        }
+                      }
+                    , Cmd.none
+                    )
 
         GotMessageSendResp result ->
             case result of
