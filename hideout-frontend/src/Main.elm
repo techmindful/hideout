@@ -3,7 +3,15 @@ port module Main exposing (..)
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
-import Chat exposing (..)
+import Chat exposing
+    ( ChatId
+    , ChatStatus
+    , Message
+    , MessageBody
+    , mkJoinMsg
+    , mkMessageMsg
+    , msgView
+    )
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
@@ -53,7 +61,7 @@ init flags url navKey =
       , navKey = navKey
       , userStatus = userStatus
       , letterInput = ""
-      , chatStatus = { id = tag "", input = tag "" }
+      , chatStatus = { id = tag "", msgs = [], input = tag "" }
       , tempResp = ""
       }
     , Cmd.batch
@@ -72,7 +80,7 @@ init flags url navKey =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ( { chatStatus } as model ) =
     case msg of
         UrlRequested req ->
             case req of
@@ -158,6 +166,7 @@ update msg model =
                 Ok chatId ->
                     ( { model | chatStatus =
                         { id = tag <| unquote chatId
+                        , msgs = []  -- TODO: Display messages before joining.
                         , input = tag ""
                         }
                       }
@@ -165,11 +174,7 @@ update msg model =
                     )
 
         MessageInput str ->
-            ( { model | chatStatus =
-                { id = model.chatStatus.id
-                , input = tag str
-                }
-              }
+            ( { model | chatStatus = { chatStatus | input = tag str } }
             , Cmd.none
             )
 
@@ -179,7 +184,11 @@ update msg model =
             )
 
         MessageRecv str ->
-            ( { model | tempResp = str }
+            ( { model |
+                chatStatus = { chatStatus |
+                    msgs = ( Message <| tag str ) :: chatStatus.msgs 
+                }
+              }
             , Cmd.none
             )
 
@@ -279,9 +288,9 @@ view model =
                                 [ Element.column
                                     [ Element.width Element.fill
                                     , Element.height Element.fill
-                                    ]
-                                    [ plainPara model.tempResp
-                                    ]
+                                    ] <|
+                                    List.map Chat.msgView <| List.reverse model.chatStatus.msgs
+
                                 , Input.multiline
                                     [ Background.color bgColor
                                     , Element.height <| Element.px 200
