@@ -37,19 +37,24 @@ view model =
                 [ Element.width Element.fill
                 , Element.height Element.fill
                 , Element.spacingXY 0 30
+                , Element.scrollbarY
                 ] <|
                 List.map msgView <| List.reverse model.chatStatus.msgs
 
-            , Input.multiline
-                [ Background.color bgColor
-                , Element.height <| Element.px 200
-                ]
-                { onChange = MessageInput
-                , text = untag model.chatStatus.input
-                , placeholder = Nothing
-                , label = Input.labelAbove [] Element.none
-                , spellcheck = False
-                }
+            , Element.el
+                [ Element.width <| Element.fill
+                , Element.paddingEach { top = 40, bottom = 0, left = 0, right = 0 }
+                ] <|
+                Input.multiline
+                    [ Element.height <| Element.px 200
+                    , Background.color bgColor
+                    ]
+                    { onChange = MessageInput
+                    , text = untag model.chatStatus.input
+                    , placeholder = Nothing
+                    , label = Input.labelAbove [] Element.none
+                    , spellcheck = False
+                    }
             , Element.row
                 [ Element.paddingXY 0 10 ]
                 [ Input.button
