@@ -15,20 +15,20 @@
       })
 
       var socket = new WebSocket( "ws://localhost:8080/chat" );
-      elmApp.ports.sendMessage.subscribe( function( message )
+      elmApp.ports.sendWsMsgPort.subscribe( function( message )
           {
             socket.send( message );
           } );
       socket.addEventListener( "open",
         function( event )
         {
-          elmApp.ports.messageReceiver.send( "wsReady" );
+          elmApp.ports.wsReadyPort.send( "wsReady" );
         }
       );
       socket.addEventListener( "message",
         function( event )
         {
-          elmApp.ports.messageReceiver.send( event.data );
+          elmApp.ports.recvWsMsgPort.send( event.data );
         }
       );
 

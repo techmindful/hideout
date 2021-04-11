@@ -1,6 +1,6 @@
 module UserStatus exposing (..)
 
-import Chat exposing ( ChatId, MessageBody )
+import Chat
 import Letter exposing (..)
 import Http
 

@@ -3,14 +3,7 @@ port module Main exposing (..)
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
-import Chat exposing
-    ( ChatId
-    , ChatStatus
-    , Message
-    , MessageBody
-    , mkJoinMsg
-    , mkMessageMsg
-    )
+import Chat
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
@@ -39,14 +32,17 @@ import Views.Chat
 import Views.WritingLetter
 
 
-port sendMessage : String -> Cmd msg
-port messageReceiver : ( String -> msg ) -> Sub msg
+port wsReadyPort : ( String -> msg ) -> Sub msg
+port sendWsMsgPort : String -> Cmd msg
+port recvWsMsgPort : ( String -> msg ) -> Sub msg
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver OnWsMsg
-
+    Sub.batch
+        [ wsReadyPort OnWsReady
+        , recvWsMsgPort OnWsMsg
+        ]
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
@@ -102,7 +98,7 @@ update msg ( { chatStatus } as model ) =
                   case route of
                     Chat chatIdStr ->
                         if model.isWsReady then
-                            sendMessage <| mkJoinMsg
+                            sendWsMsgPort <| Chat.mkJoinMsg
                         else
                             Cmd.none
 
@@ -180,24 +176,27 @@ update msg ( { chatStatus } as model ) =
 
         MessageSend ->
             ( model
-            , sendMessage <| mkMessageMsg <| untag model.chatStatus.input
+            , sendWsMsgPort <| Chat.mkContentMsg <| untag model.chatStatus.input
+            )
+
+        OnWsReady _ ->
+            ( { model | isWsReady = True }
+            -- If ws is open after user lands on the chat page,
+            -- Send the join msg.
+            , case model.route of
+                Chat chatId -> sendWsMsgPort <| Chat.mkJoinMsg
+                _ -> Cmd.none
             )
 
         OnWsMsg str ->
-            case str of
-                "wsReady" ->
-                    ( { model | isWsReady = True }
-                    -- If ws is open after user lands on the chat page,
-                    -- Send the join msg.
-                    , case model.route of
-                        Chat chatId -> sendMessage <| mkJoinMsg
-                        _ -> Cmd.none
-                    )
+            case JDec.decodeString Chat.msgDecoder str of
+                Err _ ->
+                    ( model, Cmd.none )  -- TODO: Handle error.
 
-                _ ->
+                Ok chatMsg ->
                     ( { model |
                         chatStatus = { chatStatus |
-                            msgs = ( Message <| tag str ) :: chatStatus.msgs 
+                            msgs = chatMsg :: chatStatus.msgs 
                         }
                       }
                     , Cmd.none

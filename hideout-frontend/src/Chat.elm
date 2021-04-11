@@ -1,16 +1,18 @@
 module Chat exposing
     ( ChatId
-    , ChatStatus
-    , Message
-    , MessageBody
+    , Status
+    , Msg
+    , MsgBody
     , mkJoinMsg
-    , mkMessageMsg
+    , mkContentMsg
+    , msgDecoder
     )
 
 import Element
 import Element exposing ( Element )
+import Json.Decode as JDec
 import Json.Encode as JEnc
-import Tagged exposing ( Tagged, untag )
+import Tagged exposing ( Tagged, tag, untag )
 import Utils.Utils exposing ( plainPara )
 
 
@@ -18,29 +20,43 @@ type ChatIdTag = ChatIdTag
 type alias ChatId = Tagged ChatIdTag String
 
 
-type MessageBodyTag = MessageBodyTag
-type alias MessageBody = Tagged MessageBodyTag String
+type MsgTypeTag = MsgTypeTag
+type alias MsgType = Tagged MsgTypeTag String
 
 
-type alias Message =
-    { body : MessageBody }
+type MsgBodyTag = MsgBodyTag
+type alias MsgBody = Tagged MsgBodyTag String
 
 
-type alias ChatStatus =
-    { id : ChatId
-    , input : MessageBody
-    , msgs : List Message
+type alias Msg =
+    { msgType : MsgType
+    , msgBody : MsgBody
     }
 
 
-mkJoinMsg = mkChatMsg "join" ""
+msgDecoder : JDec.Decoder Msg
+msgDecoder =
+    JDec.map2
+        Msg
+        ( JDec.map tag <| JDec.field "msgType" JDec.string )
+        ( JDec.map tag <| JDec.field "msgBody" JDec.string )
 
 
-mkMessageMsg = mkChatMsg "message"
+type alias Status =
+    { id : ChatId
+    , input : MsgBody
+    , msgs : List Msg
+    }
 
 
-mkChatMsg : String -> String -> String
-mkChatMsg msgType msgBody =
+mkJoinMsg = mkWsMsg "join" ""
+
+
+mkContentMsg = mkWsMsg "content"
+
+
+mkWsMsg : String -> String -> String
+mkWsMsg msgType msgBody =
     JEnc.encode 0 <| JEnc.object
         [ ( "msgType", JEnc.string msgType )
         , ( "msgBody", JEnc.string msgBody )

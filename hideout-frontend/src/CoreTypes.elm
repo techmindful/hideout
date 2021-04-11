@@ -3,7 +3,7 @@ module CoreTypes exposing (..)
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
-import Chat exposing ( ChatStatus )
+import Chat
 import Http
 import Letter exposing (..)
 import Route exposing (..)
@@ -18,7 +18,7 @@ type alias Model =
     , isWsReady : Bool
     , userStatus : UserStatus
     , letterInput : String
-    , chatStatus : ChatStatus
+    , chatStatus : Chat.Status
     , tempResp : String
     }
 
@@ -35,6 +35,7 @@ type Msg
     | GotNewChatResp ( Result Http.Error String )
     | MessageInput String
     | MessageSend
+    | OnWsReady String
     | OnWsMsg String
     | GotMessageSendResp ( Result Http.Error () )
     | Nop

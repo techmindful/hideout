@@ -1,13 +1,6 @@
 module Views.Chat exposing ( view )
 
-import Chat exposing
-    ( ChatId
-    , ChatStatus
-    , Message
-    , MessageBody
-    , mkJoinMsg
-    , mkMessageMsg
-    )
+import Chat
 import Common.Colors exposing (..)
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
@@ -75,7 +68,7 @@ view model =
             ]
         ]
 
-msgView : Message -> Element m
+msgView : Chat.Msg -> Element m
 msgView msg =
     Element.textColumn
         [ Element.width Element.fill
@@ -86,5 +79,5 @@ msgView msg =
             [ Element.text  "UserX" ]
         , Element.paragraph
             []
-            [ Element.text <| untag msg.body ]
+            [ Element.text <| untag msg.msgBody ]
         ]
