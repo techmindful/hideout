@@ -181,10 +181,12 @@ chatHandler chatIdStr conn = do
     -- Chat exists.
     Just chatTvar -> liftIO $ do
 
-      chat <- atomically $ readTVar chatTvar
+      oldChat <- atomically $ readTVar chatTvar
 
       let
-        newUserId = UserId { chatId = thisChatId, index = length $ chat & users }
+        -- FIXME: Use of list length as user ID is incorrect!
+        --        There can easily be duplicates after some users disconnect.
+        newUserId = UserId { chatId = thisChatId, index = length $ oldChat & users }
 
         newUser = ChatUser {
           userId = newUserId
@@ -226,7 +228,7 @@ chatHandler chatIdStr conn = do
 
               _ -> liftIO $ putStrLn "Data Message is in binary form."
 
-      atomically $ writeTVar chatTvar $ chat { users = newUser : ( chat & users ) }
+      atomically $ writeTVar chatTvar $ oldChat { users = newUser : ( oldChat & users ) }
       liftIO $ WebSock.withPingThread conn 30 ( return () ) $
         flip finally removeUser $ loop chatTvar
 
