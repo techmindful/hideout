@@ -70,14 +70,21 @@ view model =
 
 msgView : Chat.Msg -> Element m
 msgView msg =
-    Element.textColumn
-        [ Element.width Element.fill
-        , Element.spacingXY 0 10
-        ]
-        [ Element.paragraph
-            [ Font.bold ]
-            [ Element.text  "UserX" ]
-        , Element.paragraph
-            []
-            [ Element.text <| untag msg.msgBody ]
-        ]
+    case untag msg.msgType of
+        "join" ->
+            Element.paragraph
+                [ Font.color red ]
+                [ Element.text "New user joined." ]
+
+        _ ->
+            Element.textColumn
+                [ Element.width Element.fill
+                , Element.spacingXY 0 10
+                ]
+                [ Element.paragraph
+                    [ Font.bold ]
+                    [ Element.text  "UserX" ]
+                , Element.paragraph
+                    []
+                    [ Element.text <| untag msg.msgBody ]
+                ]
