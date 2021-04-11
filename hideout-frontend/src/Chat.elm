@@ -49,10 +49,12 @@ type alias Status =
     }
 
 
-mkJoinMsg = mkWsMsg "join" ""
+mkJoinMsg : ChatId -> String
+mkJoinMsg = mkWsMsg "join" << untag
 
 
-mkContentMsg = mkWsMsg "content"
+mkContentMsg : MsgBody -> String
+mkContentMsg = mkWsMsg "content" << untag
 
 
 mkWsMsg : String -> String -> String

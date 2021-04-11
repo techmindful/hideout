@@ -98,7 +98,7 @@ update msg ( { chatStatus } as model ) =
                   case route of
                     Chat chatIdStr ->
                         if model.isWsReady then
-                            sendWsMsgPort <| Chat.mkJoinMsg
+                            sendWsMsgPort <| Chat.mkJoinMsg <| tag chatIdStr
                         else
                             Cmd.none
 
@@ -176,7 +176,7 @@ update msg ( { chatStatus } as model ) =
 
         MessageSend ->
             ( model
-            , sendWsMsgPort <| Chat.mkContentMsg <| untag model.chatStatus.input
+            , sendWsMsgPort <| Chat.mkContentMsg <| model.chatStatus.input
             )
 
         OnWsReady _ ->
@@ -184,7 +184,7 @@ update msg ( { chatStatus } as model ) =
             -- If ws is open after user lands on the chat page,
             -- Send the join msg.
             , case model.route of
-                Chat chatId -> sendWsMsgPort <| Chat.mkJoinMsg
+                Chat chatIdStr -> sendWsMsgPort <| Chat.mkJoinMsg <| tag chatIdStr
                 _ -> Cmd.none
             )
 
