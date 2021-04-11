@@ -65,7 +65,7 @@ instance ToJSON LetterMeta
 
 data AppState = AppState
   { letterMetas :: TVar ( Map String LetterMeta )
-  , chats :: TVar ( Map ChatId Chat )
+  , chats :: TVar ( Map ChatId ( TVar Chat ) )
   }
 
 
@@ -150,7 +150,9 @@ newChat = do
         , maxJoinCount = 2
         }
 
-    let newChats = Map.insert newChatId newChat oldChats
+    newChatTvar <- atomically $ newTVar newChat
+
+    let newChats = Map.insert newChatId newChatTvar oldChats
 
     atomically $ writeTVar ( appState & chats ) newChats
 
@@ -164,44 +166,46 @@ chatHandler chatIdStr conn = do
 
   appState <- ask
 
-  let thisChatId = ChatId chatIdStr
-
   let getChats = atomically $ readTVar ( appState & chats )
 
-  oldChats <- liftIO getChats  
+  let thisChatId = ChatId chatIdStr
 
-  let maybeOldChat = Map.lookup thisChatId oldChats
-  case maybeOldChat of
+  -- Chats without this user.
+  chatsBeforeJoin <- liftIO getChats
+ 
+  let maybeChatTvar = Map.lookup thisChatId chatsBeforeJoin
+  case maybeChatTvar of
 
     Nothing -> liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
 
-    Just oldChat -> do
+    -- Chat exists.
+    Just chatTvar -> liftIO $ do
+
+      chat <- atomically $ readTVar chatTvar
 
       let
-        newUserId = UserId { chatId = thisChatId, index = length $ oldChat & users }
+        newUserId = UserId { chatId = thisChatId, index = length $ chat & users }
 
-        newChatUser = ChatUser {
+        newUser = ChatUser {
           userId = newUserId
         , name   = "User" ++ show newUserId
         , userConn = conn
         }
-
+        
         removeUser :: IO ()
         removeUser = liftIO $ do
-          oldChats <- getChats
-          let
-            removeUserFromChat =
-              \chat -> chat { users = filter
-                ( \chatUser ->
-                  ( chatUser & userId ) /= ( newChatUser & userId )
+          oldChat <- atomically $ readTVar chatTvar
+          let 
+            newChat = oldChat { users = filter
+                ( \user ->
+                  ( user & userId ) /= ( newUser & userId )
                 )
-                ( chat & users )
-              }
-            newChats = Map.adjust removeUserFromChat thisChatId oldChats
-          atomically $ writeTVar ( appState & chats ) newChats
+                ( oldChat & users )
+            }
+          atomically $ writeTVar chatTvar newChat
 
-        loop :: IO ()
-        loop = forever $ liftIO $ do
+        loop :: TVar Chat -> IO ()
+        loop chatTvar = forever $ liftIO $ do
             -- Check for incoming message.
             dataMsg <- WebSock.receiveDataMessage conn
             case dataMsg of
@@ -215,41 +219,16 @@ chatHandler chatIdStr conn = do
                         msgBody = msg ^. #msgBody
                     -- Debug print msg.
                     putStrLn $ show msg
-                    -- Handle join.
-                    if msgType == "join" then do
-                      oldChats <- getChats
-                      let newChats =
-                            Map.adjust
-                              ( \chat -> chat { users = newChatUser : ( chat & users ) } )
-                              thisChatId
-                              oldChats
-                      atomically $ writeTVar ( appState & chats ) newChats
-                    else
-                      return ()
                     -- Broadcast the msg.
-                    chats <- atomically $ readTVar ( appState & chats )
-                    forM_ ( oldChat & users ) $
-                      ( \chatUser -> WebSock.sendTextData ( chatUser & userConn ) $ Aeson.encode msg )
+                    chat <- atomically $ readTVar chatTvar
+                    forM_ ( chat & users ) $
+                      ( \user -> WebSock.sendTextData ( user & userConn ) $ Aeson.encode msg )
 
               _ -> liftIO $ putStrLn "Data Message is in binary form."
 
+      atomically $ writeTVar chatTvar $ chat { users = newUser : ( chat & users ) }
       liftIO $ WebSock.withPingThread conn 30 ( return () ) $
-        flip finally removeUser $ loop
-
-    --oldChatMetas <- liftIO $ atomically $ readTVar ( appState & chatMetas )
-    --let maybeOldChatMeta = Map.lookup chatId oldChatMetas
-    --case maybeOldChatMeta of
-    --  Nothing -> do
-    --    liftIO $ print "404"
-    --    Servant.throwError Servant.err404
-    --  Just oldChatMeta -> do
-    --    let newChatMeta = oldChatMeta & #chat . #messages %~ ( ( : ) message )
-    --        newChatMetas = Map.insert chatId newChatMeta oldChatMetas
-    --    liftIO $ atomically $ writeTVar ( appState & chatMetas ) newChatMetas
-
-    --    liftIO $ putStrLn $ show newChatMetas
-
-    --return ()
+        flip finally removeUser $ loop chatTvar
 
 
 getRandomHash :: IO String
