@@ -177,7 +177,7 @@ chatHandler chatIdStr conn = do
       liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
     -- Chat exists: Handle join, enter loop.
     Just chat -> liftIO $ do
-      let newUserId = UserId { chatId = thisChatId, index = length $ chat & users }
+      let newUserId = UserId { chatId = thisChatId, index = chat & joinCount }
 
       let newUser = ChatUser {
             userId = newUserId
@@ -185,7 +185,9 @@ chatHandler chatIdStr conn = do
           , userConn = conn
           }
 
-      let newChat  = chat { users = newUser : ( chat & users ) }
+      let newChat  = chat { users = newUser : ( chat & users )
+                          , joinCount = ( chat & joinCount ) + 1
+                          }
           newChats = Map.insert thisChatId newChat chatsBeforeJoin
          
       let removeUser :: IO ()
