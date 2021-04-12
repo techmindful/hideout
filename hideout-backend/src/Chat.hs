@@ -45,5 +45,5 @@ data Chat = Chat
   , msgs :: [ Msg ]
   , maxJoinCount :: Int
   , joinCount :: Int
-  }
+  } deriving ( Generic )
 
