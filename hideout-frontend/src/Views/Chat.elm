@@ -12,6 +12,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Tagged exposing ( tag, untag )
+import Utils.Markdown
 import Utils.Utils as Utils exposing (..)
 
 
@@ -84,7 +85,5 @@ msgView msg =
                 [ Element.paragraph
                     [ Font.bold ]
                     [ Element.text  "UserX" ]
-                , Element.paragraph
-                    []
-                    [ Element.text <| untag msg.msgBody ]
+                , Utils.Markdown.render <| untag msg.msgBody
                 ]
