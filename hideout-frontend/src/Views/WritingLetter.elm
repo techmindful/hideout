@@ -19,13 +19,13 @@ import Http
 import Json.Encode
 import Json.Decode as JDec
 import Letter exposing (..)
-import Markdown
 import Route exposing (..)
 import String.Extra exposing (unquote)
 import Task
 import Url exposing (Url)
 import Url.Parser
 import UserStatus exposing (..)
+import Utils.Markdown
 import Utils.Utils as Utils exposing (..)
 
 
@@ -64,7 +64,9 @@ view model =
             <|
                 Element.html <|
                     Html.div [] <|
-                        Markdown.toHtml Nothing model.letterInput
+                        case Utils.Markdown.render model.letterInput of
+                            Err str -> [ Html.text str ]
+                            Ok views -> views
     in
     Element.column
         [ Element.width Element.fill ]

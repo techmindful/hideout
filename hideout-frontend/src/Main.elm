@@ -19,7 +19,6 @@ import Http
 import Json.Encode as JEnc
 import Json.Decode as JDec
 import Letter exposing (..)
-import Markdown
 import Route exposing (..)
 import String.Extra exposing (unquote)
 import Tagged exposing ( tag, untag )
