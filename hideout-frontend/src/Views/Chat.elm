@@ -75,7 +75,7 @@ msgView msg =
         "join" ->
             Element.paragraph
                 [ Font.color red ]
-                [ Element.text "New user joined." ]
+                [ Element.text <| msg.username ++ " joined." ]
 
         _ ->
             Element.textColumn
@@ -84,6 +84,6 @@ msgView msg =
                 ]
                 [ Element.paragraph
                     [ Font.bold ]
-                    [ Element.text  "UserX" ]
+                    [ Element.text msg.username ]
                 , Utils.Markdown.render <| untag msg.msgFromClient.msgBody
                 ]
