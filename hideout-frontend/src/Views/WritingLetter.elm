@@ -57,16 +57,14 @@ view model =
                 }
 
         preview =
-            Element.el
+            Element.column
                 [ Element.width Element.fill
+                , Element.spacing 30
                 , Element.alignTop
-                ]
-            <|
-                Element.html <|
-                    Html.div [] <|
-                        case Utils.Markdown.render model.letterInput of
-                            Err str -> [ Html.text str ]
-                            Ok views -> views
+                ] <|
+                case Utils.Markdown.render model.letterInput of
+                    Err str -> [ plainPara str ]
+                    Ok views -> views
     in
     Element.column
         [ Element.width Element.fill ]
