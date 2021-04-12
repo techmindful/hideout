@@ -60,13 +60,9 @@ view model =
             Element.el
                 [ Element.width Element.fill
                 , Element.alignTop
-                ]
-            <|
-                Element.html <|
-                    Html.div [] <|
-                        case Utils.Markdown.render model.letterInput of
-                            Err str -> [ Html.text str ]
-                            Ok views -> views
+                ] <|
+                Utils.Markdown.render model.letterInput
+
     in
     Element.column
         [ Element.width Element.fill ]

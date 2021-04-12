@@ -26,6 +26,7 @@ import Task
 import Url exposing (Url)
 import Url.Parser
 import UserStatus exposing (..)
+import Utils.Markdown
 import Utils.Utils as Utils exposing (..)
 import Views.Chat
 import Views.WritingLetter
@@ -275,7 +276,7 @@ view model =
                                             plainPara <| Debug.toString err
 
                                         Ok letterMeta ->
-                                            plainPara letterMeta.letter.body
+                                            Utils.Markdown.render letterMeta.letter.body
 
                                 _ -> plainPara "Error: Unaddressed UserStatus case!"
                             ]
