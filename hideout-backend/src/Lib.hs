@@ -144,7 +144,7 @@ newChat = do
     let newChatId = ChatId newChatIdStr
     
     let newChat = Chat {
-          users = []
+          users = Map.empty
         , msgs = []
         , joinCount = 0
         , maxJoinCount = 2
@@ -181,15 +181,14 @@ chatHandler chatIdStr conn = do
       if chat ^. #joinCount == chat ^. #maxJoinCount then
         putStrLn "Maximum join count is reached."  -- TODO: Report to client.
       else do
-        let newUserId = UserId { chatId = thisChatId, index = chat & joinCount }
+        let newUserId = chat ^. #joinCount
 
-        let newUser = ChatUser {
-              userId = newUserId
-            , name   = "User" ++ show newUserId
+        let newUser = User {
+              name = "User" ++ show newUserId
             , userConn = conn
             }
 
-        let newChat  = chat { users = newUser : ( chat & users )
+        let newChat  = chat { users = Map.insert newUserId newUser $ chat ^. #users
                             , joinCount = ( chat & joinCount ) + 1
                             }
             newChats = Map.insert thisChatId newChat chatsBeforeJoin
@@ -203,12 +202,7 @@ chatHandler chatIdStr conn = do
                 -- So no need to remove?
                 Nothing -> return ()
                 Just chat -> do
-                  let newChat = chat { users = filter
-                        ( \user ->
-                          ( user & userId ) /= ( newUser & userId )
-                        )
-                        ( chat & users )
-                      }
+                  let newChat  = chat & #users %~ Map.delete newUserId
                       newChats = Map.insert thisChatId newChat chats
                   atomically $ writeTVar ( appState ^. #chats ) newChats
 
@@ -227,18 +221,26 @@ chatHandler chatIdStr conn = do
                 Just chat -> do
                   case dataMsg of
                     WebSock.Text byteStr _ -> do
-                      let maybeMsg :: Maybe Msg
-                          maybeMsg = Aeson.decode byteStr
-                      case maybeMsg of
+                      let maybeMsgFromClient :: Maybe MsgFromClient
+                          maybeMsgFromClient = Aeson.decode byteStr
+                      case maybeMsgFromClient of
                         Nothing -> putStrLn "Message can't be JSON-decoded."
-                        Just msg -> do
-                          let msgType = msg ^. #msgType
-                              msgBody = msg ^. #msgBody
+                        Just msgFromClient -> do
+                          let msgType = msgFromClient ^. #msgType
+                              msgBody = msgFromClient ^. #msgBody
                           -- Debug print msg.
-                          putStrLn $ show msg
+                          putStrLn $ "Received msg from client: " ++ show msgFromClient
                           -- Broadcast the msg.
-                          forM_ ( chat & users ) $
-                            ( \user -> WebSock.sendTextData ( user & userConn ) $ Aeson.encode msg )
+                          let msgFromServer = MsgFromServer {
+                              msgFromClient = msgFromClient
+                            , username = newUser & name
+                          }
+                          forM_ ( Map.elems $ chat ^. #users ) $
+                            ( \user ->
+                                WebSock.sendTextData
+                                  ( user & userConn )
+                                  ( Aeson.encode msgFromServer )
+                            )
 
                     _ -> liftIO $ putStrLn "Data Message is in binary form."
 

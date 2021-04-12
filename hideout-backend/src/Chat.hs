@@ -7,16 +7,25 @@ import qualified Network.WebSockets as WebSock
 
 import           Data.Aeson ( FromJSON, ToJSON )
 
+import           Data.Map.Strict ( Map )
 import           GHC.Generics ( Generic )
 
 
-data Msg = Msg
+data MsgFromClient = MsgFromClient
   { msgType :: String
   , msgBody :: String
   }
   deriving ( Generic, Show )
-instance FromJSON Msg
-instance ToJSON   Msg
+instance FromJSON MsgFromClient
+instance ToJSON   MsgFromClient
+
+
+data MsgFromServer = MsgFromServer
+  { msgFromClient :: MsgFromClient
+  , username :: String
+  } deriving ( Generic, Show )
+instance FromJSON MsgFromServer
+instance ToJSON   MsgFromServer
 
 
 newtype ChatId = ChatId { unChatId :: String }
@@ -25,24 +34,15 @@ instance FromJSON ChatId
 instance ToJSON   ChatId
 
 
-data UserId = UserId
-  { chatId :: ChatId
-  , index  :: Int
-  } deriving ( Eq, Generic, Ord, Show )
-instance FromJSON UserId
-instance ToJSON   UserId
-
-
-data ChatUser = ChatUser
-  { userId :: UserId
-  , name   :: String
-  , userConn   :: WebSock.Connection
+data User = User
+  { name :: String
+  , userConn :: WebSock.Connection
   }
 
 
 data Chat = Chat
-  { users :: [ ChatUser ]
-  , msgs :: [ Msg ]
+  { users :: Map Int User
+  , msgs :: [ MsgFromClient ]
   , maxJoinCount :: Int
   , joinCount :: Int
   } deriving ( Generic )
