@@ -188,14 +188,14 @@ update msg ( { chatStatus } as model ) =
             )
 
         OnWsMsg str ->
-            case JDec.decodeString Chat.msgDecoder str of
+            case JDec.decodeString Chat.msgFromServerDecoder str of
                 Err _ ->
                     ( model, Cmd.none )  -- TODO: Handle error.
 
-                Ok chatMsg ->
+                Ok msgFromServer ->
                     ( { model |
                         chatStatus = { chatStatus |
-                            msgs = chatMsg :: chatStatus.msgs 
+                            msgs = msgFromServer :: chatStatus.msgs 
                         }
                       }
                     , Cmd.none

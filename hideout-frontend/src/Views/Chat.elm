@@ -69,9 +69,9 @@ view model =
             ]
         ]
 
-msgView : Chat.Msg -> Element m
+msgView : Chat.MsgFromServer -> Element m
 msgView msg =
-    case untag msg.msgType of
+    case untag msg.msgFromClient.msgType of
         "join" ->
             Element.paragraph
                 [ Font.color red ]
@@ -85,5 +85,5 @@ msgView msg =
                 [ Element.paragraph
                     [ Font.bold ]
                     [ Element.text  "UserX" ]
-                , Utils.Markdown.render <| untag msg.msgBody
+                , Utils.Markdown.render <| untag msg.msgFromClient.msgBody
                 ]

@@ -1,11 +1,11 @@
 module Chat exposing
     ( ChatId
     , Status
-    , Msg
+    , MsgFromServer
     , MsgBody
     , mkJoinMsg
     , mkContentMsg
-    , msgDecoder
+    , msgFromServerDecoder
     )
 
 import Element
@@ -28,24 +28,38 @@ type MsgBodyTag = MsgBodyTag
 type alias MsgBody = Tagged MsgBodyTag String
 
 
-type alias Msg =
+type alias MsgFromClient =
     { msgType : MsgType
     , msgBody : MsgBody
     }
 
 
-msgDecoder : JDec.Decoder Msg
-msgDecoder =
+type alias MsgFromServer =
+    { msgFromClient : MsgFromClient
+    , username : String
+    }
+
+
+msgFromClientDecoder : JDec.Decoder MsgFromClient
+msgFromClientDecoder =
     JDec.map2
-        Msg
+        MsgFromClient
         ( JDec.map tag <| JDec.field "msgType" JDec.string )
         ( JDec.map tag <| JDec.field "msgBody" JDec.string )
+
+
+msgFromServerDecoder : JDec.Decoder MsgFromServer
+msgFromServerDecoder =
+    JDec.map2
+        MsgFromServer
+        ( JDec.field "msgFromClient" msgFromClientDecoder )
+        ( JDec.field "username" JDec.string )
 
 
 type alias Status =
     { id : ChatId
     , input : MsgBody
-    , msgs : List Msg
+    , msgs : List MsgFromServer
     }
 
 
