@@ -136,22 +136,25 @@ update msg ( { chatStatus } as model ) =
             )
 
         LetterSend ->
-            ( { model | userStatus = SentLetter }
-            , Http.request
-                { method = "PUT"
-                , headers = []
-                , url = backendWriteLetterUrl
-                , body =
-                    Http.jsonBody <|
-                        JEnc.object
-                            [ ( "body", JEnc.string model.letterInput )
-                            , ( "maxReadCount", JEnc.int 1 )
-                            ]
-                , expect = Http.expectString GotLetterSendResp
-                , timeout = Nothing
-                , tracker = Nothing
-                }
-            )
+            case model.letterMaxReadCountInput of
+                Bad _ -> ( model, Cmd.none )
+                Good maxReadCount ->
+                    ( { model | userStatus = SentLetter }
+                    , Http.request
+                        { method = "PUT"
+                        , headers = []
+                        , url = backendWriteLetterUrl
+                        , body =
+                            Http.jsonBody <|
+                                JEnc.object
+                                    [ ( "body", JEnc.string model.letterInput )
+                                    , ( "maxReadCount", JEnc.int maxReadCount )
+                                    ]
+                        , expect = Http.expectString GotLetterSendResp
+                        , timeout = Nothing
+                        , tracker = Nothing
+                        }
+                    )
 
         GotLetterSendResp result ->
             case result of
