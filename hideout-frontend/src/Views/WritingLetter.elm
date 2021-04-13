@@ -67,8 +67,38 @@ view model =
     Element.column
         [ Element.width Element.fill ]
         [ instruction
+        , Element.column
+            [ Element.width Element.fill
+            , Element.spacingXY 0 20
+            ]
+            [ Element.row
+                [ Element.spacingXY 10 0 ]
+                [ Element.el
+                    [ Element.centerY ] <|
+                    Element.text "This letter can be read " 
+                , Input.text
+                    [ Element.width <| Element.px 100
+                    , Element.height <| Element.maximum 40 Element.fill
+                    , Background.color bgColor
+                    ]
+                    { onChange = LetterMaxReadCountInput
+                    , text = Letter.maxReadCountInputToStr model.letterMaxReadCountInput
+                    , placeholder = Nothing
+                    , label = Input.labelAbove [] Element.none
+                    }
+                , Element.text " times."
+                ]
+            , case model.letterMaxReadCountInput of
+                Good _ -> Element.none
+                Bad  _ -> Element.el
+                    [ Font.color red ] <|
+                    Element.text "Please input a positive integer."
+            ]
+
         , Element.row
-            [ Element.width Element.fill ]
+            [ Element.width Element.fill
+            , Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+            ]
             [ case model.userStatus of
                 WritingLetter ->
                     letterInputBox

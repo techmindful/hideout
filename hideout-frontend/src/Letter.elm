@@ -15,6 +15,18 @@ type alias LetterMeta =
     }
 
 
+type MaxReadCountInput
+    = Good Int
+    | Bad  String
+
+
+maxReadCountInputToStr : MaxReadCountInput -> String
+maxReadCountInputToStr input =
+    case input of
+        Good n  -> String.fromInt n
+        Bad str -> str
+
+
 letterJsonDec : JDec.Decoder Letter
 letterJsonDec = JDec.map2 Letter ( field "body" string ) ( field "maxReadCount" int )
 

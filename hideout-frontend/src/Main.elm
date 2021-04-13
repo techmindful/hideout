@@ -59,6 +59,7 @@ init flags url navKey =
       , isWsReady = False
       , userStatus = userStatus
       , letterInput = ""
+      , letterMaxReadCountInput = Good 2
       , chatStatus = { id = tag "", msgs = [], input = tag "" }
       , tempResp = ""
       }
@@ -118,6 +119,21 @@ update msg ( { chatStatus } as model ) =
 
         LetterInput str ->
             ( { model | letterInput = str }, Cmd.none )
+
+        LetterMaxReadCountInput str ->
+            let
+                input =
+                    case String.toInt str of
+                        Nothing -> Bad str
+                        Just n  ->
+                            if n >= 1 then
+                                Good n
+                            else
+                                Bad str
+            in
+            ( { model | letterMaxReadCountInput = input }
+            , Cmd.none
+            )
 
         LetterSend ->
             ( { model | userStatus = SentLetter }

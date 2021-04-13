@@ -18,6 +18,7 @@ type alias Model =
     , isWsReady : Bool
     , userStatus : UserStatus
     , letterInput : String
+    , letterMaxReadCountInput : Letter.MaxReadCountInput
     , chatStatus : Chat.Status
     , tempResp : String
     }
@@ -29,6 +30,7 @@ type Msg
     | GotViewport ( Result Dom.Error Dom.Viewport )
     | GotReadLetterResp ( Result Http.Error LetterMeta )
     | LetterInput String
+    | LetterMaxReadCountInput String
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
     | NewChat
