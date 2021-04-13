@@ -5,6 +5,7 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Common.Colors exposing (..)
+import Common.Contents exposing ( posIntInputHint )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
@@ -83,15 +84,11 @@ view model =
                     { onChange = LetterMaxReadCountInput
                     , text = posIntInputToStr model.letterMaxReadCountInput
                     , placeholder = Nothing
-                    , label = Input.labelAbove [] Element.none
+                    , label = Input.labelHidden ""
                     }
                 , Element.text " times."
                 ]
-            , case model.letterMaxReadCountInput of
-                Good _ -> Element.none
-                Bad  _ -> Element.el
-                    [ Font.color red ] <|
-                    Element.text "Please input a positive integer."
+            , posIntInputHint model.letterMaxReadCountInput
             ]
 
         , Element.row

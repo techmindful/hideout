@@ -5,6 +5,7 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Chat
 import Common.Colors exposing (..)
+import Common.Contents exposing ( posIntInputHint )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
@@ -268,28 +269,32 @@ view model =
                                     { url = "/write-letter"
                                     , label = Element.text "> Write a letter."
                                     }
-                                , Element.row
-                                    []
-                                    [ Input.button
+                                , Element.column
+                                    [ Element.spacingXY 0 10 ]
+                                    [ Element.row
                                         []
-                                        { onPress = Just NewChat
-                                        , label = Element.text "> Start a chat."
-                                        }
-                                    , Element.row
-                                        []
-                                        [ Element.text " It can be joined "
-                                        , Input.text
-                                            [ Element.width <| Element.px 100
-                                            , Element.height <| Element.maximum 40 Element.fill
-                                            , Background.color bgColor
-                                            ]
-                                            { onChange = ChatMaxJoinCountInput
-                                            , text = posIntInputToStr model.chatMaxJoinCountInput
-                                            , placeholder = Nothing
-                                            , label = Input.labelHidden ""
+                                        [ Input.button
+                                            []
+                                            { onPress = Just NewChat
+                                            , label = Element.text "> Start a chat."
                                             }
-                                        , Element.text " times."
+                                        , Element.row
+                                            []
+                                            [ Element.text " It can be joined "
+                                            , Input.text
+                                                [ Element.width <| Element.px 100
+                                                , Element.height <| Element.maximum 40 Element.fill
+                                                , Background.color bgColor
+                                                ]
+                                                { onChange = ChatMaxJoinCountInput
+                                                , text = posIntInputToStr model.chatMaxJoinCountInput
+                                                , placeholder = Nothing
+                                                , label = Input.labelHidden ""
+                                                }
+                                            , Element.text " times."
+                                            ]
                                         ]
+                                    , posIntInputHint model.chatMaxJoinCountInput
                                     ]
                                 ]
                             ]
