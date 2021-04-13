@@ -158,12 +158,16 @@ update msg ( { chatStatus } as model ) =
                     ( { model | userStatus = GotLetterId letterId }, Cmd.none )
 
         NewChat ->
-            ( model
-            , Http.get
-                { url = newChatUrl
-                , expect = Http.expectString GotNewChatResp
-                }
-            )
+            case model.chatMaxJoinCountInput of
+                Bad  _ -> ( model, Cmd.none )
+                Good _ ->
+                    ( model
+                    , Http.get
+                        { url = newChatUrl
+                        , expect = Http.expectString GotNewChatResp
+                        }
+                    , Debug.todo "send the max join count"
+                    )
 
         ChatMaxJoinCountInput str ->
             ( { model | chatMaxJoinCountInput = strToPosIntInput str }
