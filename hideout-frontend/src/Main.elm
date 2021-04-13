@@ -27,6 +27,7 @@ import Url exposing (Url)
 import Url.Parser
 import UserStatus exposing (..)
 import Utils.Markdown
+import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
 import Utils.Utils as Utils exposing (..)
 import Views.Chat
 import Views.WritingLetter
@@ -61,6 +62,7 @@ init flags url navKey =
       , letterInput = ""
       , letterMaxReadCountInput = Good 2
       , chatStatus = { id = tag "", msgs = [], input = tag "" }
+      , chatMaxJoinCountInput = Good 2
       , tempResp = ""
       }
     , Cmd.batch
@@ -121,17 +123,7 @@ update msg ( { chatStatus } as model ) =
             ( { model | letterInput = str }, Cmd.none )
 
         LetterMaxReadCountInput str ->
-            let
-                input =
-                    case String.toInt str of
-                        Nothing -> Bad str
-                        Just n  ->
-                            if n >= 1 then
-                                Good n
-                            else
-                                Bad str
-            in
-            ( { model | letterMaxReadCountInput = input }
+            ( { model | letterMaxReadCountInput = strToPosIntInput str }
             , Cmd.none
             )
 
@@ -170,6 +162,11 @@ update msg ( { chatStatus } as model ) =
                 { url = newChatUrl
                 , expect = Http.expectString GotNewChatResp
                 }
+            )
+
+        ChatMaxJoinCountInput str ->
+            ( { model | chatMaxJoinCountInput = strToPosIntInput str }
+            , Cmd.none
             )
 
         GotNewChatResp result ->
@@ -271,11 +268,29 @@ view model =
                                     { url = "/write-letter"
                                     , label = Element.text "> Write a letter."
                                     }
-                                , Input.button
+                                , Element.row
                                     []
-                                    { onPress = Just NewChat
-                                    , label = Element.text "> Start a chat."
-                                    }
+                                    [ Input.button
+                                        []
+                                        { onPress = Just NewChat
+                                        , label = Element.text "> Start a chat."
+                                        }
+                                    , Element.row
+                                        []
+                                        [ Element.text " It can be joined "
+                                        , Input.text
+                                            [ Element.width <| Element.px 100
+                                            , Element.height <| Element.maximum 40 Element.fill
+                                            , Background.color bgColor
+                                            ]
+                                            { onChange = ChatMaxJoinCountInput
+                                            , text = posIntInputToStr model.chatMaxJoinCountInput
+                                            , placeholder = Nothing
+                                            , label = Input.labelHidden ""
+                                            }
+                                        , Element.text " times."
+                                        ]
+                                    ]
                                 ]
                             ]
 

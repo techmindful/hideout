@@ -9,6 +9,7 @@ import Letter exposing (..)
 import Route exposing (..)
 import Url exposing (Url)
 import UserStatus exposing (..)
+import Utils.Types exposing ( PosIntInput )
 
 
 type alias Model =
@@ -18,8 +19,9 @@ type alias Model =
     , isWsReady : Bool
     , userStatus : UserStatus
     , letterInput : String
-    , letterMaxReadCountInput : Letter.MaxReadCountInput
+    , letterMaxReadCountInput : PosIntInput
     , chatStatus : Chat.Status
+    , chatMaxJoinCountInput : PosIntInput
     , tempResp : String
     }
 
@@ -34,6 +36,7 @@ type Msg
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
     | NewChat
+    | ChatMaxJoinCountInput String
     | GotNewChatResp ( Result Http.Error String )
     | MessageInput String
     | MessageSend

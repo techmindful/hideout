@@ -26,6 +26,7 @@ import Url exposing (Url)
 import Url.Parser
 import UserStatus exposing (..)
 import Utils.Markdown
+import Utils.Types exposing ( PosIntInput(..), posIntInputToStr )
 import Utils.Utils as Utils exposing (..)
 
 
@@ -73,16 +74,14 @@ view model =
             ]
             [ Element.row
                 [ Element.spacingXY 10 0 ]
-                [ Element.el
-                    [ Element.centerY ] <|
-                    Element.text "This letter can be read " 
+                [ Element.text "This letter can be read " 
                 , Input.text
                     [ Element.width <| Element.px 100
                     , Element.height <| Element.maximum 40 Element.fill
                     , Background.color bgColor
                     ]
                     { onChange = LetterMaxReadCountInput
-                    , text = Letter.maxReadCountInputToStr model.letterMaxReadCountInput
+                    , text = posIntInputToStr model.letterMaxReadCountInput
                     , placeholder = Nothing
                     , label = Input.labelAbove [] Element.none
                     }
