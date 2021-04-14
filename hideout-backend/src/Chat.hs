@@ -36,8 +36,8 @@ instance ToJSON   ChatId
 
 data User = User
   { name :: String
-  , userConn :: WebSock.Connection
-  }
+  , conn :: WebSock.Connection
+  } deriving ( Generic )
 
 
 data Chat = Chat

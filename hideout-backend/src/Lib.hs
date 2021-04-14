@@ -203,7 +203,7 @@ chatHandler chatIdStr conn = do
 
         let user = User {
               name = "User" ++ show userId
-            , userConn = conn
+            , conn = conn
             }
 
         let newChat  = chat { users = Map.insert userId user $ chat ^. #users
@@ -249,8 +249,11 @@ chatHandler chatIdStr conn = do
  
                   -- Handle various msg types.
                   case msgType of
-                    "nameChange" ->
-                      return ()
+                    "nameChange" -> do
+                      let newUser  = user & #name .~ msgBody
+                          newChat  = chat & #users %~ Map.insert userId newUser
+                          newChats = Map.insert thisChatId newChat chats
+                      liftIO $ atomically $ writeTVar chatsTvar newChats
                     _ ->
                       return ()
 
@@ -262,7 +265,7 @@ chatHandler chatIdStr conn = do
                   liftIO $ forM_ ( Map.elems $ chat ^. #users ) $
                     ( \user ->
                         WebSock.sendTextData
-                          ( user & userConn )
+                          ( user ^. #conn )
                           ( Aeson.encode msgFromServer )
                     )
 
