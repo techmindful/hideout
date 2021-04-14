@@ -1,6 +1,7 @@
 {-# language DataKinds #-}
 {-# language DeriveGeneric #-}
 {-# language DuplicateRecordFields #-}
+{-# language FlexibleContexts #-}
 {-# language OverloadedLabels #-}
 {-# language OverloadedStrings #-}
 {-# language ScopedTypeVariables #-}
@@ -43,6 +44,7 @@ import           Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
 import           GHC.Generics ( Generic )
+import           Text.Read ( readMaybe )
 
 
 data Letter = Letter
@@ -71,7 +73,7 @@ data AppState = AppState
 
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
-      :<|> "new-chat"     :> Get '[ Servant.JSON ] String
+      :<|> "new-chat"     :> ReqBody '[ Servant.PlainText ] String :> Put '[ Servant.JSON ] String
       :<|> "chat"         :> Capture "chatId" String :> WebSocket
 
 
@@ -128,35 +130,48 @@ writeLetter letter = do
   return letterId
 
 
-newChat :: ReaderT AppState Servant.Handler String
-newChat = do
+newChat :: String -> ReaderT AppState Servant.Handler String
+newChat maxJoinCountInput = do
 
-  appState <- ask
+  case readMaybe maxJoinCountInput of
+    Just int ->
+      if int >= 1 then
+        mkNewChat int
+      else
+        Servant.throwError Servant.err400
+    _ ->
+      Servant.throwError Servant.err400
 
-  newChatIdStr <- liftIO $ do
-    
-    oldChats <- atomically $ readTVar ( appState ^. #chats )
+  where
 
-    newChatIdStr <- getRandomHash
+    mkNewChat maxJoinCount = do
 
-    -- Create and insert new Chat into AppState.
+      appState <- ask
 
-    let newChatId = ChatId newChatIdStr
-    
-    let newChat = Chat {
-          users = Map.empty
-        , msgs = []
-        , joinCount = 0
-        , maxJoinCount = 2
-        }
+      newChatIdStr <- liftIO $ do
+        
+        oldChats <- atomically $ readTVar ( appState ^. #chats )
 
-    let newChats = Map.insert newChatId newChat oldChats
+        newChatIdStr <- getRandomHash
 
-    atomically $ writeTVar ( appState ^. #chats ) newChats
+        -- Create and insert new Chat into AppState.
 
-    return newChatIdStr
+        let newChatId = ChatId newChatIdStr
+        
+        let newChat = Chat {
+              users = Map.empty
+            , msgs = []
+            , joinCount = 0
+            , maxJoinCount = maxJoinCount
+            }
 
-  return newChatIdStr
+        let newChats = Map.insert newChatId newChat oldChats
+
+        atomically $ writeTVar ( appState ^. #chats ) newChats
+
+        return newChatIdStr
+
+      return newChatIdStr
 
 
 chatHandler :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
