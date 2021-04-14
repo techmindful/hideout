@@ -196,14 +196,14 @@ chatHandler chatIdStr conn = do
       if chat ^. #joinCount == chat ^. #maxJoinCount then
         putStrLn "Maximum join count is reached."  -- TODO: Report to client.
       else do
-        let newUserId = chat ^. #joinCount
+        let userId = chat ^. #joinCount
 
-        let newUser = User {
-              name = "User" ++ show newUserId
+        let user = User {
+              name = "User" ++ show userId
             , userConn = conn
             }
 
-        let newChat  = chat { users = Map.insert newUserId newUser $ chat ^. #users
+        let newChat  = chat { users = Map.insert userId user $ chat ^. #users
                             , joinCount = ( chat & joinCount ) + 1
                             }
             newChats = Map.insert thisChatId newChat chatsBeforeJoin
@@ -217,7 +217,7 @@ chatHandler chatIdStr conn = do
                 -- So no need to remove?
                 Nothing -> return ()
                 Just chat -> do
-                  let newChat  = chat & #users %~ Map.delete newUserId
+                  let newChat  = chat & #users %~ Map.delete userId
                       newChats = Map.insert thisChatId newChat chats
                   atomically $ writeTVar ( appState ^. #chats ) newChats
 
@@ -225,6 +225,7 @@ chatHandler chatIdStr conn = do
             loop chatsTvar = liftIO $ do
               -- Check for incoming message.
               -- THIS BLOCKS THE THREAD!!!
+              -- ABSOLUTELY HAVE TO DO THIS BEFORE READING APPSTATE.
               dataMsg <- WebSock.receiveDataMessage conn
               -- First check if chat *still* exists.
               chats <- atomically $ readTVar chatsTvar
@@ -243,12 +244,21 @@ chatHandler chatIdStr conn = do
                         Just msgFromClient -> do
                           let msgType = msgFromClient ^. #msgType
                               msgBody = msgFromClient ^. #msgBody
+
+                          let maybeUser = Map.lookup userId $ chats ^. #users
                           -- Debug print msg.
                           putStrLn $ "Received msg from client: " ++ show msgFromClient
+                          -- Handle various msg types.
+                          case msgType of
+                            "nameChange" ->
+                              return ()
+                            _ ->
+
+                              return ()
                           -- Broadcast the msg.
                           let msgFromServer = MsgFromServer {
                               msgFromClient = msgFromClient
-                            , username = newUser & name
+                            , username = user & name
                           }
                           forM_ ( Map.elems $ chat ^. #users ) $
                             ( \user ->
