@@ -241,27 +241,36 @@ chatHandler chatIdStr conn = do
 
                   msgFromClient <- failWith "Message can't be JSON-decoded." $ Aeson.decode byteStr
 
+                  -- Debug print msg.
+                  liftIO $ putStrLn $ "Received msg from client: " ++ show msgFromClient
+
                   let msgType = msgFromClient ^. #msgType
                       msgBody = msgFromClient ^. #msgBody
 
-                  -- Debug print msg.
-                  liftIO $ putStrLn $ "Received msg from client: " ++ show msgFromClient
- 
-                  -- Handle various msg types.
-                  case msgType of
-                    "nameChange" -> do
-                      let newUser  = user & #name .~ msgBody
-                          newChat  = chat & #users %~ Map.insert userId newUser
-                          newChats = Map.insert thisChatId newChat chats
-                      liftIO $ atomically $ writeTVar chatsTvar newChats
-                    _ ->
-                      return ()
-
-                  -- Broadcast the msg.
                   let msgFromServer = MsgFromServer {
-                      msgFromClient = msgFromClient
-                    , username = user & name
-                  }
+                        msgFromClient = msgFromClient
+                      , username = user ^. #name
+                      }
+
+                  -- Update chat.
+                  let
+                    -- Update msgs.
+                    chat'  = chat & #msgs %~ ( ++ [ msgFromServer ] )
+
+                    -- Update based on msg type.
+                    chat'' =
+                      case msgType of
+                        "nameChange" ->
+                          let updatedUser = user & #name .~ msgBody
+                          in chat' & #users %~ Map.insert userId updatedUser
+
+                        _ -> chat'
+
+                  -- Update chats.
+                  let updatedChats = Map.insert thisChatId chat'' chats
+                  liftIO $ atomically $ writeTVar chatsTvar updatedChats
+ 
+                  -- Broadcast the msg.
                   liftIO $ forM_ ( Map.elems $ chat ^. #users ) $
                     ( \user ->
                         WebSock.sendTextData

@@ -14,8 +14,7 @@ import           GHC.Generics ( Generic )
 data MsgFromClient = MsgFromClient
   { msgType :: String
   , msgBody :: String
-  }
-  deriving ( Generic, Show )
+  } deriving ( Generic, Show )
 instance FromJSON MsgFromClient
 instance ToJSON   MsgFromClient
 
@@ -42,8 +41,15 @@ data User = User
 
 data Chat = Chat
   { users :: Map Int User
-  , msgs :: [ MsgFromClient ]
+  , msgs :: [ MsgFromServer ]
   , maxJoinCount :: Int
   , joinCount :: Int
   } deriving ( Generic )
+
+
+data MsgHistory = MsgHistory
+  { msgs  :: [ MsgFromServer ]
+  , users :: [ String ]
+  } deriving ( Generic )
+instance ToJSON MsgHistory 
 
