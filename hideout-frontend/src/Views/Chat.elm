@@ -87,7 +87,9 @@ view model =
                 [ Element.text "Users" ]
             -- List of users
             , Element.column
-                [] <|
+                [ Element.paddingXY 0 40 
+                , Element.spacingXY 0 20
+                ] <|
                 List.map userView model.chatStatus.users
             ]
         ]
