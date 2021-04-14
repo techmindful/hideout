@@ -81,8 +81,14 @@ view model =
             , Element.height Element.fill
             , Element.paddingXY 30 20
             , Border.widthEach { left = 2, right = 0, top = 0, bottom = 0 }
-            ]
-            [ plainPara "Users"
+            ] <|
+            [ Element.paragraph
+                [ Font.size 24 ]
+                [ Element.text "Users" ]
+            -- List of users
+            , Element.column
+                [] <|
+                List.map userView model.chatStatus.users
             ]
         ]
 
@@ -116,3 +122,8 @@ msgView msg =
                     [ Element.text msg.username ]
                 , Utils.Markdown.render <| untag msgFromClient.msgBody
                 ]
+
+
+userView : String -> Element m
+userView username =
+    plainPara username

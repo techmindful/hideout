@@ -61,6 +61,7 @@ type alias Status =
     { id : ChatId
     , input : MsgBody
     , msgs : List MsgFromServer
+    , users : List String
     }
 
 

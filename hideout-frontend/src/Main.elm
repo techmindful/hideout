@@ -20,6 +20,7 @@ import Http
 import Json.Encode as JEnc
 import Json.Decode as JDec
 import Letter exposing (..)
+import List.Extra as List
 import Route exposing (..)
 import String.Extra exposing (unquote)
 import Tagged exposing ( tag, untag )
@@ -63,7 +64,7 @@ init flags url navKey =
       , letterInput = ""
       , letterMaxReadCountInput = Good 2
       , chatMaxJoinCountInput = Good 2
-      , chatStatus = { id = tag "", msgs = [], input = tag "" }
+      , chatStatus = { id = tag "", msgs = [], input = tag "", users = [] }
       , newNameInput = ""
       , tempResp = ""
       }
@@ -189,6 +190,7 @@ update msg ( { chatStatus } as model ) =
                         { id = tag <| unquote chatId
                         , msgs = []  -- TODO: Display messages before joining.
                         , input = tag ""
+                        , users = []
                         }
                       }
                     , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
@@ -229,10 +231,28 @@ update msg ( { chatStatus } as model ) =
                     ( model, Cmd.none )  -- TODO: Handle error.
 
                 Ok msgFromServer ->
+                    let
+                        msgFromClient = msgFromServer.msgFromClient
+                        sender = msgFromServer.username
+                        oldUsers = model.chatStatus.users
+
+                        newUsers =
+                            if List.member sender oldUsers then
+                                case untag msgFromClient.msgType of
+                                    "nameChange" ->
+                                        List.setIf ( (==) sender )
+                                            ( untag msgFromClient.msgBody )
+                                            oldUsers
+                                    _ ->
+                                        model.chatStatus.users
+                            else
+                                oldUsers ++ [ sender ]
+                    in
                     ( { model |
-                        chatStatus = { chatStatus |
-                            msgs = msgFromServer :: chatStatus.msgs 
-                        }
+                        chatStatus =
+                            { chatStatus | msgs = msgFromServer :: chatStatus.msgs 
+                                         , users = newUsers
+                            }
                       }
                     , Cmd.none
                     )
