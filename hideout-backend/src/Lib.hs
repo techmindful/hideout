@@ -2,6 +2,7 @@
 {-# language DeriveGeneric #-}
 {-# language DuplicateRecordFields #-}
 {-# language FlexibleContexts #-}
+{-# language LambdaCase #-}
 {-# language OverloadedLabels #-}
 {-# language OverloadedStrings #-}
 {-# language ScopedTypeVariables #-}
@@ -28,9 +29,11 @@ import           Data.Aeson ( FromJSON, ToJSON )
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
 
+import           Control.Error.Util ( failWith )
 import           Control.Exception ( finally )
 import           Control.Lens ( (^.), (.~), (%~) )
 import           Control.Monad ( forever, forM_ )
+import           Control.Monad.Except ( ExceptT, runExceptT )
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import qualified Control.Monad.STM as STM
@@ -221,62 +224,65 @@ chatHandler chatIdStr conn = do
                       newChats = Map.insert thisChatId newChat chats
                   atomically $ writeTVar ( appState ^. #chats ) newChats
 
-        let loop :: TVar ( Map ChatId Chat ) -> IO ()
-            loop chatsTvar = liftIO $ do
+        let loop :: TVar ( Map ChatId Chat ) -> ExceptT String IO ()
+            loop chatsTvar = do
               -- Check for incoming message.
               -- THIS BLOCKS THE THREAD!!!
               -- ABSOLUTELY HAVE TO DO THIS BEFORE READING APPSTATE.
-              dataMsg <- WebSock.receiveDataMessage conn
-              -- First check if chat *still* exists.
-              chats <- atomically $ readTVar chatsTvar
-              let maybeChat = Map.lookup thisChatId chats
-              case maybeChat of
-                Nothing -> do
-                  putStrLn "Chat doesn't exist."  -- TODO: Report to client.
-                -- Chat exists.
-                Just chat -> do
-                  case dataMsg of
-                    WebSock.Text byteStr _ -> do
-                      let maybeMsgFromClient :: Maybe MsgFromClient
-                          maybeMsgFromClient = Aeson.decode byteStr
-                      case maybeMsgFromClient of
-                        Nothing -> putStrLn "Message can't be JSON-decoded."
-                        Just msgFromClient -> do
-                          let msgType = msgFromClient ^. #msgType
-                              msgBody = msgFromClient ^. #msgBody
+              dataMsg <- liftIO $ WebSock.receiveDataMessage conn
 
-                          let maybeUser = Map.lookup userId $ chats ^. #users
-                          -- Debug print msg.
-                          putStrLn $ "Received msg from client: " ++ show msgFromClient
-                          -- Handle various msg types.
-                          case msgType of
-                            "nameChange" ->
-                              return ()
-                            _ ->
+              chats <- liftIO $ atomically $ readTVar chatsTvar
 
-                              return ()
-                          -- Broadcast the msg.
-                          let msgFromServer = MsgFromServer {
-                              msgFromClient = msgFromClient
-                            , username = user & name
-                          }
-                          forM_ ( Map.elems $ chat ^. #users ) $
-                            ( \user ->
-                                WebSock.sendTextData
-                                  ( user & userConn )
-                                  ( Aeson.encode msgFromServer )
-                            )
+              chat  <- failWith "Chat doesn't exist."   $ Map.lookup thisChatId chats
+              user  <- failWith "User doesn't exist..?" $ Map.lookup userId $ chat ^. #users
 
-                    _ -> liftIO $ putStrLn "Data Message is in binary form."
+              case dataMsg of
+                WebSock.Text byteStr _ -> do
 
-                  loop chatsTvar
+                  msgFromClient <- failWith "Message can't be JSON-decoded." $ Aeson.decode byteStr
+
+                  let msgType = msgFromClient ^. #msgType
+                      msgBody = msgFromClient ^. #msgBody
+
+                  -- Debug print msg.
+                  liftIO $ putStrLn $ "Received msg from client: " ++ show msgFromClient
+ 
+                  -- Handle various msg types.
+                  case msgType of
+                    "nameChange" ->
+                      return ()
+                    _ ->
+                      return ()
+
+                  -- Broadcast the msg.
+                  let msgFromServer = MsgFromServer {
+                      msgFromClient = msgFromClient
+                    , username = user & name
+                  }
+                  liftIO $ forM_ ( Map.elems $ chat ^. #users ) $
+                    ( \user ->
+                        WebSock.sendTextData
+                          ( user & userConn )
+                          ( Aeson.encode msgFromServer )
+                    )
+
+                _ -> liftIO $ putStrLn "Data Message is in binary form."
+
+              liftIO $ loopAndHandleError $ loop chatsTvar
+
+
+            loopAndHandleError :: ExceptT String IO () -> IO ()
+            loopAndHandleError loop =
+              runExceptT loop >>= \case
+                Left errStr -> putStrLn errStr
+                Right _     -> return ()
 
         -- Update AppState.
         atomically $ writeTVar ( appState ^. #chats ) newChats
 
         -- Enter loop.
         WebSock.withPingThread conn 30 ( return () ) $
-          flip finally removeUser $ loop $ appState ^. #chats
+          flip finally removeUser $ loopAndHandleError $ loop $ appState ^. #chats
 
 
 getRandomHash :: IO String
