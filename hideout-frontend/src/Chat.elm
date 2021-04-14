@@ -5,6 +5,7 @@ module Chat exposing
     , MsgBody
     , mkJoinMsg
     , mkContentMsg
+    , mkNameChangeMsg
     , msgFromServerDecoder
     )
 
@@ -69,6 +70,10 @@ mkJoinMsg = mkWsMsg "join" << untag
 
 mkContentMsg : MsgBody -> String
 mkContentMsg = mkWsMsg "content" << untag
+
+
+mkNameChangeMsg : MsgBody -> String
+mkNameChangeMsg = mkWsMsg "nameChange" << untag
 
 
 mkWsMsg : String -> String -> String

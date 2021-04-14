@@ -62,8 +62,9 @@ init flags url navKey =
       , userStatus = userStatus
       , letterInput = ""
       , letterMaxReadCountInput = Good 2
-      , chatStatus = { id = tag "", msgs = [], input = tag "" }
       , chatMaxJoinCountInput = Good 2
+      , chatStatus = { id = tag "", msgs = [], input = tag "" }
+      , newNameInput = ""
       , tempResp = ""
       }
     , Cmd.batch
@@ -200,7 +201,17 @@ update msg ( { chatStatus } as model ) =
 
         MessageSend ->
             ( model
-            , port_SendWsMsg <| Chat.mkContentMsg <| model.chatStatus.input
+            , port_SendWsMsg <| Chat.mkContentMsg model.chatStatus.input
+            )
+
+        NewNameInput str ->
+            ( { model | newNameInput = str }
+            , Cmd.none
+            )
+
+        NameChange ->
+            ( { model | newNameInput = "" }
+            , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
             )
 
         OnWsReady _ ->

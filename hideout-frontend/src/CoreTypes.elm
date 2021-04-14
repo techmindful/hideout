@@ -20,8 +20,9 @@ type alias Model =
     , userStatus : UserStatus
     , letterInput : String
     , letterMaxReadCountInput : PosIntInput
-    , chatStatus : Chat.Status
     , chatMaxJoinCountInput : PosIntInput
+    , chatStatus : Chat.Status
+    , newNameInput : String
     , tempResp : String
     }
 
@@ -40,6 +41,8 @@ type Msg
     | GotNewChatResp ( Result Http.Error String )
     | MessageInput String
     | MessageSend
+    | NewNameInput String
+    | NameChange
     | OnWsReady String
     | OnWsMsg String
     | GotMessageSendResp ( Result Http.Error () )

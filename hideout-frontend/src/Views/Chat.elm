@@ -49,16 +49,32 @@ view model =
                     , label = Input.labelAbove [] Element.none
                     , spellcheck = False
                     }
+            -- Tools below input.
             , Element.row
-                [ Element.paddingXY 0 10 ]
+                [ Element.paddingXY 0 10
+                , Element.spacingXY 10 0
+                ]
                 [ Input.button
                     [ Element.padding 5
                     , Background.color <| Element.rgb255 0 100 0 ]
                     { onPress = Just MessageSend
                     , label = Element.text "Send"
                     }
+                , Input.text
+                    [ Background.color bgColor ]
+                    { onChange = NewNameInput
+                    , text = model.newNameInput
+                    , placeholder = Nothing
+                    , label = Input.labelLeft [] <|
+                        Input.button
+                            []
+                            { onPress = Just NameChange
+                            , label = Element.text "Change Name: "
+                            }
+                    }
                 ]
             ]
+        -- Right side panel.
         , Element.column
             [ Element.width <| Element.px 400
             , Element.height Element.fill
