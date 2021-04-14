@@ -11,6 +11,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import String.Extra exposing ( quote )
 import Tagged exposing ( tag, untag )
 import Utils.Markdown
 import Utils.Utils as Utils exposing (..)
@@ -87,11 +88,23 @@ view model =
 
 msgView : Chat.MsgFromServer -> Element m
 msgView msg =
-    case untag msg.msgFromClient.msgType of
+    let msgFromClient = msg.msgFromClient
+    in
+    case untag msgFromClient.msgType of
         "join" ->
             Element.paragraph
                 [ Font.color red ]
                 [ Element.text <| msg.username ++ " joined." ]
+
+        "nameChange" ->
+            Element.paragraph
+                [ Font.color <| Element.rgb255 100 200 0 ]
+                [ Element.text <|
+                    ( quote msg.username )
+                 ++ " changed their name to "
+                 ++ ( quote <| untag msgFromClient.msgBody )
+                 ++ "."
+                ]
 
         _ ->
             Element.textColumn
@@ -101,5 +114,5 @@ msgView msg =
                 [ Element.paragraph
                     [ Font.bold ]
                     [ Element.text msg.username ]
-                , Utils.Markdown.render <| untag msg.msgFromClient.msgBody
+                , Utils.Markdown.render <| untag msgFromClient.msgBody
                 ]
