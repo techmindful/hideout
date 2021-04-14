@@ -34,7 +34,7 @@ view model =
                 , Element.spacingXY 0 30
                 , Element.scrollbarY
                 ] <|
-                List.map msgView <| List.reverse model.chatStatus.msgs
+                List.map msgView model.chatStatus.msgs
 
             , Element.el
                 [ Element.width <| Element.fill

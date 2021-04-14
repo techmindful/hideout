@@ -289,8 +289,16 @@ chatHandler chatIdStr conn = do
                 Left errStr -> putStrLn errStr
                 Right _     -> return ()
 
+
         -- Update AppState.
         atomically $ writeTVar ( appState ^. #chats ) newChats
+
+        -- Give msg history first.
+        let msgHistory = MsgHistory {
+          msgs  = chat ^. #msgs
+        , users = fmap ( ^. #name ) $ Map.elems $ chat ^. #users
+        }
+        WebSock.sendTextData ( user ^. #conn ) ( Aeson.encode msgHistory )
 
         -- Enter loop.
         WebSock.withPingThread conn 30 ( return () ) $

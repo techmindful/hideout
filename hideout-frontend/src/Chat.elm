@@ -7,6 +7,8 @@ module Chat exposing
     , mkContentMsg
     , mkNameChangeMsg
     , msgFromServerDecoder
+    , WsMsg(..)
+    , wsMsgDecoder
     )
 
 import Element
@@ -33,14 +35,6 @@ type alias MsgFromClient =
     { msgType : MsgType
     , msgBody : MsgBody
     }
-
-
-type alias MsgFromServer =
-    { msgFromClient : MsgFromClient
-    , username : String
-    }
-
-
 msgFromClientDecoder : JDec.Decoder MsgFromClient
 msgFromClientDecoder =
     JDec.map2
@@ -49,12 +43,41 @@ msgFromClientDecoder =
         ( JDec.map tag <| JDec.field "msgBody" JDec.string )
 
 
+type alias MsgFromServer =
+    { msgFromClient : MsgFromClient
+    , username : String
+    }
 msgFromServerDecoder : JDec.Decoder MsgFromServer
 msgFromServerDecoder =
     JDec.map2
         MsgFromServer
         ( JDec.field "msgFromClient" msgFromClientDecoder )
         ( JDec.field "username" JDec.string )
+
+
+type alias MsgHistory =
+    { msgs  : List MsgFromServer
+    , users : List String
+    }
+msgHistoryDecoder : JDec.Decoder MsgHistory
+msgHistoryDecoder =
+    JDec.map2
+        MsgHistory
+        ( JDec.field "msgs"  <| JDec.list msgFromServerDecoder )
+        ( JDec.field "users" <| JDec.list JDec.string )
+
+
+-- A type for conveniently JSON-decoding an incoming ws string
+-- Into various possible Elm types.
+type WsMsg
+    = MsgFromServer_ MsgFromServer
+    | MsgHistory_ MsgHistory
+wsMsgDecoder : JDec.Decoder WsMsg
+wsMsgDecoder =
+    JDec.oneOf
+        [ JDec.map MsgFromServer_ msgFromServerDecoder
+        , JDec.map MsgHistory_ msgHistoryDecoder
+        ]
 
 
 type alias Status =

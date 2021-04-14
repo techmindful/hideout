@@ -226,36 +226,49 @@ update msg ( { chatStatus } as model ) =
             )
 
         OnWsMsg str ->
-            case JDec.decodeString Chat.msgFromServerDecoder str of
+            case JDec.decodeString Chat.wsMsgDecoder str of
                 Err _ ->
-                    ( model, Cmd.none )  -- TODO: Handle error.
+                    ( model, Debug.todo "hi" )  -- TODO: Handle error.
 
-                Ok msgFromServer ->
-                    let
-                        msgFromClient = msgFromServer.msgFromClient
-                        sender = msgFromServer.username
-                        oldUsers = model.chatStatus.users
+                Ok wsMsg ->
+                    case wsMsg of
+                        Chat.MsgFromServer_ msgFromServer ->
+                            let
+                                msgFromClient = msgFromServer.msgFromClient
+                                sender = msgFromServer.username
+                                oldUsers = model.chatStatus.users
 
-                        newUsers =
-                            if List.member sender oldUsers then
-                                case untag msgFromClient.msgType of
-                                    "nameChange" ->
-                                        List.setIf ( (==) sender )
-                                            ( untag msgFromClient.msgBody )
-                                            oldUsers
-                                    _ ->
-                                        model.chatStatus.users
-                            else
-                                oldUsers ++ [ sender ]
-                    in
-                    ( { model |
-                        chatStatus =
-                            { chatStatus | msgs = msgFromServer :: chatStatus.msgs 
-                                         , users = newUsers
-                            }
-                      }
-                    , Cmd.none
-                    )
+                                newUsers =
+                                    if List.member sender oldUsers then
+                                        case untag msgFromClient.msgType of
+                                            "nameChange" ->
+                                                List.setIf ( (==) sender )
+                                                    ( untag msgFromClient.msgBody )
+                                                    oldUsers
+                                            _ ->
+                                                model.chatStatus.users
+                                    else
+                                        oldUsers ++ [ sender ]
+                            in
+                            ( { model |
+                                chatStatus =
+                                    { chatStatus | msgs = chatStatus.msgs ++ [ msgFromServer ]
+                                                 , users = newUsers
+                                    }
+                              }
+                            , Cmd.none
+                            )
+
+                        Chat.MsgHistory_ msgHistory ->
+                           ( { model |
+                              chatStatus =
+                                  { chatStatus | msgs  = msgHistory.msgs
+                                               , users = msgHistory.users
+                                  }
+                             }
+                           , Cmd.none
+                           )
+
 
         GotMessageSendResp result ->
             case result of
