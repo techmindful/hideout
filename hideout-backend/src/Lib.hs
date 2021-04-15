@@ -76,7 +76,10 @@ data AppState = AppState
 
 type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
-      :<|> "new-chat"     :> ReqBody '[ Servant.PlainText ] String :> Put '[ Servant.JSON ] String
+      :<|> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] String
+                                   :> Put '[ Servant.JSON ] String
+      :<|> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
+                                   :> Put '[ Servant.JSON ] String
       :<|> "chat"         :> Capture "chatId" String :> WebSocket
 
 
@@ -133,8 +136,8 @@ writeLetter letter = do
   return letterId
 
 
-newChat :: String -> ReaderT AppState Servant.Handler String
-newChat maxJoinCountInput = do
+spawnDispChat :: String -> ReaderT AppState Servant.Handler String
+spawnDispChat maxJoinCountInput = do
 
   case readMaybe maxJoinCountInput of
     Just int ->
@@ -175,6 +178,12 @@ newChat maxJoinCountInput = do
         return newChatIdStr
 
       return newChatIdStr
+
+
+spawnPersistChat :: String -> ReaderT AppState Servant.Handler String
+spawnPersistChat maxJoinCountInput = do
+
+  return "test"
 
 
 chatHandler :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
@@ -316,7 +325,8 @@ getRandomHash = do
 server :: Servant.ServerT API ( ReaderT AppState Servant.Handler )
 server = readLetter
     :<|> writeLetter
-    :<|> newChat
+    :<|> spawnDispChat
+    :<|> spawnPersistChat
     :<|> chatHandler
 
 

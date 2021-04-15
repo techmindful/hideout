@@ -324,7 +324,7 @@ view model =
         viewportHeight =
             Result.withDefault 1080.0 <| Result.map (.scene >> .height) model.viewport
     in
-    { title = "Disposable Messages"
+    { title = "Hideout"
     , body =
         [ Element.layout
             [ Background.color bgColor
@@ -346,11 +346,6 @@ view model =
                                 ]
                                 [ Element.link
                                     []
-                                    { url = aboutUrl
-                                    , label = Element.text "> How does it work?"
-                                    }
-                                , Element.link
-                                    []
                                     { url = frontendWriteLetterUrl
                                     , label = Element.text "> Write a letter."
                                     }
@@ -358,6 +353,11 @@ view model =
                                     []
                                     { url = configChatUrl 
                                     , label = Element.text "> Start a chat."
+                                    }
+                                , Element.link
+                                    []
+                                    { url = aboutUrl
+                                    , label = Element.text "> How does it work?"
                                     }
                                 ]
                             ]

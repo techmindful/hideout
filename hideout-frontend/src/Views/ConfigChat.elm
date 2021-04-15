@@ -31,7 +31,7 @@ view model =
         , numParticipantsInput DispChatMaxJoinCountInput model.dispChatMaxJoinCountInput
         , posIntInputHint model.dispChatMaxJoinCountInput
         , Element.el
-            [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+            [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
             ( borderedButton SpawnDispChat "Start a disposable chat!" )
         , Element.paragraph
             [ Element.paddingEach { top = 200, bottom = 0, left = 0, right = 0 } ]
@@ -45,7 +45,7 @@ view model =
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
         , Element.el
-            [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+            [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
             ( borderedButton SpawnPersistChat "Start a persistent chat!" )
         ]
 
