@@ -10,6 +10,7 @@ type Route
     | ReadLetter String
     | WriteLetter
     | Chat String
+    | ConfigChat
     | NotFound
 
 
@@ -21,6 +22,7 @@ routeParser =
         , map ReadLetter <| s "read-letter" </> string
         , map WriteLetter <| s "write-letter"
         , map Chat <| s "chat" </> string
+        , map ConfigChat <| s "config-chat"
         ]
 
 

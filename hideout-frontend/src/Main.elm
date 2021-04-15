@@ -32,6 +32,7 @@ import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
 import Utils.Utils as Utils exposing (..)
 import Views.Chat
+import Views.ConfigChat
 import Views.WritingLetter
 
 
@@ -62,8 +63,9 @@ init flags url navKey =
       , isWsReady = False
       , userStatus = userStatus
       , letterInput = ""
-      , letterMaxReadCountInput = Good 2
+      , letterMaxReadCountInput = Good 1
       , chatMaxJoinCountInput = Good 2
+      , persistChatMaxJoinCountInput = Good 2
       , chatStatus = { id = tag "", msgs = [], input = tag "", users = [] }
       , newNameInput = ""
       , tempResp = ""
@@ -196,6 +198,11 @@ update msg ( { chatStatus } as model ) =
                     , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
                     )
 
+        PersistChatMaxJoinCountInput str ->
+            ( { model | persistChatMaxJoinCountInput = strToPosIntInput str }
+            , Cmd.none
+            )
+
         MessageInput str ->
             ( { model | chatStatus = { chatStatus | input = tag str } }
             , Cmd.none
@@ -321,33 +328,11 @@ view model =
                                     { url = frontendWriteLetterUrl
                                     , label = Element.text "> Write a letter."
                                     }
-                                , Element.column
-                                    [ Element.spacingXY 0 10 ]
-                                    [ Element.row
-                                        []
-                                        [ Input.button
-                                            []
-                                            { onPress = Just NewChat
-                                            , label = Element.text "> Start a chat."
-                                            }
-                                        , Element.row
-                                            []
-                                            [ Element.text " It can be joined "
-                                            , Input.text
-                                                [ Element.width <| Element.px 100
-                                                , Element.height <| Element.maximum 40 Element.fill
-                                                , Background.color bgColor
-                                                ]
-                                                { onChange = ChatMaxJoinCountInput
-                                                , text = posIntInputToStr model.chatMaxJoinCountInput
-                                                , placeholder = Nothing
-                                                , label = Input.labelHidden ""
-                                                }
-                                            , Element.text " times."
-                                            ]
-                                        ]
-                                    , posIntInputHint model.chatMaxJoinCountInput
-                                    ]
+                                , Element.link
+                                    []
+                                    { url = configChatUrl 
+                                    , label = Element.text "> Start a chat."
+                                    }
                                 ]
                             ]
 
@@ -375,6 +360,8 @@ view model =
                     WriteLetter -> Views.WritingLetter.view model
 
                     Chat chatId -> Views.Chat.view model
+
+                    ConfigChat -> Views.ConfigChat.view model
 
                     NotFound ->
                         Element.text "404"

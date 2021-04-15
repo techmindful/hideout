@@ -5,6 +5,10 @@ import Element.Border as Border
 import Element.Font as Font
 
 
+widthConstraint =
+    Element.width <| Element.px 750
+
+
 linkStyle =
     [ Font.underline ]
 

@@ -18,7 +18,9 @@ frontendWriteLetterUrl = absolute [ "write-letter" ] []
 backendWriteLetterUrl  = crossOrigin backendUrl [ "write-letter" ] []
 
 
-frontendNewChatUrl = absolute [ "config-chat" ] []
+configChatUrl = absolute [ "config-chat" ] []
+
+
 backendNewChatUrl  = crossOrigin backendUrl [ "new-chat" ] []
 
 
