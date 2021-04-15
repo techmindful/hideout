@@ -64,7 +64,7 @@ init flags url navKey =
       , userStatus = userStatus
       , letterInput = ""
       , letterMaxReadCountInput = Good 1
-      , chatMaxJoinCountInput = Good 2
+      , dispChatMaxJoinCountInput = Good 2
       , persistChatMaxJoinCountInput = Good 2
       , chatStatus = { id = tag "", msgs = [], input = tag "", users = [] }
       , newNameInput = ""
@@ -161,8 +161,8 @@ update msg ( { chatStatus } as model ) =
                 Ok letterId ->
                     ( { model | userStatus = GotLetterId letterId }, Cmd.none )
 
-        NewChat ->
-            case model.chatMaxJoinCountInput of
+        SpawnDispChat ->
+            case model.dispChatMaxJoinCountInput of
                 Bad  _ -> ( model, Cmd.none )
                 Good posInt ->
                     ( model
@@ -177,8 +177,8 @@ update msg ( { chatStatus } as model ) =
                         }
                     )
 
-        ChatMaxJoinCountInput str ->
-            ( { model | chatMaxJoinCountInput = strToPosIntInput str }
+        DispChatMaxJoinCountInput str ->
+            ( { model | dispChatMaxJoinCountInput = strToPosIntInput str }
             , Cmd.none
             )
 

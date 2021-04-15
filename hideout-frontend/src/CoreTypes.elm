@@ -20,7 +20,7 @@ type alias Model =
     , userStatus : UserStatus
     , letterInput : String
     , letterMaxReadCountInput : PosIntInput
-    , chatMaxJoinCountInput : PosIntInput
+    , dispChatMaxJoinCountInput : PosIntInput
     , persistChatMaxJoinCountInput : PosIntInput
     , chatStatus : Chat.Status
     , newNameInput : String
@@ -37,8 +37,8 @@ type Msg
     | LetterMaxReadCountInput String
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
-    | NewChat
-    | ChatMaxJoinCountInput String
+    | SpawnDispChat
+    | DispChatMaxJoinCountInput String
     | GotNewChatResp ( Result Http.Error String )
     | PersistChatMaxJoinCountInput String
     | MessageInput String

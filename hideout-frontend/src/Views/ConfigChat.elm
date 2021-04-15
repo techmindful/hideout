@@ -28,9 +28,11 @@ view model =
                  chat is a good default option. Only you and your friends can join. The server deletes the chat when the room is empty.
                 """
             ]
-        , numParticipantsInput ChatMaxJoinCountInput model.chatMaxJoinCountInput
-        , posIntInputHint model.chatMaxJoinCountInput
-        , borderedButton NewChat "Start a disposable chat!"
+        , numParticipantsInput DispChatMaxJoinCountInput model.dispChatMaxJoinCountInput
+        , posIntInputHint model.dispChatMaxJoinCountInput
+        , Element.el
+            [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+            ( borderedButton SpawnDispChat "Start a disposable chat!" )
         , Element.paragraph
             [ Element.paddingEach { top = 200, bottom = 0, left = 0, right = 0 } ]
             [ Element.text "A "
