@@ -167,7 +167,7 @@ update msg ( { chatStatus } as model ) =
                     , Http.request
                         { method = "PUT"
                         , headers = []
-                        , url = newChatUrl
+                        , url = backendNewChatUrl
                         , body = Http.stringBody "text/plain;charset=utf-8" <| String.fromInt posInt
                         , expect = Http.expectString GotNewChatResp
                         , timeout = Nothing
@@ -313,12 +313,12 @@ view model =
                                 ]
                                 [ Element.link
                                     []
-                                    { url = "/about"
+                                    { url = aboutUrl
                                     , label = Element.text "> How does it work?"
                                     }
                                 , Element.link
                                     []
-                                    { url = "/write-letter"
+                                    { url = frontendWriteLetterUrl
                                     , label = Element.text "> Write a letter."
                                     }
                                 , Element.column

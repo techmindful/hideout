@@ -4,21 +4,22 @@ import Url.Builder exposing (..)
 
 
 frontendUrl = "http://localhost:8000"
-
-
 backendUrl = "http://localhost:8080"
 
 
+aboutUrl = absolute [ "about" ] []
+
+
 frontendReadLetterUrl = crossOrigin frontendUrl [ "read-letter" ] []
+backendReadLetterUrl  = crossOrigin backendUrl [ "read-letter" ] []
 
 
-backendReadLetterUrl = crossOrigin backendUrl [ "read-letter" ] []
+frontendWriteLetterUrl = absolute [ "write-letter" ] []
+backendWriteLetterUrl  = crossOrigin backendUrl [ "write-letter" ] []
 
 
-backendWriteLetterUrl = crossOrigin backendUrl [ "write-letter" ] []
-
-
-newChatUrl = crossOrigin backendUrl [ "new-chat" ] []
+frontendNewChatUrl = absolute [ "config-chat" ] []
+backendNewChatUrl  = crossOrigin backendUrl [ "new-chat" ] []
 
 
 chatUrl chatId = relative [ "chat", chatId ] []
