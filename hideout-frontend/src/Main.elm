@@ -161,6 +161,11 @@ update msg ( { chatStatus } as model ) =
                 Ok letterId ->
                     ( { model | userStatus = GotLetterId letterId }, Cmd.none )
 
+        DispChatMaxJoinCountInput str ->
+            ( { model | dispChatMaxJoinCountInput = strToPosIntInput str }
+            , Cmd.none
+            )
+
         SpawnDispChat ->
             case model.dispChatMaxJoinCountInput of
                 Bad  _ -> ( model, Cmd.none )
@@ -169,20 +174,15 @@ update msg ( { chatStatus } as model ) =
                     , Http.request
                         { method = "PUT"
                         , headers = []
-                        , url = backendNewChatUrl
+                        , url = backendSpawnDispChatUrl 
                         , body = Http.stringBody "text/plain;charset=utf-8" <| String.fromInt posInt
-                        , expect = Http.expectString GotNewChatResp
+                        , expect = Http.expectString GotSpawnDispChatResp 
                         , timeout = Nothing
                         , tracker = Nothing
                         }
                     )
 
-        DispChatMaxJoinCountInput str ->
-            ( { model | dispChatMaxJoinCountInput = strToPosIntInput str }
-            , Cmd.none
-            )
-
-        GotNewChatResp result ->
+        GotSpawnDispChatResp result ->
             case result of
                 Err _ ->
                     ( model, Cmd.none )
@@ -190,7 +190,7 @@ update msg ( { chatStatus } as model ) =
                 Ok chatId ->
                     ( { model | chatStatus =
                         { id = tag <| unquote chatId
-                        , msgs = []  -- TODO: Display messages before joining.
+                        , msgs = []
                         , input = tag ""
                         , users = []
                         }
@@ -202,6 +202,32 @@ update msg ( { chatStatus } as model ) =
             ( { model | persistChatMaxJoinCountInput = strToPosIntInput str }
             , Cmd.none
             )
+
+        SpawnPersistChat ->
+            ( model
+            , case model.persistChatMaxJoinCountInput of
+                Bad _ -> Cmd.none
+                Good posInt ->
+                    Http.request
+                        { method = "PUT"
+                        , headers = []
+                        , url = backendSpawnPersistChatUrl
+                        , body = Http.stringBody "text/plain;charset=utf-8" <| String.fromInt posInt
+                        , expect = Http.expectString GotSpawnPersistChatResp 
+                        , timeout = Nothing
+                        , tracker = Nothing
+                        }
+            )
+
+
+        GotSpawnPersistChatResp result ->
+            case result of
+                Err _ ->
+                    ( model, Cmd.none ) -- TODO: Handle err
+
+                Ok letterId ->
+                    ( model, Cmd.none )
+
 
         MessageInput str ->
             ( { model | chatStatus = { chatStatus | input = tag str } }

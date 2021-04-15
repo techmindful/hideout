@@ -44,6 +44,9 @@ view model =
             ]
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
+        , Element.el
+            [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+            ( borderedButton SpawnPersistChat "Start a persistent chat!" )
         ]
 
 

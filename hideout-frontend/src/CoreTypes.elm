@@ -37,10 +37,15 @@ type Msg
     | LetterMaxReadCountInput String
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
-    | SpawnDispChat
+
     | DispChatMaxJoinCountInput String
-    | GotNewChatResp ( Result Http.Error String )
+    | SpawnDispChat
+    | GotSpawnDispChatResp ( Result Http.Error String )
+ 
     | PersistChatMaxJoinCountInput String
+    | SpawnPersistChat
+    | GotSpawnPersistChatResp ( Result Http.Error String )
+
     | MessageInput String
     | MessageSend
     | NewNameInput String

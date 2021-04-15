@@ -7,21 +7,25 @@ frontendUrl = "http://localhost:8000"
 backendUrl = "http://localhost:8080"
 
 
+mkBackendUrl = crossOrigin backendUrl
+
+
 aboutUrl = absolute [ "about" ] []
 
 
 frontendReadLetterUrl = crossOrigin frontendUrl [ "read-letter" ] []
-backendReadLetterUrl  = crossOrigin backendUrl [ "read-letter" ] []
+backendReadLetterUrl  = mkBackendUrl [ "read-letter" ] []
 
 
 frontendWriteLetterUrl = absolute [ "write-letter" ] []
-backendWriteLetterUrl  = crossOrigin backendUrl [ "write-letter" ] []
+backendWriteLetterUrl  = mkBackendUrl [ "write-letter" ] []
 
 
 configChatUrl = absolute [ "config-chat" ] []
 
 
-backendNewChatUrl  = crossOrigin backendUrl [ "new-chat" ] []
+backendSpawnDispChatUrl  = mkBackendUrl [ "spawn-disposable-chat" ] []
+backendSpawnPersistChatUrl = mkBackendUrl [ "spawn-persistent-chat" ] []
 
 
 chatUrl chatId = relative [ "chat", chatId ] []
