@@ -14,29 +14,47 @@
         node: document.getElementById("elm-app")
       })
 
+      var socket = null;
+      var portSendWsMsgHandler = null
       elmApp.ports.port_InitWs.subscribe( function( chatId )
         {
-          var socket = new WebSocket( "ws://localhost:8080/chat/" + chatId );
+          // Clean up old ws.
+          if ( socket != null )
+          {
+            socket.close();
+            elmApp.ports.port_SendWsMsg.unsubscribe( portSendWsMsgHandler );
+          }
 
-          socket.addEventListener( "open",
-            function( event )
+          socket = new WebSocket( "ws://localhost:8080/chat/" + chatId );
+
+          let handleOnOpen = function( event )
             {
               elmApp.ports.port_WsReady.send( "wsReady" );
             }
-          );
+          socket.addEventListener( "open", handleOnOpen );
 
-          elmApp.ports.port_SendWsMsg.subscribe( function( msg )
-              {
-                socket.send( msg );
-              }
-          );
+          let handleDataFromPortSendWsMsg = function( msg )
+            {
+              socket.send( msg );
+            }
+          elmApp.ports.port_SendWsMsg.subscribe( handleDataFromPortSendWsMsg )
+          portSendWsMsgHandler = handleDataFromPortSendWsMsg
 
-          socket.addEventListener( "message",
-            function( event )
+          let handleDataFromWs = function( event )
             {
               elmApp.ports.port_RecvWsMsg.send( event.data );
             }
-          );
+          socket.addEventListener( "message", handleDataFromWs );
+
+          //let handleClose = function()
+          //  {
+          //    socket.close();
+          //    elmApp.ports.port_SendWsMsg.unsubscribe( handleDataFromPortSendWsMsg );
+
+          //    //elmApp.ports.port_CloseWs.unsubscribe( handleClose );
+          //  }
+          ////elmApp.ports.port_CloseWs.subscribe( handleClose );
+          //socket.addEventListener( "close", handleClose );
         }
       );
 
