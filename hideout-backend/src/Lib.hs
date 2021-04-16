@@ -238,11 +238,6 @@ chatHandler chatIdStr conn = do
                 -- So no need to remove?
                 Nothing -> return ()
                 Just chat -> do
-                  -- Update AppState chats.
-                  let newChat  = chat & #users %~ Map.delete userId
-                      newChats = Map.insert thisChatId newChat chats
-                  atomically $ writeTVar ( appState ^. #chats ) newChats
-                  -- Broadcast user's departure.
                   let username = case Map.lookup userId $ chat ^. #users of
                         Just user -> user ^. #name
                         Nothing -> "[Error: User not found]"
@@ -250,10 +245,15 @@ chatHandler chatIdStr conn = do
                         msgType = "leave"
                       , msgBody = ""
                       }
-                      msgFromServer = MsgFromServer {
+                  let msgFromServer = MsgFromServer {
                         msgFromClient = msgFromClient
                       , username = username
                       }
+                  let newChat  = chat & #users %~ Map.delete userId
+                                      & #msgs  %~ ( ++ [ msgFromServer ] )
+                      newChats = Map.insert thisChatId newChat chats
+                  -- Update AppState.
+                  atomically $ writeTVar ( appState ^. #chats ) newChats
                   -- Important to broadcast to new chat,
                   -- Don't broadcast to disconnected users. That blocks the whole thing.
                   broadcast newChat $ Aeson.encode msgFromServer
