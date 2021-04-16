@@ -5,11 +5,13 @@ import Element exposing ( rgb255 )
 
 black = rgb255 0 0 0
 
-
 white = rgb255 255 255 255
 
+red = rgb255 230 6 6
 
-red = rgb255 200 0 0
+yellow = rgb255 220 220 20
+
+green = rgb255 100 200 0
 
 
 bgColor =

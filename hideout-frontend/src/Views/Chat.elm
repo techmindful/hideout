@@ -101,18 +101,23 @@ msgView msg =
     case untag msgFromClient.msgType of
         "join" ->
             Element.paragraph
-                [ Font.color red ]
+                [ Font.color green ]
                 [ Element.text <| msg.username ++ " joined." ]
 
         "nameChange" ->
             Element.paragraph
-                [ Font.color <| Element.rgb255 100 200 0 ]
+                [ Font.color yellow ]
                 [ Element.text <|
                     ( quote msg.username )
                  ++ " changed their name to "
                  ++ ( quote <| untag msgFromClient.msgBody )
                  ++ "."
                 ]
+
+        "leave" ->
+            Element.paragraph
+                [ Font.color red ]
+                [ Element.text <| msg.username ++ " left." ]
 
         _ ->
             Element.textColumn

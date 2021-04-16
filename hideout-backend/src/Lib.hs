@@ -219,6 +219,15 @@ chatHandler chatIdStr conn = do
                             , joinCount = ( chat & joinCount ) + 1
                             }
             newChats = Map.insert thisChatId newChat chatsBeforeJoin
+
+        -- | This blocks thread too!
+        -- If a user already disconnected, this blocks broadcasting to all other users!
+        let broadcast :: MonadIO m => Chat -> LazyByteStr.ByteString -> m ()
+            broadcast chat byteStr =
+              liftIO $ forM_ ( Map.elems $ chat ^. #users ) $
+                ( \user ->
+                    WebSock.sendTextData ( user ^. #conn ) byteStr
+                )
            
         let removeUser :: IO ()
             removeUser = liftIO $ do
@@ -229,9 +238,25 @@ chatHandler chatIdStr conn = do
                 -- So no need to remove?
                 Nothing -> return ()
                 Just chat -> do
+                  -- Update AppState chats.
                   let newChat  = chat & #users %~ Map.delete userId
                       newChats = Map.insert thisChatId newChat chats
                   atomically $ writeTVar ( appState ^. #chats ) newChats
+                  -- Broadcast user's departure.
+                  let username = case Map.lookup userId $ chat ^. #users of
+                        Just user -> user ^. #name
+                        Nothing -> "[Error: User not found]"
+                  let msgFromClient = MsgFromClient {
+                        msgType = "leave"
+                      , msgBody = ""
+                      }
+                      msgFromServer = MsgFromServer {
+                        msgFromClient = msgFromClient
+                      , username = username
+                      }
+                  -- Important to broadcast to new chat,
+                  -- Don't broadcast to disconnected users. That blocks the whole thing.
+                  broadcast newChat $ Aeson.encode msgFromServer
 
         let loop :: TVar ( Map ChatId Chat ) -> ExceptT String IO ()
             loop chatsTvar = do
@@ -280,12 +305,7 @@ chatHandler chatIdStr conn = do
                   liftIO $ atomically $ writeTVar chatsTvar updatedChats
  
                   -- Broadcast the msg.
-                  liftIO $ forM_ ( Map.elems $ chat ^. #users ) $
-                    ( \user ->
-                        WebSock.sendTextData
-                          ( user ^. #conn )
-                          ( Aeson.encode msgFromServer )
-                    )
+                  broadcast chat'' $ Aeson.encode msgFromServer
 
                 _ -> liftIO $ putStrLn "Data Message is in binary form."
 
