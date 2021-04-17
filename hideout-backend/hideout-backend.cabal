@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 82cca267bddc3c01c3516fc8dc8a2d1f495249a37d9152756da5b569e56103af
+-- hash: 0f629d6267c333d9afa9b64ef9e9d9c2d64a5a01fd008b3d8cb7c4ddb17f3861
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
   exposed-modules:
       Chat
       Lib
+      Utils
   other-modules:
       Paths_hideout_backend
   hs-source-dirs:

@@ -15,6 +15,7 @@ module Lib
     ) where
 
 import           Chat
+import           Utils ( readPosInt )
     
 import qualified Servant
 import           Servant ( (:>), (:<|>)(..), Capture, Get, NoContent(..), Put, ReqBody )
@@ -47,7 +48,6 @@ import           Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
 import           GHC.Generics ( Generic )
-import           Text.Read ( readMaybe )
 
 
 data Letter = Letter
@@ -139,14 +139,9 @@ writeLetter letter = do
 spawnDispChat :: String -> ReaderT AppState Servant.Handler String
 spawnDispChat maxJoinCountInput = do
 
-  case readMaybe maxJoinCountInput of
-    Just int ->
-      if int >= 1 then
-        mkNewChat int
-      else
-        Servant.throwError Servant.err400
-    _ ->
-      Servant.throwError Servant.err400
+  case readPosInt maxJoinCountInput of
+    Just int -> mkNewChat int
+    Nothing -> Servant.throwError Servant.err400
 
   where
 
