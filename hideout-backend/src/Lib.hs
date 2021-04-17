@@ -25,8 +25,6 @@ import qualified Network.Wai.Handler.Warp as Warp
 import           Network.Wai.Middleware.Cors ( cors, CorsResourcePolicy(..) )
 import qualified Network.WebSockets as WebSock
 
-import qualified Data.Aeson as Aeson
-import           Data.Aeson ( FromJSON, ToJSON )
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
 
@@ -40,6 +38,8 @@ import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import qualified Control.Monad.STM as STM
 import           Control.Monad.STM ( atomically )
 import           Control.Concurrent.STM.TVar ( TVar, newTVar, readTVar, writeTVar )
+import qualified Data.Aeson as Aeson
+import           Data.Aeson ( FromJSON, ToJSON )
 import qualified Data.ByteString.Lazy as LazyByteStr
 import qualified Data.ByteString as ByteStr
 import qualified Data.ByteString.Char8 as ByteStrC8
@@ -112,7 +112,11 @@ readLetter letterId = do
 
 
 writeLetter :: Letter -> ReaderT AppState Servant.Handler String
-writeLetter letter = do
+writeLetter letter = mkNewLetter letter
+
+
+mkNewLetter :: Letter -> ReaderT AppState Servant.Handler String
+mkNewLetter letter = do
 
   appState <- ask
 
@@ -140,45 +144,80 @@ spawnDispChat :: String -> ReaderT AppState Servant.Handler String
 spawnDispChat maxJoinCountInput = do
 
   case readPosInt maxJoinCountInput of
-    Just int -> mkNewChat int
+    Just int -> do
+      mkNewChat $
+        Chat.Config {
+          maxJoinCount = Just int 
+        , expiry = MaxJoined
+        , persist = False
+        , sendHistory = True
+        }
+
     Nothing -> Servant.throwError Servant.err400
-
-  where
-
-    mkNewChat maxJoinCount = do
-
-      appState <- ask
-
-      newChatIdStr <- liftIO $ do
-        
-        oldChats <- atomically $ readTVar ( appState ^. #chats )
-
-        newChatIdStr <- getRandomHash
-
-        -- Create and insert new Chat into AppState.
-
-        let newChatId = ChatId newChatIdStr
-        
-        let newChat = Chat {
-              users = Map.empty
-            , msgs = []
-            , joinCount = 0
-            , maxJoinCount = maxJoinCount
-            }
-
-        let newChats = Map.insert newChatId newChat oldChats
-
-        atomically $ writeTVar ( appState ^. #chats ) newChats
-
-        return newChatIdStr
-
-      return newChatIdStr
 
 
 spawnPersistChat :: String -> ReaderT AppState Servant.Handler String
 spawnPersistChat maxJoinCountInput = do
 
-  return "test"
+  case readPosInt maxJoinCountInput of
+    Just int -> do
+      newChatIdStr <- mkNewChat $
+        Chat.Config
+          { maxJoinCount = Just int 
+          , expiry = Never
+          , persist = True
+          , sendHistory = True
+          }
+
+      let chatIdLetter = Letter {
+            body = "Chat ID is: " ++ newChatIdStr
+          , maxReadCount = int
+          }
+
+      mkNewLetter chatIdLetter
+
+    Nothing -> Servant.throwError Servant.err400
+
+
+mkNewChat :: Chat.Config -> ReaderT AppState Servant.Handler String
+mkNewChat config = do
+
+  appState <- ask
+
+  newChatIdStr <- liftIO $ do
+    
+    oldChats <- atomically $ readTVar ( appState ^. #chats )
+
+    newChatIdStr <- getRandomHash
+
+    -- Create and insert new Chat into AppState.
+
+    let newChatId = ChatId newChatIdStr
+    
+    let newChat = Chat {
+          users = Map.empty
+        , msgs = []
+        , joinCount = 0
+        , config = config
+        }
+
+    let newChats = Map.insert newChatId newChat oldChats
+
+    atomically $ writeTVar ( appState ^. #chats ) newChats
+
+    return newChatIdStr
+
+  return newChatIdStr
+
+
+isMaxJoined :: Chat -> Bool
+isMaxJoined chat =
+  case chat ^. #config . #maxJoinCount of
+    Just posInt ->
+      if chat ^. #joinCount == posInt then True
+      else False
+
+    _ -> False
 
 
 chatHandler :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
@@ -197,11 +236,11 @@ chatHandler chatIdStr conn = do
   case maybeChat of
     Nothing -> do
       liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
-    -- Chat exists: Handle join, enter loop.
+    -- Chat exists:
     Just chat -> liftIO $ do
-      -- Check join count.
-      if chat ^. #joinCount == chat ^. #maxJoinCount then
+      if isMaxJoined chat then
         putStrLn "Maximum join count is reached."  -- TODO: Report to client.
+      -- Can join:
       else do
         let userId = chat ^. #joinCount
 

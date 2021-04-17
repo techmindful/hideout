@@ -1,12 +1,13 @@
 {-# language DeriveGeneric #-}
 {-# language DuplicateRecordFields #-}
+{-# language OverloadedLabels #-}
 
 module Chat where
 
 import qualified Network.WebSockets as WebSock
 
+import           Control.Lens ( (^.), (.~), (%~) )
 import           Data.Aeson ( FromJSON, ToJSON )
-
 import           Data.Map.Strict ( Map )
 import           GHC.Generics ( Generic )
 
@@ -42,9 +43,26 @@ data User = User
 data Chat = Chat
   { users :: Map Int User
   , msgs :: [ MsgFromServer ]
-  , maxJoinCount :: Int
   , joinCount :: Int
+  , config :: Config
   } deriving ( Generic )
+
+
+data Config = Config
+  { maxJoinCount :: Maybe Int
+  , expiry :: Expiry
+  , persist :: Bool
+  , sendHistory :: Bool
+  } deriving ( Generic )
+instance FromJSON Config
+
+
+data Expiry
+  = Empty
+  | MaxJoined
+  | Never
+  deriving ( Generic )
+instance FromJSON Expiry
 
 
 data MsgHistory = MsgHistory
