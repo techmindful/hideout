@@ -163,7 +163,7 @@ spawnPersistChat maxJoinCountInput = do
     Just int -> do
       newChatIdStr <- mkNewChat $
         Chat.Config
-          { maxJoinCount = Just int 
+          { maxJoinCount = Nothing
           , expiry = Never
           , persist = True
           , sendHistory = True
