@@ -18,6 +18,13 @@ italicText str =
         ( Element.text str )
 
 
+underlinedText : String -> Element msg
+underlinedText str =
+    Element.el
+        [ Font.underline ]
+        ( Element.text str )
+
+
 borderedButton : m -> String -> Element m
 borderedButton msg labelStr =
     Input.button
