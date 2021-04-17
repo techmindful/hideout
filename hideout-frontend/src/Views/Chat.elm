@@ -2,6 +2,7 @@ module Views.Chat exposing ( view )
 
 import Chat
 import Common.Colors exposing (..)
+import Common.Contents exposing ( plainPara )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
@@ -14,7 +15,6 @@ import Element.Input as Input
 import String.Extra exposing ( quote )
 import Tagged exposing ( tag, untag )
 import Utils.Markdown
-import Utils.Utils as Utils exposing (..)
 
 
 view : Model -> Element Msg

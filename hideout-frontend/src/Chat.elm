@@ -11,12 +11,12 @@ module Chat exposing
     , wsMsgDecoder
     )
 
+import Common.Contents exposing ( plainPara )
 import Element
 import Element exposing ( Element )
 import Json.Decode as JDec
 import Json.Encode as JEnc
 import Tagged exposing ( Tagged, tag, untag )
-import Utils.Utils exposing ( plainPara )
 
 
 type ChatIdTag = ChatIdTag

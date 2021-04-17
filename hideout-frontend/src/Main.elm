@@ -5,7 +5,10 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Chat
 import Common.Colors exposing (..)
-import Common.Contents exposing ( posIntInputHint )
+import Common.Contents exposing
+    ( plainPara
+    , posIntInputHint
+    )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
@@ -30,7 +33,6 @@ import Url.Parser
 import UserStatus exposing (..)
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
-import Utils.Utils as Utils exposing (..)
 import Views.Chat
 import Views.ConfigChat
 import Views.WritingLetter
@@ -221,12 +223,9 @@ update msg ( { chatStatus } as model ) =
 
 
         GotSpawnPersistChatResp result ->
-            case result of
-                Err _ ->
-                    ( model, Cmd.none ) -- TODO: Handle err
-
-                Ok letterId ->
-                    ( model, Cmd.none )
+            ( { model | userStatus = GotPersistChatIdLetter result }
+            , Cmd.none
+            )
 
 
         MessageInput str ->

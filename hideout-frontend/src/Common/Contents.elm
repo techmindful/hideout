@@ -8,6 +8,9 @@ import Common.Colors exposing ( red )
 import Utils.Types exposing ( PosIntInput(..) )
 
 
+plainPara str = Element.paragraph [] [ Element.text str ]
+
+
 italicText : String -> Element msg
 italicText str =
     Element.el

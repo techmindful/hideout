@@ -4,6 +4,7 @@ import Common.Colors exposing ( bgColor )
 import Common.Contents exposing
     ( borderedButton
     , italicText
+    , plainPara
     , posIntInputHint
     )
 import Common.Styles exposing ( widthConstraint )
@@ -12,6 +13,7 @@ import Element exposing ( Element )
 import Element.Background as Background
 import Element.Border as Border
 import Element.Input as Input
+import UserStatus exposing ( UserStatus(..) )
 import Utils.Types exposing ( PosIntInput, posIntInputToStr )
 
 
@@ -44,9 +46,20 @@ view model =
             ]
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
-        , Element.el
-            [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-            ( borderedButton SpawnPersistChat "Start a persistent chat!" )
+
+        , case model.userStatus of
+           GotPersistChatIdLetter result ->
+              case result of
+                 Err _ ->
+                     Element.text "Error!"
+
+                 Ok chatIdStr ->
+                     plainPara <| "Letter ID: " ++ chatIdStr
+                   
+           _ -> 
+               Element.el
+                   [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
+                   ( borderedButton SpawnPersistChat "Start a persistent chat!" )
         ]
 
 

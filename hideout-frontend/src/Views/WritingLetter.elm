@@ -5,7 +5,10 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Common.Colors exposing (..)
-import Common.Contents exposing ( posIntInputHint )
+import Common.Contents exposing
+    ( plainPara
+    , posIntInputHint
+    )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
@@ -28,7 +31,6 @@ import Url.Parser
 import UserStatus exposing (..)
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr )
-import Utils.Utils as Utils exposing (..)
 
 
 view : Model -> Element Msg
