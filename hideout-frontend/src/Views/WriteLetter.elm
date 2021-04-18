@@ -61,12 +61,12 @@ view model =
                 }
 
         preview =
-            Element.el
+            Element.column
                 [ Element.width Element.fill
+                , Element.spacing 30
                 , Element.alignTop
                 ] <|
                 Utils.Markdown.render model.letterInput
-
     in
     Element.column
         [ Element.width Element.fill ]

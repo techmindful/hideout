@@ -40,11 +40,11 @@ view model =
                                 , Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
                                 ]
                                 [ Element.text "Below is the letter." ]
-                            , Element.el
+                            , Element.column
                                 [ Element.width Element.fill
                                 , Element.paddingEach { top = 60, bottom = 0, left = 0, right = 0 }
-                                ]
-                                ( Utils.Markdown.render letterMeta.letter.body )
+                                ] <|
+                                Utils.Markdown.render letterMeta.letter.body
                             ]
 
             _ -> plainPara "Error: Unaddressed UserStatus case!"

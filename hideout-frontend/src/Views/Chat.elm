@@ -127,7 +127,9 @@ msgView msg =
                 [ Element.paragraph
                     [ Font.bold ]
                     [ Element.text msg.username ]
-                , Utils.Markdown.render <| untag msgFromClient.msgBody
+                , Element.column
+                    [] <|
+                    Utils.Markdown.render <| untag msgFromClient.msgBody
                 ]
 
 

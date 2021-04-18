@@ -170,7 +170,9 @@ spawnPersistChat maxJoinCountInput = do
           }
 
       let chatIdLetter = Letter {
-            body = "Chat ID is: " ++ newChatIdStr
+            body =
+              "You are invited to a Hideout persistent chat. Below is the link to the chat room. Bookmark the chat (not this letter), and you can send private messages to your contacts at any time.\n\nDo not post the chat link anywhere.\n\nhttp://localhost:8000/chat/" ++ newChatIdStr
+
           , maxReadCount = int
           }
 
