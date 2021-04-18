@@ -35,7 +35,8 @@ import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
 import Views.Chat
 import Views.ConfigChat
-import Views.WritingLetter
+import Views.ReadLetter
+import Views.WriteLetter
 
 
 port port_InitWs : String -> Cmd msg
@@ -368,25 +369,9 @@ view model =
                     About ->
                         Element.text "About page"
 
-                    ReadLetter id ->
-                        Element.column
-                            []
-                            [ case model.userStatus of
-                                ReadLetterReq _ ->
-                                    plainPara "Waiting for the letter from server.."
-
-                                ReadLetterResp result ->
-                                    case result of
-                                        Err err ->
-                                            plainPara <| Debug.toString err
-
-                                        Ok letterMeta ->
-                                            Utils.Markdown.render letterMeta.letter.body
-
-                                _ -> plainPara "Error: Unaddressed UserStatus case!"
-                            ]
+                    ReadLetter id -> Views.ReadLetter.view model
                             
-                    WriteLetter -> Views.WritingLetter.view model
+                    WriteLetter -> Views.WriteLetter.view model
 
                     Chat chatId -> Views.Chat.view model
 

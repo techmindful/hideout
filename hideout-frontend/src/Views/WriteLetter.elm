@@ -1,4 +1,4 @@
-module Views.WritingLetter exposing ( view )
+module Views.WriteLetter exposing ( view )
 
 
 import Browser
