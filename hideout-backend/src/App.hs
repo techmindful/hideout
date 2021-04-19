@@ -28,6 +28,8 @@ import qualified Network.WebSockets as WebSock
 
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
+import qualified Database.Persist as Persist
+import           Database.Persist.Class ( selectList )
 import           Database.Persist.Sql ( SqlBackend, runMigration, runSqlPool )
 import           Database.Persist.Sqlite ( createSqlitePool )
 
@@ -121,9 +123,8 @@ mkNewLetter letter = do
         newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
-    -- Debug print
-    letterMetas <- atomically $ readTVar ( appState & letterMetas )
-    putStrLn $ "Current letter metas:\n----------\n" ++  show letterMetas
+    -- TODO: This is just a test save.
+    runSqlPool ( Persist.insert $ LetterMetaWithId hash newLetterMeta ) ( appState ^. #dbConnPool )
 
     return hash
 
@@ -403,12 +404,25 @@ startApp = do
   dbConnPool <- runStderrLoggingT $ createSqlitePool "database.db" 5
   runSqlPool ( runMigration migrateAll ) dbConnPool
 
-  initLetterMetas <- atomically $ newTVar Map.empty
+  dbLetterMetaWithIds :: [ Persist.Entity LetterMetaWithId ] <-
+    runSqlPool ( selectList [] [] ) dbConnPool
+
+  let letterMetaWithIds = fmap Persist.entityVal dbLetterMetaWithIds
+
+      split :: LetterMetaWithId -> ( String, LetterMeta )
+      split letterMetaWithId =
+        ( letterMetaWithId & letterMetaWithIdId'
+        , letterMetaWithId & letterMetaWithIdVal
+        )
+
+      idLetterMetaPairs = fmap split letterMetaWithIds
+
+  initLetterMetas <- atomically $ newTVar $ Map.fromList idLetterMetaPairs
   initChats       <- atomically $ newTVar Map.empty
   let initAppState = AppState {
-      dbConnPool  = dbConnPool
-    , letterMetas = initLetterMetas
-    , chats       = initChats
+      dbConnPool   = dbConnPool
+    , letterMetas  = initLetterMetas
+    , chats        = initChats
     }
 
   Warp.run 8080 $ app initAppState

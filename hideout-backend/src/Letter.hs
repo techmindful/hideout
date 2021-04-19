@@ -41,5 +41,29 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     readCount Int
     deriving Generic Show
 
+  LetterMetaWithId
+    id' String
+    val LetterMeta
+    Id' id'  -- Uniqueness Constraint
+    deriving Show
+
 |]
+
+
+{-
+data Letter = Letter
+  { body :: String
+  , maxReadCount :: Int
+  } deriving ( Generic, Show )
+instance FromJSON Letter
+instance ToJSON   Letter
+
+
+data LetterMeta = LetterMeta
+  { letter :: Letter
+  , readCount :: Int
+  } deriving ( Generic, Show )
+instance FromJSON LetterMeta
+instance ToJSON   LetterMeta
+-}
 
