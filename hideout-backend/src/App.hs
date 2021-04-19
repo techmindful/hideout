@@ -28,6 +28,8 @@ import qualified Network.WebSockets as WebSock
 
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
+import           Database.Persist.Sql ( runMigration, runSqlPool )
+import           Database.Persist.Sqlite ( createSqlitePool )
 
 import           Control.Error.Util ( failWith )
 import           Control.Exception ( finally )
@@ -35,6 +37,7 @@ import           Control.Lens ( (^.), (.~), (%~) )
 import           Control.Monad ( forever, forM_ )
 import           Control.Monad.Except ( ExceptT, runExceptT )
 import           Control.Monad.IO.Class
+import           Control.Monad.Logger ( runStderrLoggingT )
 import           Control.Monad.Reader ( ReaderT, ask, runReaderT )
 import qualified Control.Monad.STM as STM
 import           Control.Monad.STM ( atomically )
@@ -393,6 +396,13 @@ app appState =
 
 startApp :: IO ()
 startApp = do
+
+  dbConnPool <- runStderrLoggingT $ createSqlitePool "database.db" 5
+  runSqlPool ( runMigration migrateAll ) dbConnPool
+
+  let testLetter = Letter { letterBody = "test", letterMaxReadCount = 3 }
+  putStrLn $ show testLetter
+
   initLetterMetas <- atomically $ newTVar Map.empty
   initChats       <- atomically $ newTVar Map.empty
   let initAppState = AppState {

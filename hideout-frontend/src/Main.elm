@@ -147,8 +147,8 @@ update msg ( { chatStatus } as model ) =
                         , body =
                             Http.jsonBody <|
                                 JEnc.object
-                                    [ ( "letterBody", JEnc.string model.letterInput )
-                                    , ( "letterMaxReadCount", JEnc.int maxReadCount )
+                                    [ ( "body", JEnc.string model.letterInput )
+                                    , ( "maxReadCount", JEnc.int maxReadCount )
                                     ]
                         , expect = Http.expectString GotLetterSendResp
                         , timeout = Nothing

@@ -31,19 +31,15 @@ import           GHC.Generics ( Generic )
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 
-  Letter
+  Letter json
     body String
     maxReadCount Int
     deriving Generic Show
 
-  LetterMeta
+  LetterMeta json
     letter Letter
     readCount Int
     deriving Generic Show
 
 |]
-instance FromJSON Letter
-instance ToJSON Letter
-instance FromJSON LetterMeta
-instance ToJSON LetterMeta
 

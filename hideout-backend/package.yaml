@@ -27,8 +27,10 @@ dependencies:
 - errors
 - generic-lens
 - lens
+- monad-logger
 - mtl
 - persistent
+- persistent-sqlite
 - persistent-template
 - servant
 - servant-server
