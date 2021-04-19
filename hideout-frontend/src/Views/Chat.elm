@@ -36,6 +36,7 @@ view model =
                 ] <|
                 List.map msgView model.chatStatus.msgs
 
+            -- Input
             , Element.el
                 [ Element.width <| Element.fill
                 , Element.paddingEach { top = 40, bottom = 0, left = 0, right = 0 }
@@ -50,6 +51,7 @@ view model =
                     , label = Input.labelAbove [] Element.none
                     , spellcheck = False
                     }
+
             -- Tools below input.
             , Element.row
                 [ Element.paddingXY 0 10

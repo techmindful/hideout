@@ -38,7 +38,7 @@ renderer =
     { heading = heading
     , paragraph =
         Element.paragraph
-            []
+            [ Element.spacingXY 0 15 ]
     , thematicBreak = Element.none
     , text = \value -> Element.paragraph [] [ Element.text value ]
     , strong = \content -> Element.paragraph [ Font.bold ] content
@@ -51,7 +51,7 @@ renderer =
                 { url = destination
                 , label =
                     Element.paragraph
-                        [ Font.color (Element.rgb255 0 0 255)
+                        [ Font.underline
                         , Element.htmlAttribute (Html.Attributes.style "overflow-wrap" "break-word")
                         , Element.htmlAttribute (Html.Attributes.style "word-break" "break-word")
                         ]
