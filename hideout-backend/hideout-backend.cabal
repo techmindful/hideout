@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 523fe8255be8575e3ed1bb05fa84a153c074d9d2fcbc3a786ac6f86b6fe90ed2
+-- hash: bdbbd3f40e7b6d2d2b0b93e689fd2e0657d185d45c405e46924edf2a7aad2bee
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -48,10 +48,12 @@ library
     , persistent
     , persistent-sqlite
     , persistent-template
+    , resource-pool
     , servant
     , servant-server
     , servant-websockets
     , stm
+    , text
     , wai
     , wai-cors
     , warp
@@ -80,10 +82,12 @@ executable hideout-backend-exe
     , persistent
     , persistent-sqlite
     , persistent-template
+    , resource-pool
     , servant
     , servant-server
     , servant-websockets
     , stm
+    , text
     , wai
     , wai-cors
     , warp
@@ -116,10 +120,12 @@ test-suite hideout-backend-test
     , persistent
     , persistent-sqlite
     , persistent-template
+    , resource-pool
     , servant
     , servant-server
     , servant-websockets
     , stm
+    , text
     , wai
     , wai-cors
     , warp

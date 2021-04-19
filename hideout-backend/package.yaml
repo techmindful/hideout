@@ -32,10 +32,12 @@ dependencies:
 - persistent
 - persistent-sqlite
 - persistent-template
+- resource-pool
 - servant
 - servant-server
 - servant-websockets
 - stm
+- text
 - wai
 - warp
 - wai-cors

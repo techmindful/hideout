@@ -28,7 +28,7 @@ import qualified Network.WebSockets as WebSock
 
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
-import           Database.Persist.Sql ( runMigration, runSqlPool )
+import           Database.Persist.Sql ( SqlBackend, runMigration, runSqlPool )
 import           Database.Persist.Sqlite ( createSqlitePool )
 
 import           Control.Error.Util ( failWith )
@@ -51,11 +51,14 @@ import           Data.Function ( (&) )
 import           Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
+import           Data.Pool ( Pool )
+import           Data.Text ( Text )
 import           GHC.Generics ( Generic )
 
 
 data AppState = AppState
-  { letterMetas :: TVar ( Map String LetterMeta )
+  { dbConnPool :: Pool SqlBackend
+  , letterMetas :: TVar ( Map String LetterMeta )
   , chats :: TVar ( Map ChatId Chat )
   } deriving ( Generic )
 
@@ -400,14 +403,12 @@ startApp = do
   dbConnPool <- runStderrLoggingT $ createSqlitePool "database.db" 5
   runSqlPool ( runMigration migrateAll ) dbConnPool
 
-  let testLetter = Letter { letterBody = "test", letterMaxReadCount = 3 }
-  putStrLn $ show testLetter
-
   initLetterMetas <- atomically $ newTVar Map.empty
   initChats       <- atomically $ newTVar Map.empty
   let initAppState = AppState {
-      letterMetas  = initLetterMetas
-    , chats        = initChats
+      dbConnPool  = dbConnPool
+    , letterMetas = initLetterMetas
+    , chats       = initChats
     }
 
   Warp.run 8080 $ app initAppState
