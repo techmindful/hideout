@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 65b8d3c37792acdde97bf03caf633a33e67b4b5d7cae8b5e2c877b559e91e557
+-- hash: 3a72b44ebd2228a2cf0b6ff2c056553d2fedb20b04b9ce3b98f79fa88d8aa2ae
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -44,6 +44,8 @@ library
     , generic-lens
     , lens
     , mtl
+    , persistent
+    , persistent-template
     , servant
     , servant-server
     , servant-websockets
@@ -72,6 +74,8 @@ executable hideout-backend-exe
     , hideout-backend
     , lens
     , mtl
+    , persistent
+    , persistent-template
     , servant
     , servant-server
     , servant-websockets
@@ -104,6 +108,8 @@ test-suite hideout-backend-test
     , hspec-wai-json
     , lens
     , mtl
+    , persistent
+    , persistent-template
     , servant
     , servant-server
     , servant-websockets

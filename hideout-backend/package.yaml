@@ -28,6 +28,8 @@ dependencies:
 - generic-lens
 - lens
 - mtl
+- persistent
+- persistent-template
 - servant
 - servant-server
 - servant-websockets

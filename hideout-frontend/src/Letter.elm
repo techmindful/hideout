@@ -16,9 +16,12 @@ type alias LetterMeta =
 
 
 letterJsonDec : JDec.Decoder Letter
-letterJsonDec = JDec.map2 Letter ( field "body" string ) ( field "maxReadCount" int )
+letterJsonDec = JDec.map2 Letter ( field "letterBody" string ) ( field "letterMaxReadCount" int )
 
 
 letterMetaJsonDec : JDec.Decoder LetterMeta
-letterMetaJsonDec = JDec.map2 LetterMeta ( field "letter" letterJsonDec ) ( field "readCount" int )
+letterMetaJsonDec =
+    JDec.map2 LetterMeta
+        ( field "letterMetaLetter" letterJsonDec )
+        ( field "letterMetaReadCount" int )
 

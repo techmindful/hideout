@@ -78,12 +78,13 @@ readLetter letterId = do
     Nothing -> Servant.throwError Servant.err404
     Just oldLetterMeta -> do
 
-      let newLetterMeta = oldLetterMeta & #readCount %~ ( (+1) :: Int -> Int )
+      let newLetterMeta = oldLetterMeta & #letterMetaReadCount %~ ( (+1) :: Int -> Int )
 
           -- Delete letter from memory if maxReadCount is reached.
           -- Otherwise, increment the read count and update the Map.
           newLetterMetas =
-            if newLetterMeta ^. #readCount == newLetterMeta ^. #letter . #maxReadCount then
+            if newLetterMeta ^. #letterMetaReadCount ==
+               newLetterMeta ^. #letterMetaLetter . #letterMaxReadCount then
               Map.delete letterId oldLetterMetas
             else
               Map.insert letterId newLetterMeta oldLetterMetas
@@ -110,7 +111,7 @@ mkNewLetter letter = do
     hash <- getRandomHash
 
     -- Create a new LetterMeta, and insert it into AppState.
-    let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
+    let newLetterMeta  = LetterMeta { letterMetaLetter = letter, letterMetaReadCount = 0 }
         newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
@@ -153,10 +154,10 @@ spawnPersistChat maxJoinCountInput = do
           }
 
       let chatIdLetter = Letter {
-            body =
+            letterBody =
               "You are invited to a Hideout persistent chat. Below is the link to the chat room. Bookmark the chat (not this letter), and you can send private messages to your contacts at any time.\nDo not post the chat link anywhere.\n[http://localhost:8000/chat/" ++ newChatIdStr ++ "](http://localhost:8000/chat/" ++ newChatIdStr ++ ")"
 
-          , maxReadCount = int
+          , letterMaxReadCount = int
           }
 
       mkNewLetter chatIdLetter
