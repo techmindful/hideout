@@ -9,11 +9,12 @@
 {-# language TemplateHaskell #-}
 {-# language TypeOperators #-}
 
-module Lib
+module App
     ( startApp
     , app
     ) where
 
+import           Letter
 import           Chat
 import           Utils ( readPosInt )
     
@@ -48,24 +49,6 @@ import           Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
 import           GHC.Generics ( Generic )
-
-
-data Letter = Letter
-  { body :: String
-  , maxReadCount :: Int
-  }
-  deriving ( Generic, Show )
-instance FromJSON Letter
-instance ToJSON Letter
-
-
-data LetterMeta = LetterMeta
-  { letter  :: Letter
-  , readCount :: Int
-  }
-  deriving ( Generic, Show )
-instance FromJSON LetterMeta
-instance ToJSON LetterMeta
 
 
 data AppState = AppState
