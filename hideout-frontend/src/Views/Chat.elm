@@ -103,9 +103,13 @@ msgBundleView bundle =
         [ Element.width Element.fill
         , Element.spacingXY 0 10
         ] <|
-        [ Element.paragraph
-            [ Font.bold ]
-            [ Element.text bundle.username ]
+        [ case Chat.isMetaBundle bundle of
+            False ->
+                Element.paragraph
+                    [ Font.bold ]
+                    [ Element.text bundle.username ]
+
+            True -> Element.none
         ] ++
         List.map msgView bundle.msgs
 

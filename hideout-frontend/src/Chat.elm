@@ -4,6 +4,7 @@ module Chat exposing
     , MsgFromServer
     , MsgBody
     , MsgBundle
+    , isMetaBundle
     , mkJoinMsg
     , mkContentMsg
     , mkMsgBundles
@@ -117,30 +118,59 @@ type alias MsgBundle =
     { username : String
     , msgs : List MsgFromServer
     }
+
+
 mkMsgBundles : List MsgFromServer -> List MsgBundle
 mkMsgBundles msgFromServers =
     let
         combine : MsgFromServer -> List MsgBundle -> List MsgBundle
         combine msg bundles =
+            let
+                appended =
+                    { username = msg.username, msgs = [ msg ] } :: bundles
+            in
             case
                 Maybe.map2 Tuple.pair
                     ( List.head bundles )
                     ( List.tail bundles ) of
 
                 Just ( headBundle, tailBundles ) ->
-                    if msg.username == headBundle.username then
-                        let
-                            updatedHeadBundle = 
-                                { headBundle | msgs = msg :: headBundle.msgs }
-                        in
-                        updatedHeadBundle :: tailBundles
+                    if isMetaMsg msg ||
+                       ( Maybe.withDefault False <| Maybe.map isMetaMsg <| List.head headBundle.msgs )
+                    then appended
                     else
-                        { username = msg.username, msgs = [ msg ] } :: bundles
+                        if msg.username == headBundle.username then
+                            let
+                                updatedHeadBundle = 
+                                    { headBundle | msgs = msg :: headBundle.msgs }
+                            in
+                            updatedHeadBundle :: tailBundles
+                        else
+                            appended
 
+                -- Empty bundle list
                 Nothing ->
-                    [ { username = msg.username, msgs = [ msg ] } ]
+                    appended
 
     in
     List.foldr combine [] msgFromServers
 
+
+isMetaBundle : MsgBundle -> Bool
+isMetaBundle bundle =
+    case Maybe.map isMetaMsg <| List.head bundle.msgs of
+        Just True -> True
+        _ -> False
+
+
+isMetaMsg : MsgFromServer -> Bool
+isMetaMsg msg =
+    let
+        msgTypeStr = untag msg.msgFromClient.msgType
+    in
+    if msgTypeStr == "join" ||
+       msgTypeStr == "nameChange" ||
+       msgTypeStr == "leave"
+    then True
+    else False
 
