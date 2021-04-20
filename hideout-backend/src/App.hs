@@ -14,6 +14,7 @@ module App
     , app
     ) where
 
+import           DbLetterMeta
 import           Letter
 import           Chat
 import           Utils ( readPosInt )
@@ -86,13 +87,13 @@ readLetter letterId = do
     Nothing -> Servant.throwError Servant.err404
     Just oldLetterMeta -> do
 
-      let newLetterMeta = oldLetterMeta & #letterMetaReadCount %~ ( (+1) :: Int -> Int )
+      let newLetterMeta = oldLetterMeta & #readCount %~ ( (+1) :: Int -> Int )
 
           -- Delete letter from memory if maxReadCount is reached.
           -- Otherwise, increment the read count and update the Map.
           newLetterMetas =
-            if newLetterMeta ^. #letterMetaReadCount ==
-               newLetterMeta ^. #letterMetaLetter . #letterMaxReadCount then
+            if newLetterMeta ^. #readCount ==
+               newLetterMeta ^. #letter . #maxReadCount then
               Map.delete letterId oldLetterMetas
             else
               Map.insert letterId newLetterMeta oldLetterMetas
@@ -119,12 +120,12 @@ mkNewLetter letter = do
     hash <- getRandomHash
 
     -- Create a new LetterMeta, and insert it into AppState.
-    let newLetterMeta  = LetterMeta { letterMetaLetter = letter, letterMetaReadCount = 0 }
+    let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
         newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
     -- TODO: This is just a test save.
-    runSqlPool ( Persist.insert $ LetterMetaWithId hash newLetterMeta ) ( appState ^. #dbConnPool )
+    runSqlPool ( Persist.insert $ DbLetterMeta hash newLetterMeta ) ( appState ^. #dbConnPool )
 
     return hash
 
@@ -161,10 +162,10 @@ spawnPersistChat maxJoinCountInput = do
           }
 
       let chatIdLetter = Letter {
-            letterBody =
+            body =
               "You are invited to a Hideout persistent chat. Below is the link to the chat room. Bookmark the chat (not this letter), and you can send private messages to your contacts at any time.\nDo not post the chat link anywhere.\n[http://localhost:8000/chat/" ++ newChatIdStr ++ "](http://localhost:8000/chat/" ++ newChatIdStr ++ ")"
 
-          , letterMaxReadCount = int
+          , maxReadCount = int
           }
 
       mkNewLetter chatIdLetter
@@ -404,18 +405,18 @@ startApp = do
   dbConnPool <- runStderrLoggingT $ createSqlitePool "database.db" 5
   runSqlPool ( runMigration migrateAll ) dbConnPool
 
-  dbLetterMetaWithIds :: [ Persist.Entity LetterMetaWithId ] <-
+  dbLetterMetaEnts :: [ Persist.Entity DbLetterMeta ] <-
     runSqlPool ( selectList [] [] ) dbConnPool
 
-  let letterMetaWithIds = fmap Persist.entityVal dbLetterMetaWithIds
+  let dbLetterMetas = fmap Persist.entityVal dbLetterMetaEnts
 
-      split :: LetterMetaWithId -> ( String, LetterMeta )
-      split letterMetaWithId =
-        ( letterMetaWithId & letterMetaWithIdId'
-        , letterMetaWithId & letterMetaWithIdVal
+      split :: DbLetterMeta -> ( String, LetterMeta )
+      split dbLetterMeta =
+        ( dbLetterMeta & dbLetterMetaId'
+        , dbLetterMeta & dbLetterMetaVal
         )
 
-      idLetterMetaPairs = fmap split letterMetaWithIds
+      idLetterMetaPairs = fmap split dbLetterMetas
 
   initLetterMetas <- atomically $ newTVar $ Map.fromList idLetterMetaPairs
   initChats       <- atomically $ newTVar Map.empty

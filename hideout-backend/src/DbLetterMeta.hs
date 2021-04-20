@@ -14,30 +14,30 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Letter where
+module DbLetterMeta where
 
-import           Database.Persist.TH ( derivePersistField )
+import           Letter
+
+import           Database.Persist.TH
+  ( mkMigrate
+  , mkPersist
+  , persistLowerCase
+  , share
+  , sqlSettings
+  )
 
 import qualified Data.Aeson as Aeson
 import           Data.Aeson ( FromJSON, ToJSON )
 import           GHC.Generics ( Generic )
 
 
-data Letter = Letter
-  { body :: String
-  , maxReadCount :: Int
-  } deriving ( Generic, Read, Show )
-instance FromJSON Letter
-instance ToJSON   Letter
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 
+  DbLetterMeta
+    id' String
+    val LetterMeta
+    Id' id'  -- Uniqueness Constraint
+    deriving Show
 
-data LetterMeta = LetterMeta
-  { letter :: Letter
-  , readCount :: Int
-  } deriving ( Generic, Read, Show )
-instance FromJSON LetterMeta
-instance ToJSON   LetterMeta
-
-derivePersistField "Letter"
-derivePersistField "LetterMeta"
+|]
 
