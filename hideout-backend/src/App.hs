@@ -10,9 +10,13 @@
 {-# language TypeOperators #-}
 
 module App
-    ( startApp
-    , app
-    ) where
+  ( API
+  , api
+  , startApp
+  , initApp
+  , mkApp
+  ) where
+
 
 import           DbTypes
 import           Letter
@@ -412,8 +416,8 @@ api :: Servant.Proxy API
 api = Servant.Proxy
 
 
-app :: AppState -> Servant.Application
-app appState =
+mkApp :: AppState -> Servant.Application
+mkApp appState =
   cors ( \_ -> Just $ CorsResourcePolicy
           { corsOrigins = Nothing
           , corsMethods = [ "GET", "PUT" ]
@@ -429,8 +433,8 @@ app appState =
 
 
 
-startApp :: IO ()
-startApp = do
+initApp :: IO AppState
+initApp = do
 
   dbConnPool <- runStderrLoggingT $ createSqlitePool "database.db" 5
   runSqlPool ( runMigration migrateAll ) dbConnPool
@@ -471,5 +475,10 @@ startApp = do
     , letterMetas  = initLetterMetas
     , chats        = initRooms
     }
+  return initAppState
 
-  Warp.run 8080 $ app initAppState
+
+startApp :: IO ()
+startApp = do
+  initAppState <- initApp
+  Warp.run 8080 $ mkApp initAppState

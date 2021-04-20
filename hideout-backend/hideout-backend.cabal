@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 239cbca3df4387c8695ecf85c7d670cb0bea4b1be0719345d59294437cb2ed84
+-- hash: 3cc1a6305e77642e186f19af639195a1e9ce3777fa3f3481a752fac3fc546ce4
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -115,6 +115,7 @@ test-suite hideout-backend-test
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , http-client
     , lens
     , monad-logger
     , mtl
@@ -123,6 +124,7 @@ test-suite hideout-backend-test
     , persistent-template
     , resource-pool
     , servant
+    , servant-client
     , servant-server
     , servant-websockets
     , stm

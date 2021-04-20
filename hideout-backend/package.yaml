@@ -73,3 +73,5 @@ tests:
     - hspec-wai
     - hspec-wai-json
     - aeson
+    - http-client
+    - servant-client
