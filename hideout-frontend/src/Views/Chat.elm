@@ -34,7 +34,7 @@ view model =
                 , Element.spacingXY 0 30
                 , Element.scrollbarY
                 ] <|
-                List.map msgView model.chatStatus.msgs
+                List.map msgBundleView <| Chat.mkMsgBundles model.chatStatus.msgs
 
             -- Input
             , Element.el
@@ -96,6 +96,20 @@ view model =
             ]
         ]
 
+
+msgBundleView : Chat.MsgBundle -> Element m
+msgBundleView bundle =
+    Element.textColumn
+        [ Element.width Element.fill
+        , Element.spacingXY 0 10
+        ] <|
+        [ Element.paragraph
+            [ Font.bold ]
+            [ Element.text bundle.username ]
+        ] ++
+        List.map msgView bundle.msgs
+
+
 msgView : Chat.MsgFromServer -> Element m
 msgView msg =
     let msgFromClient = msg.msgFromClient
@@ -122,17 +136,9 @@ msgView msg =
                 [ Element.text <| msg.username ++ " left." ]
 
         _ ->
-            Element.textColumn
-                [ Element.width Element.fill
-                , Element.spacingXY 0 10
-                ]
-                [ Element.paragraph
-                    [ Font.bold ]
-                    [ Element.text msg.username ]
-                , Element.column
-                    [] <|
-                    Utils.Markdown.render <| untag msgFromClient.msgBody
-                ]
+            Element.column
+                [] <|
+                Utils.Markdown.render <| untag msgFromClient.msgBody
 
 
 userView : String -> Element m

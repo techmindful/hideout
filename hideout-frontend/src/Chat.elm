@@ -3,8 +3,10 @@ module Chat exposing
     , Status
     , MsgFromServer
     , MsgBody
+    , MsgBundle
     , mkJoinMsg
     , mkContentMsg
+    , mkMsgBundles
     , mkNameChangeMsg
     , msgFromServerDecoder
     , WsMsg(..)
@@ -16,6 +18,7 @@ import Element
 import Element exposing ( Element )
 import Json.Decode as JDec
 import Json.Encode as JEnc
+import List.Extra as List
 import Tagged exposing ( Tagged, tag, untag )
 
 
@@ -106,4 +109,38 @@ mkWsMsg msgType msgBody =
         [ ( "msgType", JEnc.string msgType )
         , ( "msgBody", JEnc.string msgBody )
         ]
+
+
+{-| A list of messages that a user has sent continuously, to be displayed together, without adding a username header at each message.
+-}
+type alias MsgBundle =
+    { username : String
+    , msgs : List MsgFromServer
+    }
+mkMsgBundles : List MsgFromServer -> List MsgBundle
+mkMsgBundles msgFromServers =
+    let
+        combine : MsgFromServer -> List MsgBundle -> List MsgBundle
+        combine msg bundles =
+            case
+                Maybe.map2 Tuple.pair
+                    ( List.head bundles )
+                    ( List.tail bundles ) of
+
+                Just ( headBundle, tailBundles ) ->
+                    if msg.username == headBundle.username then
+                        let
+                            updatedHeadBundle = 
+                                { headBundle | msgs = msg :: headBundle.msgs }
+                        in
+                        updatedHeadBundle :: tailBundles
+                    else
+                        { username = msg.username, msgs = [ msg ] } :: bundles
+
+                Nothing ->
+                    [ { username = msg.username, msgs = [ msg ] } ]
+
+    in
+    List.foldr combine [] msgFromServers
+
 
