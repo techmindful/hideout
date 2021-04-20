@@ -91,6 +91,14 @@ view model =
                 , Element.text " times."
                 ]
             , posIntInputHint model.letterMaxReadCountInput
+
+            , Input.checkbox
+                []
+                { onChange = LetterPersistInput
+                , icon = Input.defaultCheckbox
+                , checked = model.letterPersistInput
+                , label = Input.labelRight [] <| Element.text "Disk Persistence"
+                }
             ]
 
         , Element.row

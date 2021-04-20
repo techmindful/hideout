@@ -20,6 +20,7 @@ type alias Model =
     , userStatus : UserStatus
     , letterInput : String
     , letterMaxReadCountInput : PosIntInput
+    , letterPersistInput : Bool
     , dispChatMaxJoinCountInput : PosIntInput
     , persistChatMaxJoinCountInput : PosIntInput
     , chatStatus : Chat.Status
@@ -35,6 +36,7 @@ type Msg
     | GotReadLetterResp ( Result Http.Error LetterMeta )
     | LetterInput String
     | LetterMaxReadCountInput String
+    | LetterPersistInput Bool
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
 

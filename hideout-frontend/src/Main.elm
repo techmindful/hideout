@@ -65,12 +65,16 @@ init flags url navKey =
       , navKey = navKey
       , isWsReady = False
       , userStatus = userStatus
+
       , letterInput = ""
       , letterMaxReadCountInput = Good 1
+      , letterPersistInput = True
+
       , dispChatMaxJoinCountInput = Good 2
       , persistChatMaxJoinCountInput = Good 2
       , chatStatus = { id = tag "", msgs = [], input = tag "", users = [] }
       , newNameInput = ""
+
       , tempResp = ""
       }
     , Cmd.batch
@@ -135,6 +139,9 @@ update msg ( { chatStatus } as model ) =
             , Cmd.none
             )
 
+        LetterPersistInput input ->
+            ( { model | letterPersistInput = input }, Cmd.none )
+
         LetterSend ->
             case model.letterMaxReadCountInput of
                 Bad _ -> ( model, Cmd.none )
@@ -149,6 +156,7 @@ update msg ( { chatStatus } as model ) =
                                 JEnc.object
                                     [ ( "body", JEnc.string model.letterInput )
                                     , ( "maxReadCount", JEnc.int maxReadCount )
+                                    , ( "persist", JEnc.bool model.letterPersistInput )
                                     ]
                         , expect = Http.expectString GotLetterSendResp
                         , timeout = Nothing

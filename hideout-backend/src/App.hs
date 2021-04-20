@@ -135,8 +135,10 @@ mkNewLetter letter = do
         newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
-    -- TODO: This is just a test save.
-    runSqlPool ( Persist.insert $ DbLetterMeta hash newLetterMeta ) ( appState ^. #dbConnPool )
+    if letter ^. #persist then
+      runSqlPool ( Persist.insert_ $ DbLetterMeta hash newLetterMeta ) ( appState ^. #dbConnPool )
+    else
+      return ()
 
     return hash
 
@@ -177,6 +179,7 @@ spawnPersistChat maxJoinCountInput = do
               "You are invited to a Hideout persistent chat. Below is the link to the chat room. Bookmark the chat (not this letter), and you can send private messages to your contacts at any time.\nDo not post the chat link anywhere.\n[http://localhost:8000/chat/" ++ newChatIdStr ++ "](http://localhost:8000/chat/" ++ newChatIdStr ++ ")"
 
           , maxReadCount = int
+          , persist = True
           }
 
       mkNewLetter chatIdLetter

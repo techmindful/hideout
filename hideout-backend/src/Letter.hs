@@ -26,6 +26,7 @@ import           GHC.Generics ( Generic )
 data Letter = Letter
   { body :: String
   , maxReadCount :: Int
+  , persist :: Bool
   } deriving ( Generic, Read, Show )
 instance FromJSON Letter
 instance ToJSON   Letter
