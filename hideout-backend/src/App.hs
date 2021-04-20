@@ -208,9 +208,15 @@ mkNewChat config = do
         , config = config
         }
 
+    -- Update memory AppState.
     let newChats = Map.insert newChatId ( newChat, Map.empty ) oldChats
-
     atomically $ writeTVar ( appState ^. #chats ) newChats
+
+    -- Save to db, if persistent.
+    if config ^. #persist then
+      runSqlPool ( Persist.insert_ $ DbChat newChatId newChat ) ( appState ^. #dbConnPool )
+    else
+      return ()
 
     return newChatIdStr
 
@@ -431,12 +437,28 @@ startApp = do
 
       idLetterMetaPairs = fmap split dbLetterMetas
 
+  dbChatEnts :: [ Persist.Entity DbChat ] <-
+    runSqlPool ( selectList [] [] ) dbConnPool
+
+  let dbChats = fmap Persist.entityVal dbChatEnts
+
+      mkRoom :: DbChat -> ( ChatId, ( Chat, Map Int User ) )
+      mkRoom dbChat =
+        ( dbChat & dbChatChatId
+        -- Room
+        , ( dbChat & dbChatVal
+          , Map.empty
+          )
+        )
+
+      rooms = fmap mkRoom dbChats
+
   initLetterMetas <- atomically $ newTVar $ Map.fromList idLetterMetaPairs
-  initChats       <- atomically $ newTVar Map.empty
+  initRooms       <- atomically $ newTVar $ Map.fromList rooms
   let initAppState = AppState {
       dbConnPool   = dbConnPool
     , letterMetas  = initLetterMetas
-    , chats        = initChats
+    , chats        = initRooms
     }
 
   Warp.run 8080 $ app initAppState
