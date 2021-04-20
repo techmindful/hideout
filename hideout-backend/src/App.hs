@@ -240,12 +240,12 @@ chatHandler chatIdStr conn = do
 
   let getChats = atomically $ readTVar ( appState ^. #chats )
 
-  let thisChatId = ChatId chatIdStr
+  let chatId = ChatId chatIdStr
 
   chatsBeforeJoin <- liftIO getChats
 
   -- Before joining, first check if chat exists.
-  let maybeChat = Map.lookup thisChatId chatsBeforeJoin
+  let maybeChat = Map.lookup chatId chatsBeforeJoin
   case maybeChat of
     Nothing -> do
       liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
@@ -264,7 +264,7 @@ chatHandler chatIdStr conn = do
 
         let newChat  = chat { joinCount = ( chat ^. #joinCount ) + 1 }
             newUsers = Map.insert userId user users
-            newChats = Map.insert thisChatId ( newChat, newUsers ) chatsBeforeJoin
+            newChats = Map.insert chatId ( newChat, newUsers ) chatsBeforeJoin
 
         -- | This blocks thread too!
         -- If a user already disconnected, this blocks broadcasting to all other users!
@@ -278,7 +278,7 @@ chatHandler chatIdStr conn = do
         let removeUser :: IO ()
             removeUser = liftIO $ do
               chats <- atomically $ readTVar $ appState ^. #chats
-              let  maybeChat = Map.lookup thisChatId chats
+              let  maybeChat = Map.lookup chatId chats
               case maybeChat of
                 -- Chat doesn't exist in AppState anymore, maybe removed by other threads,
                 -- So no need to remove?
@@ -297,7 +297,7 @@ chatHandler chatIdStr conn = do
                       }
                   let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
                       newUsers = Map.delete userId users
-                      newChats = Map.insert thisChatId ( newChat, newUsers ) chats
+                      newChats = Map.insert chatId ( newChat, newUsers ) chats
 
                   -- Update AppState.
                   atomically $ writeTVar ( appState ^. #chats ) newChats
@@ -314,7 +314,7 @@ chatHandler chatIdStr conn = do
 
               chats <- liftIO $ atomically $ readTVar chatsTvar
 
-              ( chat, users ) <- failWith "Chat doesn't exist." $ Map.lookup thisChatId chats
+              ( chat, users ) <- failWith "Chat doesn't exist." $ Map.lookup chatId chats
               user <- failWith "User doesn't exist..?" $ Map.lookup userId $ users
 
               case dataMsg of
@@ -338,7 +338,7 @@ chatHandler chatIdStr conn = do
                     -- Update chat msgs.
                     chat'  = chat & #msgs %~ ( ++ [ msgFromServer ] )
 
-                    -- Update based on msg type.
+                    -- Update users based on msg type.
                     users' =
                       case msgType of
                         "nameChange" ->
@@ -347,9 +347,20 @@ chatHandler chatIdStr conn = do
 
                         _ -> users
 
-                  -- Update chats.
-                  let updatedChats = Map.insert thisChatId ( chat', users' ) chats
+                  -- Update chats in memory.
+                  let updatedChats = Map.insert chatId ( chat', users' ) chats
                   liftIO $ atomically $ writeTVar chatsTvar updatedChats
+
+                  -- Update chats in db, if persistent.
+                  if chat ^. #config . #persist then liftIO $ do
+                    runSqlPool
+                      ( Persist.updateWhere 
+                          [ DbChatChatId ==. chatId ]
+                          [ DbChatVal =. chat' ]
+                      )
+                      ( appState ^. #dbConnPool )
+                  else
+                    return ()
  
                   -- Broadcast the msg.
                   broadcast ( Map.elems users' ) $ Aeson.encode msgFromServer
