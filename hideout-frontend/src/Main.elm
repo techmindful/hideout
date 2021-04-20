@@ -146,7 +146,9 @@ update msg ( { chatStatus } as model ) =
             case model.letterMaxReadCountInput of
                 Bad _ -> ( model, Cmd.none )
                 Good maxReadCount ->
-                    ( { model | userStatus = SentLetter }
+                    ( { model | userStatus = SentLetter
+                              , letterInput = ""
+                      }
                     , Http.request
                         { method = "PUT"
                         , headers = []
@@ -243,7 +245,7 @@ update msg ( { chatStatus } as model ) =
             )
 
         MessageSend ->
-            ( model
+            ( { model | chatStatus = { chatStatus | input = tag "" } }
             , port_SendWsMsg <| Chat.mkContentMsg model.chatStatus.input
             )
 
