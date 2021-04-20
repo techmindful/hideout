@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c66c228cba9a0a86a870408b7fee2e66765926268caccf6c6f534bb5bb4f6366
+-- hash: 130dcc5dc12df90b3317fb6e3d8f066e41b000d0eaf4c9f2e40dcba3edd43158
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
   exposed-modules:
       App
       Chat
+      DbChat
       DbLetterMeta
       Letter
       Utils

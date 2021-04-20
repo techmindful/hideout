@@ -63,7 +63,7 @@ import           GHC.Generics ( Generic )
 data AppState = AppState
   { dbConnPool :: Pool SqlBackend
   , letterMetas :: TVar ( Map String LetterMeta )
-  , chats :: TVar ( Map ChatId Chat )
+  , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
   } deriving ( Generic )
 
 
@@ -203,13 +203,12 @@ mkNewChat config = do
     let newChatId = ChatId newChatIdStr
     
     let newChat = Chat {
-          users = Map.empty
-        , msgs = []
+          msgs = []
         , joinCount = 0
         , config = config
         }
 
-    let newChats = Map.insert newChatId newChat oldChats
+    let newChats = Map.insert newChatId ( newChat, Map.empty ) oldChats
 
     atomically $ writeTVar ( appState ^. #chats ) newChats
 
@@ -245,7 +244,7 @@ chatHandler chatIdStr conn = do
     Nothing -> do
       liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
     -- Chat exists:
-    Just chat -> liftIO $ do
+    Just ( chat, users ) -> liftIO $ do
       if isMaxJoined chat then
         putStrLn "Maximum join count is reached."  -- TODO: Report to client.
       -- Can join:
@@ -257,16 +256,15 @@ chatHandler chatIdStr conn = do
             , conn = conn
             }
 
-        let newChat  = chat { users = Map.insert userId user $ chat ^. #users
-                            , joinCount = ( chat & joinCount ) + 1
-                            }
-            newChats = Map.insert thisChatId newChat chatsBeforeJoin
+        let newChat  = chat { joinCount = ( chat ^. #joinCount ) + 1 }
+            newUsers = Map.insert userId user users
+            newChats = Map.insert thisChatId ( newChat, newUsers ) chatsBeforeJoin
 
         -- | This blocks thread too!
         -- If a user already disconnected, this blocks broadcasting to all other users!
-        let broadcast :: MonadIO m => Chat -> LazyByteStr.ByteString -> m ()
-            broadcast chat byteStr =
-              liftIO $ forM_ ( Map.elems $ chat ^. #users ) $
+        let broadcast :: MonadIO m => [ User ] -> LazyByteStr.ByteString -> m ()
+            broadcast users byteStr =
+              liftIO $ forM_ users $
                 ( \user ->
                     WebSock.sendTextData ( user ^. #conn ) byteStr
                 )
@@ -279,8 +277,8 @@ chatHandler chatIdStr conn = do
                 -- Chat doesn't exist in AppState anymore, maybe removed by other threads,
                 -- So no need to remove?
                 Nothing -> return ()
-                Just chat -> do
-                  let username = case Map.lookup userId $ chat ^. #users of
+                Just ( chat, users ) -> do
+                  let username = case Map.lookup userId users of
                         Just user -> user ^. #name
                         Nothing -> "[Error: User not found]"
                   let msgFromClient = MsgFromClient {
@@ -291,16 +289,17 @@ chatHandler chatIdStr conn = do
                         msgFromClient = msgFromClient
                       , username = username
                       }
-                  let newChat  = chat & #users %~ Map.delete userId
-                                      & #msgs  %~ ( ++ [ msgFromServer ] )
-                      newChats = Map.insert thisChatId newChat chats
+                  let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
+                      newUsers = Map.delete userId users
+                      newChats = Map.insert thisChatId ( newChat, newUsers ) chats
+
                   -- Update AppState.
                   atomically $ writeTVar ( appState ^. #chats ) newChats
                   -- Important to broadcast to new chat,
                   -- Don't broadcast to disconnected users. That blocks the whole thing.
-                  broadcast newChat $ Aeson.encode msgFromServer
+                  broadcast ( Map.elems newUsers ) $ Aeson.encode msgFromServer
 
-        let loop :: TVar ( Map ChatId Chat ) -> ExceptT String IO ()
+        let loop :: TVar ( Map ChatId ( Chat, Map Int User ) ) -> ExceptT String IO ()
             loop chatsTvar = do
               -- Check for incoming message.
               -- THIS BLOCKS THE THREAD!!!
@@ -309,8 +308,8 @@ chatHandler chatIdStr conn = do
 
               chats <- liftIO $ atomically $ readTVar chatsTvar
 
-              chat  <- failWith "Chat doesn't exist."   $ Map.lookup thisChatId chats
-              user  <- failWith "User doesn't exist..?" $ Map.lookup userId $ chat ^. #users
+              ( chat, users ) <- failWith "Chat doesn't exist." $ Map.lookup thisChatId chats
+              user <- failWith "User doesn't exist..?" $ Map.lookup userId $ users
 
               case dataMsg of
                 WebSock.Text byteStr _ -> do
@@ -330,24 +329,24 @@ chatHandler chatIdStr conn = do
 
                   -- Update chat.
                   let
-                    -- Update msgs.
+                    -- Update chat msgs.
                     chat'  = chat & #msgs %~ ( ++ [ msgFromServer ] )
 
                     -- Update based on msg type.
-                    chat'' =
+                    users' =
                       case msgType of
                         "nameChange" ->
                           let updatedUser = user & #name .~ msgBody
-                          in chat' & #users %~ Map.insert userId updatedUser
+                          in Map.insert userId updatedUser users
 
-                        _ -> chat'
+                        _ -> users
 
                   -- Update chats.
-                  let updatedChats = Map.insert thisChatId chat'' chats
+                  let updatedChats = Map.insert thisChatId ( chat', users' ) chats
                   liftIO $ atomically $ writeTVar chatsTvar updatedChats
  
                   -- Broadcast the msg.
-                  broadcast chat'' $ Aeson.encode msgFromServer
+                  broadcast ( Map.elems users' ) $ Aeson.encode msgFromServer
 
                 _ -> liftIO $ putStrLn "Data Message is in binary form."
 
@@ -367,7 +366,7 @@ chatHandler chatIdStr conn = do
         -- Give msg history first.
         let msgHistory = MsgHistory {
           msgs  = chat ^. #msgs
-        , users = fmap ( ^. #name ) $ Map.elems $ chat ^. #users
+        , users = fmap ( ^. #name ) $ Map.elems users
         }
         WebSock.sendTextData ( user ^. #conn ) ( Aeson.encode msgHistory )
 

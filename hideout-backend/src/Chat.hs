@@ -41,8 +41,7 @@ data User = User
 
 
 data Chat = Chat
-  { users :: Map Int User
-  , msgs :: [ MsgFromServer ]
+  { msgs :: [ MsgFromServer ]
   , joinCount :: Int
   , config :: Config
   } deriving ( Generic )
