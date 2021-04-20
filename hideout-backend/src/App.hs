@@ -30,6 +30,7 @@ import qualified Network.WebSockets as WebSock
 import           Crypto.Random ( seedNew, seedToInteger )
 import           Crypto.Hash ( SHA256(..), hashWith )
 import qualified Database.Persist as Persist
+import           Database.Persist ( (=.), (==.), (+=.) )
 import           Database.Persist.Class ( selectList )
 import           Database.Persist.Sql ( SqlBackend, runMigration, runSqlPool )
 import           Database.Persist.Sqlite ( createSqlitePool )
@@ -85,23 +86,33 @@ readLetter letterId = do
   let maybeLetterMeta = Map.lookup letterId oldLetterMetas
   case maybeLetterMeta of
     Nothing -> Servant.throwError Servant.err404
-    Just oldLetterMeta -> do
+    Just oldLetterMeta -> liftIO $ do
 
       let newLetterMeta = oldLetterMeta & #readCount %~ ( (+1) :: Int -> Int )
 
-          -- Delete letter from memory if maxReadCount is reached.
-          -- Otherwise, increment the read count and update the Map.
-          newLetterMetas =
-            if newLetterMeta ^. #readCount ==
-               newLetterMeta ^. #letter . #maxReadCount then
-              Map.delete letterId oldLetterMetas
-            else
-              Map.insert letterId newLetterMeta oldLetterMetas
+      -- Max read count reached:
+      if newLetterMeta ^. #readCount ==
+         newLetterMeta ^. #letter . #maxReadCount then do
 
-      liftIO $ atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
+         -- Delete from memory.
+         let newLetterMetas = Map.delete letterId oldLetterMetas
+         atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
+
+         -- Delete from db.
+         runSqlPool ( Persist.deleteBy $ Id' letterId ) ( appState ^. #dbConnPool )
+
+      else do
+
+        -- Update AppState in memory.
+        let newLetterMetas = Map.insert letterId newLetterMeta oldLetterMetas
+        atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
+
+        -- Update db.
+        runSqlPool
+          ( Persist.updateWhere [ DbLetterMetaId' ==. letterId ] [ DbLetterMetaVal =. newLetterMeta ] )
+          ( appState ^. #dbConnPool )
 
       return newLetterMeta
-
 
 
 writeLetter :: Letter -> ReaderT AppState Servant.Handler String
