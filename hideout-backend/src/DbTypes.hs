@@ -14,8 +14,9 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module DbLetterMeta where
+module DbTypes where
 
+import           Chat
 import           Letter
 
 import           Database.Persist.TH
@@ -34,9 +35,15 @@ import           GHC.Generics ( Generic )
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 
   DbLetterMeta
-    id' String
+    letterId String
     val LetterMeta
-    Id' id'  -- Uniqueness Constraint
+    UniqueLetterId letterId  -- Uniqueness Constraint
+    deriving Show
+
+  DbChat
+    chatId ChatId
+    val Chat
+    UniqueChatId chatId  -- Uniqueness Constraint
     deriving Show
 
 |]

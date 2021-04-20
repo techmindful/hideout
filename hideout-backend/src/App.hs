@@ -14,7 +14,7 @@ module App
     , app
     ) where
 
-import           DbLetterMeta
+import           DbTypes
 import           Letter
 import           Chat
 import           Utils ( readPosInt )
@@ -99,7 +99,7 @@ readLetter letterId = do
          atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
          -- Delete from db.
-         runSqlPool ( Persist.deleteBy $ Id' letterId ) ( appState ^. #dbConnPool )
+         runSqlPool ( Persist.deleteBy $ UniqueLetterId letterId ) ( appState ^. #dbConnPool )
 
       else do
 
@@ -109,7 +109,7 @@ readLetter letterId = do
 
         -- Update db.
         runSqlPool
-          ( Persist.updateWhere [ DbLetterMetaId' ==. letterId ] [ DbLetterMetaVal =. newLetterMeta ] )
+          ( Persist.updateWhere [ DbLetterMetaLetterId ==. letterId ] [ DbLetterMetaVal =. newLetterMeta ] )
           ( appState ^. #dbConnPool )
 
       return newLetterMeta
@@ -425,7 +425,7 @@ startApp = do
 
       split :: DbLetterMeta -> ( String, LetterMeta )
       split dbLetterMeta =
-        ( dbLetterMeta & dbLetterMetaId'
+        ( dbLetterMeta & dbLetterMetaLetterId
         , dbLetterMeta & dbLetterMetaVal
         )
 

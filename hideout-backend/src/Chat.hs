@@ -1,10 +1,13 @@
 {-# language DeriveGeneric #-}
 {-# language DuplicateRecordFields #-}
 {-# language OverloadedLabels #-}
+{-# language TemplateHaskell #-}
 
 module Chat where
 
 import qualified Network.WebSockets as WebSock
+
+import           Database.Persist.TH ( derivePersistField )
 
 import           Control.Lens ( (^.), (.~), (%~) )
 import           Data.Aeson ( FromJSON, ToJSON )
@@ -15,7 +18,7 @@ import           GHC.Generics ( Generic )
 data MsgFromClient = MsgFromClient
   { msgType :: String
   , msgBody :: String
-  } deriving ( Generic, Show )
+  } deriving ( Generic, Read, Show )
 instance FromJSON MsgFromClient
 instance ToJSON   MsgFromClient
 
@@ -23,15 +26,16 @@ instance ToJSON   MsgFromClient
 data MsgFromServer = MsgFromServer
   { msgFromClient :: MsgFromClient
   , username :: String
-  } deriving ( Generic, Show )
+  } deriving ( Generic, Read, Show )
 instance FromJSON MsgFromServer
 instance ToJSON   MsgFromServer
 
 
 newtype ChatId = ChatId { unChatId :: String }
-  deriving ( Eq, Generic, Ord, Show )
+  deriving ( Eq, Generic, Ord, Read, Show )
 instance FromJSON ChatId
 instance ToJSON   ChatId
+derivePersistField "ChatId"
 
 
 data User = User
@@ -40,19 +44,12 @@ data User = User
   } deriving ( Generic )
 
 
-data Chat = Chat
-  { msgs :: [ MsgFromServer ]
-  , joinCount :: Int
-  , config :: Config
-  } deriving ( Generic )
-
-
 data Config = Config
   { maxJoinCount :: Maybe Int
   , expiry :: Expiry
   , persist :: Bool
   , sendHistory :: Bool
-  } deriving ( Generic )
+  } deriving ( Generic, Read, Show )
 instance FromJSON Config
 
 
@@ -60,8 +57,16 @@ data Expiry
   = Empty
   | MaxJoined
   | Never
-  deriving ( Generic )
+  deriving ( Generic, Read, Show )
 instance FromJSON Expiry
+
+
+data Chat = Chat
+  { msgs :: [ MsgFromServer ]
+  , joinCount :: Int
+  , config :: Config
+  } deriving ( Generic, Read, Show )
+derivePersistField "Chat"
 
 
 data MsgHistory = MsgHistory
