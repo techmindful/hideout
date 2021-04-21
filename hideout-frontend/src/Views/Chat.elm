@@ -13,6 +13,8 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
+import Html.Events
+import Json.Decode as JDec
 import String.Extra exposing ( quote )
 import Tagged exposing ( tag, untag )
 import Utils.Markdown
@@ -35,6 +37,8 @@ view model =
                 , Element.spacingXY 0 30
                 , Element.scrollbarY
                 , Element.htmlAttribute <| Html.Attributes.id msgsViewHtmlId
+                , Element.htmlAttribute <|
+                    Html.Events.on "scroll" <| JDec.succeed <| ChatMsgsViewEvent Chat.OnManualScrolled
                 ] <|
                 List.map msgBundleView <| Chat.mkMsgBundles model.chatStatus.msgs
 

@@ -43,6 +43,7 @@ port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_SendWsMsg : String -> Cmd msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
+port port_DebugLog : String -> Cmd msg
 
 
 subscriptions : Model -> Sub Msg
@@ -309,7 +310,7 @@ update msg ( { chatStatus } as model ) =
                                         Dom.setViewportOf
                                             Views.Chat.msgsViewHtmlId 0 viewport.scene.height
                                     )
-                                |> Task.attempt OnAutoScrollChatMsgsView
+                                |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedAutoScroll )
                             )
 
                         Chat.MsgHistory_ msgHistory ->
@@ -322,8 +323,29 @@ update msg ( { chatStatus } as model ) =
                            , Cmd.none
                            )
 
-        OnAutoScrollChatMsgsView result ->
-            ( model, Cmd.none )
+        ChatMsgsViewEvent event ->
+            case event of
+                Chat.TriedAutoScroll result ->
+                    ( model, Cmd.none )
+
+                Chat.OnManualScrolled ->
+                    ( model
+                    , Task.attempt ( ChatMsgsViewEvent << Chat.GotViewport ) <|
+                        Dom.getViewportOf Views.Chat.msgsViewHtmlId
+                    )
+
+                Chat.GotViewport result ->
+                    case result of
+                        Err err ->
+                            ( model, port_DebugLog <| Debug.toString err )
+
+                        Ok viewport ->
+                            ( model
+                            , port_DebugLog <| String.fromFloat viewport.viewport.y ++ ", "
+                                            ++ String.fromFloat viewport.viewport.height ++ ", "
+                                            ++ String.fromFloat viewport.scene.height
+                            )
+
 
 
         GotMessageSendResp result ->

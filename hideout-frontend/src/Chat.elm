@@ -4,6 +4,7 @@ module Chat exposing
     , MsgFromServer
     , MsgBody
     , MsgBundle
+    , MsgsViewEvent(..)
     , isMetaBundle
     , mkJoinMsg
     , mkContentMsg
@@ -14,6 +15,7 @@ module Chat exposing
     , wsMsgDecoder
     )
 
+import Browser.Dom as Dom
 import Common.Contents exposing ( plainPara )
 import Element
 import Element exposing ( Element )
@@ -173,4 +175,10 @@ isMetaMsg msg =
        msgTypeStr == "leave"
     then True
     else False
+
+
+type MsgsViewEvent
+    = TriedAutoScroll ( Result Dom.Error () )
+    | OnManualScrolled
+    | GotViewport ( Result Dom.Error Dom.Viewport )
 
