@@ -316,6 +316,11 @@ update msg ( { chatStatus } as model ) =
                                     , shouldHintNewMsg =
                                         model.chatStatus.hasManualScrolledUp &&
                                         ( not isMyMsg )
+
+                                    -- Clear input field if it's confirmed that
+                                    -- Server has received and broadcasted my last msg.
+                                    , input = if isMyMsg then tag ""
+                                              else model.chatStatus.input
                                     }
                               }
                             , if not model.chatStatus.hasManualScrolledUp then
