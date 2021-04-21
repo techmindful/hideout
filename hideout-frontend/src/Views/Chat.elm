@@ -1,6 +1,7 @@
 module Views.Chat exposing ( view, msgsViewHtmlId )
 
 import Chat
+import Common.Attributes
 import Common.Colors exposing (..)
 import Common.Contents exposing ( plainPara )
 import Common.Styles exposing (..)
@@ -67,6 +68,7 @@ view model =
                 Input.multiline
                     [ Element.height <| Element.px 200
                     , Background.color bgColor
+                    , Common.Attributes.onEnterKey MessageSend
                     ]
                     { onChange = MessageInput
                     , text = untag model.chatStatus.input

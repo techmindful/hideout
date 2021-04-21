@@ -54,7 +54,6 @@ type Msg
     | NameChange
     | OnWsReady String
     | OnWsMsg String
-    | GotMessageSendResp ( Result Http.Error () )
     | ChatMsgsViewEvent Chat.MsgsViewEvent
 
     | Nop

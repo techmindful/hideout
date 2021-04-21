@@ -376,14 +376,6 @@ update msg ( { chatStatus } as model ) =
                     , snapScrollChatMsgsView
                     )
 
-        GotMessageSendResp result ->
-            case result of
-                Err _ ->
-                    ( model, Cmd.none )
-
-                Ok () ->
-                    ( model, Cmd.none )
-
         Nop ->
             ( model, Cmd.none )
 
