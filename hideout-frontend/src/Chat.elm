@@ -5,6 +5,7 @@ module Chat exposing
     , MsgBody
     , MsgBundle
     , MsgsViewEvent(..)
+    , autoScrollMargin
     , isMetaBundle
     , mkJoinMsg
     , mkContentMsg
@@ -91,6 +92,7 @@ type alias Status =
     , input : MsgBody
     , msgs : List MsgFromServer
     , users : List String
+    , hasManualScrolledUp : Bool
     }
 
 
@@ -181,4 +183,15 @@ type MsgsViewEvent
     = TriedAutoScroll ( Result Dom.Error () )
     | OnManualScrolled
     | GotViewport ( Result Dom.Error Dom.Viewport )
+
+
+{-| If user hasn't manually scrolled up more than this value,
+then allow auto scrolling when new chat messages come in.
+
+Tested with Main's logViewport. One scroll wheel was 53.
+
+This is also good for floating point comparison.
+-}
+autoScrollMargin : Float
+autoScrollMargin = 30
 

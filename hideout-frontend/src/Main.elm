@@ -73,7 +73,13 @@ init flags url navKey =
 
       , dispChatMaxJoinCountInput = Good 2
       , persistChatMaxJoinCountInput = Good 2
-      , chatStatus = { id = tag "", msgs = [], input = tag "", users = [] }
+      , chatStatus =
+          { id = tag ""
+          , msgs = []
+          , input = tag ""
+          , users = []
+          , hasManualScrolledUp = False
+          }
       , newNameInput = ""
 
       , tempResp = ""
@@ -203,11 +209,7 @@ update msg ( { chatStatus } as model ) =
 
                 Ok chatId ->
                     ( { model | chatStatus =
-                        { id = tag <| unquote chatId
-                        , msgs = []
-                        , input = tag ""
-                        , users = []
-                        }
+                        { chatStatus | id = tag <| unquote chatId }
                       }
                     , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
                     )
@@ -304,13 +306,16 @@ update msg ( { chatStatus } as model ) =
                                                  , users = newUsers
                                     }
                               }
-                            , Dom.getViewportOf Views.Chat.msgsViewHtmlId
-                                |> Task.andThen
-                                    ( \ viewport ->
-                                        Dom.setViewportOf
-                                            Views.Chat.msgsViewHtmlId 0 viewport.scene.height
-                                    )
-                                |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedAutoScroll )
+                            , if not model.chatStatus.hasManualScrolledUp then
+                                Dom.getViewportOf Views.Chat.msgsViewHtmlId
+                                    |> Task.andThen
+                                        ( \ viewport ->
+                                            Dom.setViewportOf
+                                                Views.Chat.msgsViewHtmlId 0 viewport.scene.height
+                                        )
+                                    |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedAutoScroll )
+                              else
+                                  Cmd.none
                             )
 
                         Chat.MsgHistory_ msgHistory ->
@@ -340,10 +345,24 @@ update msg ( { chatStatus } as model ) =
                             ( model, port_DebugLog <| Debug.toString err )
 
                         Ok viewport ->
-                            ( model
-                            , port_DebugLog <| String.fromFloat viewport.viewport.y ++ ", "
-                                            ++ String.fromFloat viewport.viewport.height ++ ", "
-                                            ++ String.fromFloat viewport.scene.height
+                            let
+                                logViewport =
+                                    port_DebugLog <| String.fromFloat viewport.viewport.y ++ ", "
+                                                  ++ String.fromFloat viewport.viewport.height ++ ", "
+                                                  ++ String.fromFloat viewport.scene.height
+
+                                hasManualScrolledUp =
+                                    if viewport.viewport.y
+                                     + viewport.viewport.height
+                                     + Chat.autoScrollMargin
+                                     < viewport.scene.height
+                                    then True
+                                    else False
+                            in
+                            ( { model | chatStatus =
+                                { chatStatus | hasManualScrolledUp = hasManualScrolledUp }
+                              }
+                            , Cmd.none
                             )
 
 
