@@ -326,8 +326,11 @@ update msg ( { chatStatus } as model ) =
                                       msgs = chatStatus.msgs ++ [ msgFromServer ]
                                     , users = newUsers
                                     , shouldHintNewMsg =
-                                        model.chatStatus.hasManualScrolledUp &&
-                                        ( not isMyMsg )
+                                        -- If hint is previously needed, keep it.
+                                        model.chatStatus.shouldHintNewMsg || 
+                                        ( model.chatStatus.hasManualScrolledUp &&
+                                          ( not isMyMsg )
+                                        )
 
                                     -- Clear input field if it's a content msg we sent
                                     -- And it's confirmed that server already received it.
