@@ -143,13 +143,13 @@ msgView : Chat.MsgFromServer -> Element m
 msgView msg =
     let msgFromClient = msg.msgFromClient
     in
-    case untag msgFromClient.msgType of
-        "join" ->
+    case msgFromClient.msgType of
+        Chat.Join ->
             Element.paragraph
                 [ Font.color green ]
                 [ Element.text <| msg.username ++ " joined." ]
 
-        "nameChange" ->
+        Chat.NameChange ->
             Element.paragraph
                 [ Font.color yellow ]
                 [ Element.text <|
@@ -159,12 +159,12 @@ msgView msg =
                  ++ "."
                 ]
 
-        "leave" ->
+        Chat.Leave ->
             Element.paragraph
                 [ Font.color red ]
                 [ Element.text <| msg.username ++ " left." ]
 
-        _ ->
+        Chat.Content ->
             Element.column
                 [] <|
                 Utils.Markdown.render <| untag msgFromClient.msgBody

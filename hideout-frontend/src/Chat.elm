@@ -2,6 +2,7 @@ module Chat exposing
     ( ChatId
     , Status
     , MsgFromServer
+    , MsgType(..)
     , MsgBody
     , MsgBundle
     , MsgsViewEvent(..)
@@ -30,8 +31,11 @@ type ChatIdTag = ChatIdTag
 type alias ChatId = Tagged ChatIdTag String
 
 
-type MsgTypeTag = MsgTypeTag
-type alias MsgType = Tagged MsgTypeTag String
+type MsgType
+    = Content
+    | Join
+    | NameChange
+    | Leave
 
 
 type MsgBodyTag = MsgBodyTag
@@ -46,7 +50,16 @@ msgFromClientDecoder : JDec.Decoder MsgFromClient
 msgFromClientDecoder =
     JDec.map2
         MsgFromClient
-        ( JDec.map tag <| JDec.field "msgType" JDec.string )
+        ( JDec.field "msgType" JDec.string
+            |> JDec.andThen
+                ( \str ->
+                    if str == "content" then JDec.succeed Content
+                    else if str == "join" then JDec.succeed Join
+                    else if str == "nameChange" then JDec.succeed NameChange
+                    else if str == "leave" then JDec.succeed Leave
+                    else JDec.fail "Invalid MsgType"
+                )
+        )
         ( JDec.map tag <| JDec.field "msgBody" JDec.string )
 
 
@@ -170,14 +183,9 @@ isMetaBundle bundle =
 
 isMetaMsg : MsgFromServer -> Bool
 isMetaMsg msg =
-    let
-        msgTypeStr = untag msg.msgFromClient.msgType
-    in
-    if msgTypeStr == "join" ||
-       msgTypeStr == "nameChange" ||
-       msgTypeStr == "leave"
-    then True
-    else False
+    case msg.msgFromClient.msgType of
+        Content -> False
+        _ -> True
 
 
 type MsgsViewEvent

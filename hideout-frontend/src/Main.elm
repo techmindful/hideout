@@ -287,19 +287,19 @@ update msg ( { chatStatus } as model ) =
                                 oldUsers = model.chatStatus.users
 
                                 newUsers =
-                                    case untag msgFromClient.msgType of
-                                        "join" ->
+                                    case msgFromClient.msgType of
+                                        Chat.Join ->
                                             oldUsers ++ [ sender ]
 
-                                        "nameChange" ->
+                                        Chat.NameChange ->
                                             List.setIf ( (==) sender )
                                                 ( untag msgFromClient.msgBody )
                                                 oldUsers
 
-                                        "leave" ->
+                                        Chat.Leave ->
                                             List.remove sender oldUsers
 
-                                        _ ->
+                                        Chat.Content ->
                                             model.chatStatus.users
                             in
                             ( { model |
