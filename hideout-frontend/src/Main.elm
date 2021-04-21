@@ -285,14 +285,13 @@ update msg ( { chatStatus } as model ) =
                             let
                                 msgFromClient = msgFromServer.msgFromClient
                                 senderId = msgFromServer.userId
+                                senderName = msgFromServer.username
                                 oldUsers = model.chatStatus.users
 
                                 newUsers =
                                     case msgFromClient.msgType of
                                         Chat.Join ->
-                                            Dict.insert senderId
-                                                ( "User" ++ String.fromInt senderId )
-                                                oldUsers
+                                            Dict.insert senderId senderName oldUsers
 
                                         Chat.NameChange ->
                                             Dict.insert senderId

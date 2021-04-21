@@ -42,8 +42,7 @@ view model =
                 , Element.htmlAttribute <|
                     Html.Events.on "scroll" <| JDec.succeed <| ChatMsgsViewEvent Chat.OnManualScrolled
                 ] <|
-                List.map ( msgBundleView model.chatStatus.users ) <|
-                    Chat.mkMsgBundles model.chatStatus.msgs
+                List.map msgBundleView <| Chat.mkMsgBundles model.chatStatus.msgs
 
             -- New messages hint if needed
             , Element.el
@@ -124,12 +123,8 @@ view model =
         ]
 
 
-msgBundleView : Dict Int String -> Chat.MsgBundle -> Element m
-msgBundleView userDict bundle =
-    let
-        username =
-            Maybe.withDefault "Error: Unfound username" <| Dict.get bundle.userId userDict
-    in
+msgBundleView : Chat.MsgBundle -> Element m
+msgBundleView bundle =
     Element.textColumn
         [ Element.width Element.fill
         , Element.spacingXY 0 10
@@ -138,15 +133,15 @@ msgBundleView userDict bundle =
             False ->
                 Element.paragraph
                     [ Font.bold ]
-                    [ Element.text username ]
+                    [ Element.text bundle.username ]
 
             True -> Element.none
         ] ++
-        List.map ( msgView username ) bundle.msgs
+        List.map msgView bundle.msgs
 
 
-msgView : String -> Chat.MsgFromServer -> Element m
-msgView username msg =
+msgView : Chat.MsgFromServer -> Element m
+msgView msg =
     let
         msgFromClient = msg.msgFromClient
     in
@@ -154,12 +149,12 @@ msgView username msg =
         Chat.Join ->
             Element.paragraph
                 [ Font.color green ]
-                [ Element.text <| username ++ " joined." ]
+                [ Element.text <| msg.username ++ " joined." ]
 
         Chat.NameChange ->
             Element.paragraph
                 [ Font.color yellow ]
-                [ Element.text <| quote username
+                [ Element.text <| quote msg.username
                  ++ " changed their name to "
                  ++ ( quote <| untag msgFromClient.msgBody )
                  ++ "."
@@ -168,7 +163,7 @@ msgView username msg =
         Chat.Leave ->
             Element.paragraph
                 [ Font.color red ]
-                [ Element.text <| username ++ " left." ]
+                [ Element.text <| msg.username ++ " left." ]
 
         Chat.Content ->
             Element.column

@@ -298,6 +298,7 @@ chatHandler chatIdStr conn = do
                   let msgFromServer = MsgFromServer {
                         msgFromClient = msgFromClient
                       , userId = userId
+                      , username = username
                       }
                   let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
                       newUsers = Map.delete userId users
@@ -335,6 +336,7 @@ chatHandler chatIdStr conn = do
                   let msgFromServer = MsgFromServer {
                         msgFromClient = msgFromClient
                       , userId = userId
+                      , username = user ^. #name
                       }
 
                   -- Update chat.

@@ -68,13 +68,17 @@ msgFromClientDecoder =
 type alias MsgFromServer =
     { msgFromClient : MsgFromClient
     , userId : Int
+
+    -- Without this field, username in previous messages goes unfound when user leaves.
+    , username : String  
     }
 msgFromServerDecoder : JDec.Decoder MsgFromServer
 msgFromServerDecoder =
-    JDec.map2
+    JDec.map3
         MsgFromServer
         ( JDec.field "msgFromClient" msgFromClientDecoder )
         ( JDec.field "userId" JDec.int )
+        ( JDec.field "username" JDec.string )
 
 
 type alias MsgHistory =
@@ -135,7 +139,8 @@ mkWsMsg msgType msgBody =
 {-| A list of messages that a user has sent continuously, to be displayed together, without adding a username header at each message.
 -}
 type alias MsgBundle =
-    { userId : Int
+    { userId : Int  -- Compare with this, not username.
+    , username : String
     , msgs : List MsgFromServer
     }
 
@@ -147,7 +152,10 @@ mkMsgBundles msgFromServers =
         combine msg bundles =
             let
                 appended =
-                    { userId = msg.userId, msgs = [ msg ] } :: bundles
+                    { userId = msg.userId
+                    , username = msg.username
+                    , msgs = [ msg ]
+                    } :: bundles
             in
             case
                 Maybe.map2 Tuple.pair
