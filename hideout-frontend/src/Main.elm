@@ -76,7 +76,8 @@ init flags url navKey =
       , dispChatMaxJoinCountInput = Good 2
       , persistChatMaxJoinCountInput = Good 2
       , chatStatus =
-          { id = tag ""
+          { chatId = tag ""
+          , myUserId = -1
           , msgs = []
           , input = tag ""
           , users = Dict.empty
@@ -212,7 +213,7 @@ update msg ( { chatStatus } as model ) =
 
                 Ok chatId ->
                     ( { model | chatStatus =
-                        { chatStatus | id = tag <| unquote chatId }
+                        { chatStatus | chatId = tag <| unquote chatId }
                       }
                     , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
                     )
@@ -303,13 +304,18 @@ update msg ( { chatStatus } as model ) =
 
                                         Chat.Content ->
                                             model.chatStatus.users
+
+                                isMyMsg : Bool
+                                isMyMsg = msgFromServer.userId == model.chatStatus.myUserId
                             in
                             ( { model |
                                 chatStatus =
                                     { chatStatus |
                                       msgs = chatStatus.msgs ++ [ msgFromServer ]
                                     , users = newUsers
-                                    , shouldHintNewMsg = model.chatStatus.hasManualScrolledUp
+                                    , shouldHintNewMsg =
+                                        model.chatStatus.hasManualScrolledUp &&
+                                        ( not isMyMsg )
                                     }
                               }
                             , if not model.chatStatus.hasManualScrolledUp then
@@ -327,6 +333,13 @@ update msg ( { chatStatus } as model ) =
                              }
                            , Cmd.none
                            )
+
+                        Chat.UserIdMsg_ userIdMsg ->
+                            ( { model | chatStatus =
+                                { chatStatus | myUserId = userIdMsg.yourUserId }
+                              }
+                            , Cmd.none
+                            )
 
         ChatMsgsViewEvent event ->
             case event of

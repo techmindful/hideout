@@ -93,21 +93,30 @@ msgHistoryDecoder =
         ( JDec.field "users" <| JDec.dict2 JDec.int JDec.string )
 
 
+type alias UserIdMsg = { yourUserId : Int }
+userIdMsgDecoder : JDec.Decoder UserIdMsg
+userIdMsgDecoder =
+    JDec.map UserIdMsg <| JDec.field "yourUserId" JDec.int
+
+
 -- A type for conveniently JSON-decoding an incoming ws string
 -- Into various possible Elm types.
 type WsMsg
     = MsgFromServer_ MsgFromServer
     | MsgHistory_ MsgHistory
+    | UserIdMsg_ UserIdMsg
 wsMsgDecoder : JDec.Decoder WsMsg
 wsMsgDecoder =
     JDec.oneOf
         [ JDec.map MsgFromServer_ msgFromServerDecoder
         , JDec.map MsgHistory_ msgHistoryDecoder
+        , JDec.map UserIdMsg_ userIdMsgDecoder
         ]
 
 
 type alias Status =
-    { id : ChatId
+    { chatId : ChatId
+    , myUserId : Int
     , input : MsgBody
     , msgs : List MsgFromServer
     , users : Dict Int String

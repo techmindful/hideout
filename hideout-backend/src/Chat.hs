@@ -76,3 +76,9 @@ data MsgHistory = MsgHistory
   } deriving ( Generic )
 instance ToJSON MsgHistory 
 
+
+data UserIdMsg = UserIdMsg
+  { yourUserId :: Int }
+  deriving ( Generic )
+instance ToJSON UserIdMsg
+

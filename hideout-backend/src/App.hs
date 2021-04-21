@@ -386,6 +386,10 @@ chatHandler chatIdStr conn = do
         -- Update AppState.
         atomically $ writeTVar ( appState ^. #chats ) newChats
 
+        -- Tell user their ID.
+        let userIdMsg = UserIdMsg { yourUserId = userId }
+        WebSock.sendTextData ( user ^. #conn ) ( Aeson.encode userIdMsg )
+
         -- Give msg history first.
         let msgHistory = MsgHistory {
           msgs  = chat ^. #msgs
