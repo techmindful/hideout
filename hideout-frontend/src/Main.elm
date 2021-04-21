@@ -33,6 +33,7 @@ import Url.Parser
 import UserStatus exposing (..)
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
+import Utils.Utils as Utils
 import Views.Chat
 import Views.ConfigChat
 import Views.ReadLetter
@@ -79,6 +80,7 @@ init flags url navKey =
           , input = tag ""
           , users = []
           , hasManualScrolledUp = False
+          , shouldHintNewMsg = False
           }
       , newNameInput = ""
 
@@ -302,20 +304,16 @@ update msg ( { chatStatus } as model ) =
                             in
                             ( { model |
                                 chatStatus =
-                                    { chatStatus | msgs = chatStatus.msgs ++ [ msgFromServer ]
-                                                 , users = newUsers
+                                    { chatStatus |
+                                      msgs = chatStatus.msgs ++ [ msgFromServer ]
+                                    , users = newUsers
+                                    , shouldHintNewMsg = model.chatStatus.hasManualScrolledUp
                                     }
                               }
                             , if not model.chatStatus.hasManualScrolledUp then
-                                Dom.getViewportOf Views.Chat.msgsViewHtmlId
-                                    |> Task.andThen
-                                        ( \ viewport ->
-                                            Dom.setViewportOf
-                                                Views.Chat.msgsViewHtmlId 0 viewport.scene.height
-                                        )
-                                    |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedAutoScroll )
+                                snapScrollChatMsgsView
                               else
-                                  Cmd.none
+                                Cmd.none
                             )
 
                         Chat.MsgHistory_ msgHistory ->
@@ -330,7 +328,7 @@ update msg ( { chatStatus } as model ) =
 
         ChatMsgsViewEvent event ->
             case event of
-                Chat.TriedAutoScroll result ->
+                Chat.TriedSnapScroll result ->
                     ( model, Cmd.none )
 
                 Chat.OnManualScrolled ->
@@ -352,20 +350,31 @@ update msg ( { chatStatus } as model ) =
                                                   ++ String.fromFloat viewport.scene.height
 
                                 hasManualScrolledUp =
-                                    if viewport.viewport.y
-                                     + viewport.viewport.height
-                                     + Chat.autoScrollMargin
-                                     < viewport.scene.height
-                                    then True
-                                    else False
+                                    Utils.hasManualScrolledUp viewport Chat.autoScrollMargin
                             in
                             ( { model | chatStatus =
-                                { chatStatus | hasManualScrolledUp = hasManualScrolledUp }
+                                { chatStatus |
+                                  hasManualScrolledUp = hasManualScrolledUp
+
+                                -- Some boolean logic:
+                                -- Hint new msg only if it was needing the hint,
+                                -- And user has manually scrolled up.
+                                , shouldHintNewMsg =
+                                    model.chatStatus.shouldHintNewMsg &&
+                                    hasManualScrolledUp
+                                }
                               }
                             , Cmd.none
                             )
 
-
+                Chat.OnNewMsgHintClicked ->
+                    ( { model | chatStatus =
+                        { chatStatus | shouldHintNewMsg = False
+                                     , hasManualScrolledUp = False
+                        }
+                      }
+                    , snapScrollChatMsgsView
+                    )
 
         GotMessageSendResp result ->
             case result of
@@ -459,6 +468,18 @@ getLetterReq letterId =
         { url = backendReadLetterUrl ++ "/" ++ letterId
         , expect = Http.expectJson GotReadLetterResp letterMetaJsonDec
         }
+
+
+snapScrollChatMsgsView : Cmd Msg
+snapScrollChatMsgsView =
+    Dom.getViewportOf Views.Chat.msgsViewHtmlId
+        |> Task.andThen
+            ( \ viewport ->
+                Dom.setViewportOf
+                    Views.Chat.msgsViewHtmlId 0 viewport.scene.height
+            )
+        |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedSnapScroll )
+
 
 main =
     Browser.application

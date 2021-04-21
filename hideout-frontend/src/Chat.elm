@@ -93,6 +93,7 @@ type alias Status =
     , msgs : List MsgFromServer
     , users : List String
     , hasManualScrolledUp : Bool
+    , shouldHintNewMsg : Bool
     }
 
 
@@ -180,9 +181,10 @@ isMetaMsg msg =
 
 
 type MsgsViewEvent
-    = TriedAutoScroll ( Result Dom.Error () )
+    = TriedSnapScroll ( Result Dom.Error () )
     | OnManualScrolled
     | GotViewport ( Result Dom.Error Dom.Viewport )
+    | OnNewMsgHintClicked
 
 
 {-| If user hasn't manually scrolled up more than this value,

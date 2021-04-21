@@ -42,10 +42,27 @@ view model =
                 ] <|
                 List.map msgBundleView <| Chat.mkMsgBundles model.chatStatus.msgs
 
+            -- New messages hint if needed
+            , Element.el
+                [ Element.height <| Element.px 40
+                , Element.centerX
+                ] <|
+                case model.chatStatus.shouldHintNewMsg of
+                    False -> Element.none
+                    True  ->
+                        Input.button
+                            [ Element.centerY
+                            , Element.padding 5
+                            , Border.width 2
+                            , Border.rounded 6
+                            ]
+                            { onPress = Just <| ChatMsgsViewEvent Chat.OnNewMsgHintClicked
+                            , label = Element.text "New Messages Received"
+                            }
+
             -- Input
             , Element.el
                 [ Element.width <| Element.fill
-                , Element.paddingEach { top = 40, bottom = 0, left = 0, right = 0 }
                 ] <|
                 Input.multiline
                     [ Element.height <| Element.px 200
