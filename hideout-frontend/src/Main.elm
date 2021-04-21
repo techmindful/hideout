@@ -303,7 +303,13 @@ update msg ( { chatStatus } as model ) =
                                                  , users = newUsers
                                     }
                               }
-                            , Cmd.none
+                            , Dom.getViewportOf Views.Chat.msgsViewHtmlId
+                                |> Task.andThen
+                                    ( \ viewport ->
+                                        Dom.setViewportOf
+                                            Views.Chat.msgsViewHtmlId 0 viewport.scene.height
+                                    )
+                                |> Task.attempt OnAutoScrollChatMsgsView
                             )
 
                         Chat.MsgHistory_ msgHistory ->
@@ -315,6 +321,9 @@ update msg ( { chatStatus } as model ) =
                              }
                            , Cmd.none
                            )
+
+        OnAutoScrollChatMsgsView result ->
+            ( model, Cmd.none )
 
 
         GotMessageSendResp result ->

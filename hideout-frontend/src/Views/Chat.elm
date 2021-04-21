@@ -1,4 +1,4 @@
-module Views.Chat exposing ( view )
+module Views.Chat exposing ( view, msgsViewHtmlId )
 
 import Chat
 import Common.Colors exposing (..)
@@ -12,6 +12,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Html.Attributes
 import String.Extra exposing ( quote )
 import Tagged exposing ( tag, untag )
 import Utils.Markdown
@@ -33,6 +34,7 @@ view model =
                 , Element.height Element.fill
                 , Element.spacingXY 0 30
                 , Element.scrollbarY
+                , Element.htmlAttribute <| Html.Attributes.id msgsViewHtmlId
                 ] <|
                 List.map msgBundleView <| Chat.mkMsgBundles model.chatStatus.msgs
 
@@ -148,3 +150,6 @@ msgView msg =
 userView : String -> Element m
 userView username =
     plainPara username
+
+
+msgsViewHtmlId = "chat-msgs-view"
