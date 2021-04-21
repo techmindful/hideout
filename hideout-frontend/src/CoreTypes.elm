@@ -25,6 +25,9 @@ type alias Model =
     , persistChatMaxJoinCountInput : PosIntInput
     , chatStatus : Chat.Status
     , newNameInput : String
+
+    , isShiftHeld : Bool
+
     , tempResp : String
     }
 
@@ -55,6 +58,10 @@ type Msg
     | OnWsReady String
     | OnWsMsg String
     | ChatMsgsViewEvent Chat.MsgsViewEvent
+    | OnChatInputFocal Bool
+
+    | OnKeyDown String
+    | OnKeyUp   String
 
     | Nop
 

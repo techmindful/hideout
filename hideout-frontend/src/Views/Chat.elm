@@ -69,7 +69,8 @@ view model =
                 Input.multiline
                     [ Element.height <| Element.px 200
                     , Background.color bgColor
-                    , Common.Attributes.onEnterKey MessageSend
+                    , Element.htmlAttribute <| Html.Events.onFocus <| OnChatInputFocal True
+                    , Element.htmlAttribute <| Html.Events.onBlur  <| OnChatInputFocal False
                     ]
                     { onChange = MessageInput
                     , text = untag model.chatStatus.input

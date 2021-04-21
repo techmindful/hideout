@@ -120,8 +120,11 @@ type alias Status =
     , input : MsgBody
     , msgs : List MsgFromServer
     , users : Dict Int String
+
     , hasManualScrolledUp : Bool
     , shouldHintNewMsg : Bool
+
+    , isInputFocused : Bool
     }
 
 

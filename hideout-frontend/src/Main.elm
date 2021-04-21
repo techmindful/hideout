@@ -2,6 +2,7 @@ port module Main exposing (..)
 
 import Browser
 import Browser.Dom as Dom
+import Browser.Events
 import Browser.Navigation as Nav
 import Chat
 import Common.Colors exposing (..)
@@ -53,6 +54,12 @@ subscriptions _ =
     Sub.batch
         [ port_WsReady OnWsReady
         , port_RecvWsMsg OnWsMsg
+
+        , Browser.Events.onKeyDown <|
+            JDec.map OnKeyDown <| JDec.field "key" JDec.string
+
+        , Browser.Events.onKeyUp <|
+            JDec.map OnKeyUp <| JDec.field "key" JDec.string
         ]
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -81,10 +88,15 @@ init flags url navKey =
           , msgs = []
           , input = tag ""
           , users = Dict.empty
+
           , hasManualScrolledUp = False
           , shouldHintNewMsg = False
+
+          , isInputFocused = False
           }
       , newNameInput = ""
+
+      , isShiftHeld = False
 
       , tempResp = ""
       }
@@ -253,7 +265,7 @@ update msg ( { chatStatus } as model ) =
 
         MessageSend ->
             ( { model | chatStatus = { chatStatus | input = tag "" } }
-            , port_SendWsMsg <| Chat.mkContentMsg model.chatStatus.input
+            , sendChatMsg model.chatStatus.input
             )
 
         NewNameInput str ->
@@ -317,9 +329,11 @@ update msg ( { chatStatus } as model ) =
                                         model.chatStatus.hasManualScrolledUp &&
                                         ( not isMyMsg )
 
-                                    -- Clear input field if it's confirmed that
-                                    -- Server has received and broadcasted my last msg.
-                                    , input = if isMyMsg then tag ""
+                                    -- Clear input field if it's a content msg we sent
+                                    -- And it's confirmed that server already received it.
+                                    , input = if isMyMsg &&
+                                                 msgFromClient.msgType == Chat.Content
+                                              then tag ""
                                               else model.chatStatus.input
                                     }
                               }
@@ -395,6 +409,37 @@ update msg ( { chatStatus } as model ) =
                       }
                     , snapScrollChatMsgsView
                     )
+
+        OnChatInputFocal isFocused ->
+            ( { model | chatStatus =
+                { chatStatus | isInputFocused = isFocused }
+              }
+            , Cmd.none
+            )
+
+        OnKeyDown key ->
+            case key of
+                "Enter" ->
+                    ( model
+                    , if ( not model.isShiftHeld ) && model.chatStatus.isInputFocused then
+                        sendChatMsg model.chatStatus.input
+                      else
+                        Cmd.none
+                    )
+
+                "Shift" ->
+                    ( { model | isShiftHeld = True }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        OnKeyUp key ->
+            case key of
+                "Shift" ->
+                    ( { model | isShiftHeld = False }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
         Nop ->
             ( model, Cmd.none )
@@ -491,6 +536,11 @@ snapScrollChatMsgsView =
                     Views.Chat.msgsViewHtmlId 0 viewport.scene.height
             )
         |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedSnapScroll )
+
+
+sendChatMsg : Chat.MsgBody -> Cmd Msg
+sendChatMsg msgBody =
+    port_SendWsMsg <| Chat.mkContentMsg msgBody
 
 
 main =
