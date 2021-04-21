@@ -25,7 +25,7 @@ instance ToJSON   MsgFromClient
 
 data MsgFromServer = MsgFromServer
   { msgFromClient :: MsgFromClient
-  , username :: String
+  , userId :: Int
   } deriving ( Generic, Read, Show )
 instance FromJSON MsgFromServer
 instance ToJSON   MsgFromServer
@@ -71,7 +71,7 @@ derivePersistField "Chat"
 
 data MsgHistory = MsgHistory
   { msgs  :: [ MsgFromServer ]
-  , users :: [ String ]
+  , users :: Map Int String
   } deriving ( Generic )
 instance ToJSON MsgHistory 
 

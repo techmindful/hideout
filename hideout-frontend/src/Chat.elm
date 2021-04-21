@@ -19,9 +19,11 @@ module Chat exposing
 
 import Browser.Dom as Dom
 import Common.Contents exposing ( plainPara )
+import Dict exposing ( Dict )
 import Element
 import Element exposing ( Element )
 import Json.Decode as JDec
+import Json.Decode.Extra as JDec
 import Json.Encode as JEnc
 import List.Extra as List
 import Tagged exposing ( Tagged, tag, untag )
@@ -65,26 +67,26 @@ msgFromClientDecoder =
 
 type alias MsgFromServer =
     { msgFromClient : MsgFromClient
-    , username : String
+    , userId : Int
     }
 msgFromServerDecoder : JDec.Decoder MsgFromServer
 msgFromServerDecoder =
     JDec.map2
         MsgFromServer
         ( JDec.field "msgFromClient" msgFromClientDecoder )
-        ( JDec.field "username" JDec.string )
+        ( JDec.field "userId" JDec.int )
 
 
 type alias MsgHistory =
     { msgs  : List MsgFromServer
-    , users : List String
+    , users : Dict Int String
     }
 msgHistoryDecoder : JDec.Decoder MsgHistory
 msgHistoryDecoder =
     JDec.map2
         MsgHistory
         ( JDec.field "msgs"  <| JDec.list msgFromServerDecoder )
-        ( JDec.field "users" <| JDec.list JDec.string )
+        ( JDec.field "users" <| JDec.dict2 JDec.int JDec.string )
 
 
 -- A type for conveniently JSON-decoding an incoming ws string
@@ -104,7 +106,7 @@ type alias Status =
     { id : ChatId
     , input : MsgBody
     , msgs : List MsgFromServer
-    , users : List String
+    , users : Dict Int String
     , hasManualScrolledUp : Bool
     , shouldHintNewMsg : Bool
     }
@@ -133,7 +135,7 @@ mkWsMsg msgType msgBody =
 {-| A list of messages that a user has sent continuously, to be displayed together, without adding a username header at each message.
 -}
 type alias MsgBundle =
-    { username : String
+    { userId : Int
     , msgs : List MsgFromServer
     }
 
@@ -145,7 +147,7 @@ mkMsgBundles msgFromServers =
         combine msg bundles =
             let
                 appended =
-                    { username = msg.username, msgs = [ msg ] } :: bundles
+                    { userId = msg.userId, msgs = [ msg ] } :: bundles
             in
             case
                 Maybe.map2 Tuple.pair
@@ -157,7 +159,7 @@ mkMsgBundles msgFromServers =
                        ( Maybe.withDefault False <| Maybe.map isMetaMsg <| List.head headBundle.msgs )
                     then appended
                     else
-                        if msg.username == headBundle.username then
+                        if msg.userId == headBundle.userId then
                             let
                                 updatedHeadBundle = 
                                     { headBundle | msgs = msg :: headBundle.msgs }

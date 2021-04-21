@@ -297,7 +297,7 @@ chatHandler chatIdStr conn = do
                       }
                   let msgFromServer = MsgFromServer {
                         msgFromClient = msgFromClient
-                      , username = username
+                      , userId = userId
                       }
                   let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
                       newUsers = Map.delete userId users
@@ -334,7 +334,7 @@ chatHandler chatIdStr conn = do
 
                   let msgFromServer = MsgFromServer {
                         msgFromClient = msgFromClient
-                      , username = user ^. #name
+                      , userId = userId
                       }
 
                   -- Update chat.
@@ -387,7 +387,7 @@ chatHandler chatIdStr conn = do
         -- Give msg history first.
         let msgHistory = MsgHistory {
           msgs  = chat ^. #msgs
-        , users = fmap ( ^. #name ) $ Map.elems users
+        , users = Map.map ( ^. #name ) users
         }
         WebSock.sendTextData ( user ^. #conn ) ( Aeson.encode msgHistory )
 

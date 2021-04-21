@@ -12,6 +12,7 @@ import Common.Contents exposing
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
+import Dict exposing ( Dict )
 import Element
 import Element exposing ( Element )
 import Element.Background as Background
@@ -78,7 +79,7 @@ init flags url navKey =
           { id = tag ""
           , msgs = []
           , input = tag ""
-          , users = []
+          , users = Dict.empty
           , hasManualScrolledUp = False
           , shouldHintNewMsg = False
           }
@@ -283,21 +284,23 @@ update msg ( { chatStatus } as model ) =
                         Chat.MsgFromServer_ msgFromServer ->
                             let
                                 msgFromClient = msgFromServer.msgFromClient
-                                sender = msgFromServer.username
+                                senderId = msgFromServer.userId
                                 oldUsers = model.chatStatus.users
 
                                 newUsers =
                                     case msgFromClient.msgType of
                                         Chat.Join ->
-                                            oldUsers ++ [ sender ]
+                                            Dict.insert senderId
+                                                ( "User" ++ String.fromInt senderId )
+                                                oldUsers
 
                                         Chat.NameChange ->
-                                            List.setIf ( (==) sender )
+                                            Dict.insert senderId
                                                 ( untag msgFromClient.msgBody )
                                                 oldUsers
 
                                         Chat.Leave ->
-                                            List.remove sender oldUsers
+                                            Dict.remove senderId oldUsers
 
                                         Chat.Content ->
                                             model.chatStatus.users

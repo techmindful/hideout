@@ -7,6 +7,7 @@ import Common.Contents exposing ( plainPara )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
+import Dict exposing ( Dict )
 import Element
 import Element exposing ( Element )
 import Element.Background as Background
@@ -41,7 +42,8 @@ view model =
                 , Element.htmlAttribute <|
                     Html.Events.on "scroll" <| JDec.succeed <| ChatMsgsViewEvent Chat.OnManualScrolled
                 ] <|
-                List.map msgBundleView <| Chat.mkMsgBundles model.chatStatus.msgs
+                List.map ( msgBundleView model.chatStatus.users ) <|
+                    Chat.mkMsgBundles model.chatStatus.msgs
 
             -- New messages hint if needed
             , Element.el
@@ -117,13 +119,17 @@ view model =
                 [ Element.paddingXY 0 40 
                 , Element.spacingXY 0 20
                 ] <|
-                List.map userView model.chatStatus.users
+                List.map userView <| Dict.toList model.chatStatus.users
             ]
         ]
 
 
-msgBundleView : Chat.MsgBundle -> Element m
-msgBundleView bundle =
+msgBundleView : Dict Int String -> Chat.MsgBundle -> Element m
+msgBundleView userDict bundle =
+    let
+        username =
+            Maybe.withDefault "Error: Unfound username" <| Dict.get bundle.userId userDict
+    in
     Element.textColumn
         [ Element.width Element.fill
         , Element.spacingXY 0 10
@@ -132,28 +138,28 @@ msgBundleView bundle =
             False ->
                 Element.paragraph
                     [ Font.bold ]
-                    [ Element.text bundle.username ]
+                    [ Element.text username ]
 
             True -> Element.none
         ] ++
-        List.map msgView bundle.msgs
+        List.map ( msgView username ) bundle.msgs
 
 
-msgView : Chat.MsgFromServer -> Element m
-msgView msg =
-    let msgFromClient = msg.msgFromClient
+msgView : String -> Chat.MsgFromServer -> Element m
+msgView username msg =
+    let
+        msgFromClient = msg.msgFromClient
     in
     case msgFromClient.msgType of
         Chat.Join ->
             Element.paragraph
                 [ Font.color green ]
-                [ Element.text <| msg.username ++ " joined." ]
+                [ Element.text <| username ++ " joined." ]
 
         Chat.NameChange ->
             Element.paragraph
                 [ Font.color yellow ]
-                [ Element.text <|
-                    ( quote msg.username )
+                [ Element.text <| quote username
                  ++ " changed their name to "
                  ++ ( quote <| untag msgFromClient.msgBody )
                  ++ "."
@@ -162,7 +168,7 @@ msgView msg =
         Chat.Leave ->
             Element.paragraph
                 [ Font.color red ]
-                [ Element.text <| msg.username ++ " left." ]
+                [ Element.text <| username ++ " left." ]
 
         Chat.Content ->
             Element.column
@@ -170,9 +176,9 @@ msgView msg =
                 Utils.Markdown.render <| untag msgFromClient.msgBody
 
 
-userView : String -> Element m
-userView username =
-    plainPara username
+userView : ( Int, String ) -> Element m
+userView ( userId, username ) =
+    plainPara <| username ++ " (" ++ String.fromInt userId ++ ")"
 
 
 msgsViewHtmlId = "chat-msgs-view"
