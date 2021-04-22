@@ -135,7 +135,9 @@ view model =
                 , Element.spacingXY 0 10
                 , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
                 ]
-                [ plainPara <| "Join Count: "
+                [ plainPara <| "Current Users: "
+                            ++ ( String.fromInt <| Dict.size model.chatStatus.users )
+                , plainPara <| "Join Count: " ++ String.fromInt model.chatStatus.joinCount
                 , plainPara <|
                     "Max Join Count: " ++ case model.chatStatus.maxJoinCount of
                         Nothing -> "Unlimited"

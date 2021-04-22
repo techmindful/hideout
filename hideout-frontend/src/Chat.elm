@@ -127,7 +127,9 @@ type alias Status =
     , input : MsgBody
     , msgs : List MsgFromServer
     , users : Dict Int String
+
     , maxJoinCount : Maybe Int
+    , joinCount : Int
 
     , hasManualScrolledUp : Bool
     , shouldHintNewMsg : Bool

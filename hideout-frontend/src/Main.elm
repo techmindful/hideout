@@ -92,7 +92,9 @@ init flags url navKey =
           , msgs = []
           , input = tag ""
           , users = Dict.empty
+
           , maxJoinCount = Nothing
+          , joinCount = 0
 
           , hasManualScrolledUp = False
           , shouldHintNewMsg = False
@@ -356,6 +358,13 @@ update msg ( { letterStatus, chatStatus } as model ) =
                                         ( model.chatStatus.hasManualScrolledUp &&
                                           ( not isMyMsg )
                                         )
+
+                                    -- User ID can tell join count.
+                                    , joinCount =
+                                        if msgFromClient.msgType == Chat.Join then
+                                            senderId + 1
+                                        else
+                                            model.chatStatus.joinCount
 
                                     -- Clear input field if it's a content msg we sent
                                     -- And it's confirmed that server already received it.
