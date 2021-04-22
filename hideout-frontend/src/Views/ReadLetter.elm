@@ -4,7 +4,7 @@ import CoreTypes exposing ( Model, Msg(..) )
 import Common.Contents exposing
     ( plainPara )
 import Common.Styles exposing
-    ( widthConstraint )
+    ( windowPaddingPx )
 import Element exposing ( Element )
 import Element.Border as Border
 import UserStatus exposing (..)
@@ -13,8 +13,14 @@ import Utils.Markdown
 
 view : Model -> Element Msg
 view model =
+    let
+        windowWidth = model.viewport.viewport.width
+
+        maxWidthPx =
+            round <| windowWidth - 2 * ( windowPaddingPx windowWidth )
+    in
     Element.column
-        [ widthConstraint ]
+        [ Element.width <| Element.maximum maxWidthPx Element.fill ]
         [ case model.userStatus of
             ReadLetterReq _ ->
                 plainPara "Waiting for the letter from server.."
