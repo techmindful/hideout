@@ -38,9 +38,7 @@ view model =
     let
         instruction =
             Element.textColumn
-                [ Element.paddingEach { bottom = 40, top = 0, left = 0, right = 0 }
-                , Element.spacingXY 0 20
-                ]
+                [ Element.spacingXY 0 20 ]
                 [ plainPara "Type away your letter below. Markdown is supported."
                 , plainPara
                     """
@@ -52,36 +50,11 @@ view model =
                     """
                 ]
 
-        letterInputBox =
-            Input.multiline
-                [ Element.width Element.fill
-                , Element.scrollbarY
-                , Background.color bgColor
+        maxReadCountInput =
+            Element.row
+                [ Element.paddingEach { top = 40, bottom = 0, left = 0, right = 0 }
+                , Element.spacingXY 10 0
                 ]
-                { onChange = LetterInput
-                , text = model.letterInput
-                , placeholder = Nothing
-                , label = Input.labelAbove [] Element.none
-                , spellcheck = False
-                }
-
-        preview =
-            Element.column
-                [ Element.width Element.fill
-                , Element.spacing 30
-                , Element.alignTop
-                ] <|
-                Utils.Markdown.render model.letterInput
-    in
-    Element.column
-        [ Element.width Element.fill ]
-        [ instruction
-        , Element.column
-            [ Element.width Element.fill
-            , Element.spacingXY 0 20
-            ]
-            [ Element.row
-                [ Element.spacingXY 10 0 ]
                 [ Element.text "This letter can be read " 
                 , Input.text
                     [ Element.width <| Element.px 100
@@ -95,21 +68,58 @@ view model =
                     }
                 , Element.text " times."
                 ]
-            , posIntInputHint model.letterMaxReadCountInput
 
-            , Input.checkbox
-                []
+        persistInput =
+            Input.checkbox
+                [ Element.paddingXY 0 20 ]
                 { onChange = LetterPersistInput
                 , icon = Input.defaultCheckbox
                 , checked = model.letterPersistInput
                 , label = Input.labelRight [] <| Element.text "Disk Persistence"
                 }
+
+        windowWidth = model.viewport.viewport.width
+        letterInputWidthConstraint =
+            Element.width <| Element.maximum
+                ( round <|
+                    ( windowWidth - 2 * ( windowPaddingPx windowWidth ) - dividerWidth ) / 2
+                )
+                Element.fill
+
+        letterInputBox =
+            Input.multiline
+                [ letterInputWidthConstraint
+                , Element.alignTop
+                , Element.scrollbarY
+                , Background.color bgColor
+                ]
+                { onChange = LetterInput
+                , text = model.letterInput
+                , placeholder = Nothing
+                , label = Input.labelAbove [] Element.none
+                , spellcheck = False
+                }
+
+        preview =
+            Element.column
+                [ letterInputWidthConstraint
+                , Element.spacing 30
+                , Element.alignTop
+                ] <|
+                Utils.Markdown.render model.letterInput
+    in
+    Element.column
+        [ Element.width Element.fill ]
+        [ Element.column
+            [ widthConstraint ]
+            [ instruction
+            , maxReadCountInput
+            , posIntInputHint model.letterMaxReadCountInput
+            , persistInput
             ]
 
         , Element.row
-            [ Element.width Element.fill
-            , Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
-            ]
+            [ Element.width Element.fill ]
             [ case model.userStatus of
                 WritingLetter ->
                     letterInputBox
@@ -159,4 +169,7 @@ view model =
 
 divider : Element Msg
 divider =
-    Element.el [ Element.width <| Element.px 100 ] Element.none
+    Element.el [ Element.width <| Element.px dividerWidth ] Element.none
+
+
+dividerWidth = 100

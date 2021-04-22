@@ -457,7 +457,7 @@ view model =
             (Element.el
                 [ Element.width Element.fill
                 , Element.height Element.fill
-                , Element.padding 60
+                , windowPadding model.viewport.viewport.width
                 ]
                 (case model.route of
                     Root ->
