@@ -40,11 +40,16 @@ view model =
             Element.textColumn
                 [ Element.paddingEach { bottom = 40, top = 0, left = 0, right = 0 }
                 , Element.spacingXY 0 20
-                , Font.size 24
                 ]
-                [ plainPara "Type away your message below. Markdown is supported."
-                , plainPara "Send the letter after it's finished. It will be saved to a link, that can be visited only once. So don't click that link yourself. Just give it to your intended recipient."
-                , plainPara "After the recipient has opened that link, the server will send the letter to their browser, and then delete it from itself. Therefore, nobody else can read that letter."
+                [ plainPara "Type away your letter below. Markdown is supported."
+                , plainPara
+                    """
+                    Send the letter after it's finished. It will be saved to a link, that can be accessed a strictly limited number of times. So don't click that link yourself. Just give it to your contacts.
+                    """
+                , plainPara
+                    """
+                    The server deletes the letter after the access limit is reached. So if all of your contacts report that they've read the letter, you'll be sure that nobody else could have read it.
+                    """
                 ]
 
         letterInputBox =
