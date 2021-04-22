@@ -18,6 +18,23 @@ view model =
 
         maxWidthPx =
             round <| windowWidth - 2 * ( windowPaddingPx windowWidth )
+
+        intro =
+            Element.column
+                [ Element.width <| Element.maximum 750 Element.fill ]
+                [ plainPara "You received a Hideout letter!"
+                , Element.paragraph
+                    [ Element.paddingXY 0 20 ]
+                    [ Element.text
+                        """
+                        Hideout is a service for private messaging. This letter can be read a strictly limited times. So please don't refresh or reopen this letter. It prevents other recipients from accessing it!
+                        """
+                    ]
+                , Element.paragraph
+                    [ Element.paddingEach { bottom = 20, top = 0, left = 0, right = 0 } ]
+                    [ Element.text "Below is the letter." ]
+                ]
+ 
     in
     Element.column
         [ Element.width <| Element.maximum maxWidthPx Element.fill ]
@@ -33,22 +50,11 @@ view model =
                     Ok letterMeta ->
                         Element.column
                             [ Element.width Element.fill ]
-                            [ plainPara "You received a Hideout letter!"
-                            , Element.paragraph
-                                [ Element.paddingXY 0 20 ]
-                                [ Element.text
-                                    """
-                                    Hideout is a service for private messaging. This letter can be read a strictly limited times. So please don't refresh or reopen this letter. It prevents other recipients from accessing it!
-                                    """
-                                ]
-                            , Element.paragraph
-                                [ Element.paddingEach { bottom = 20, top = 0, left = 0, right = 0 }
-                                , Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
-                                ]
-                                [ Element.text "Below is the letter." ]
+                            [ intro
                             , Element.column
                                 [ Element.width Element.fill
                                 , Element.paddingEach { top = 60, bottom = 0, left = 0, right = 0 }
+                                , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
                                 ] <|
                                 Utils.Markdown.render letterMeta.letter.body
                             ]
