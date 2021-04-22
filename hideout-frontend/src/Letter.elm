@@ -1,5 +1,6 @@
 module Letter exposing (..)
 
+import Http
 import Json.Decode as JDec
 import Json.Decode exposing ( field, string, int )
 
@@ -15,7 +16,19 @@ type alias LetterMeta =
     }
 
 
-type Status
+type alias Status =
+    { read : ReadStatus
+    , write : WriteStatus
+    }
+
+
+type ReadStatus
+    = Init
+    | Waiting
+    | Got ( Result Http.Error LetterMeta )
+
+
+type WriteStatus
     = NotSent
     | Sent
         { maxReadCount : Int }

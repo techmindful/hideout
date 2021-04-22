@@ -7,6 +7,7 @@ import Common.Styles exposing
     ( windowPaddingPx )
 import Element exposing ( Element )
 import Element.Border as Border
+import Letter
 import UserStatus exposing (..)
 import Utils.Markdown
 
@@ -38,11 +39,11 @@ view model =
     in
     Element.column
         [ Element.width <| Element.maximum maxWidthPx Element.fill ]
-        [ case model.userStatus of
-            ReadLetterReq _ ->
+        [ case model.letterStatus.read of
+            Letter.Waiting ->
                 plainPara "Waiting for the letter from server.."
 
-            ReadLetterResp result ->
+            Letter.Got result ->
                 case result of
                     Err err ->
                         plainPara <| Debug.toString err

@@ -120,7 +120,7 @@ view model =
 
         , Element.row
             [ Element.width Element.fill ]
-            [ case model.letterStatus of
+            [ case model.letterStatus.write of
                 Letter.NotSent ->
                     letterInputBox
 
@@ -151,7 +151,7 @@ view model =
             , divider
             , preview
             ]
-        , case model.letterStatus of
+        , case model.letterStatus.write of
             Letter.NotSent ->
                 Element.el
                     [ Element.paddingEach

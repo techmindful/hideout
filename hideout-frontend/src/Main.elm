@@ -82,7 +82,7 @@ init flags url navKey =
       , letterInput = ""
       , letterMaxReadCountInput = Good 1
       , letterPersistInput = True
-      , letterStatus = Letter.NotSent
+      , letterStatus = { read = Init, write = Letter.NotSent }
 
       , dispChatMaxJoinCountInput = Good 2
       , persistChatMaxJoinCountInput = Good 2
@@ -107,19 +107,20 @@ init flags url navKey =
     , Cmd.batch
         [ getViewportCmd
 
-        , case userStatus of
-            ReadLetterReq letterId -> getLetterReq letterId
-            _ -> Cmd.none
-
         , case route of
-            Chat chatIdStr -> port_InitWs chatIdStr
+            Chat chatIdStr ->
+                port_InitWs chatIdStr
+
+            ReadLetter letterId ->
+                getLetterReq letterId
+
             _ -> Cmd.none
         ]
     )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ( { chatStatus } as model ) =
+update msg ( { letterStatus, chatStatus } as model ) =
     case msg of
         UrlRequested req ->
             case req of
@@ -136,22 +137,25 @@ update msg ( { chatStatus } as model ) =
             ( { model | route = route
                       , userStatus = userStatus              
               }
-            , Cmd.batch
-                [ case userStatus of
-                    ReadLetterReq letterId -> getLetterReq letterId
-                    _ -> Cmd.none
+            , case route of
+                Chat chatIdStr ->
+                    port_InitWs chatIdStr
 
-                , case route of
-                    Chat chatIdStr -> port_InitWs chatIdStr
-                    _ -> Cmd.none
-                ]
+                ReadLetter letterId ->
+                    getLetterReq letterId
+
+                _ -> Cmd.none
             )
 
         GotViewport viewport ->
             ( { model | viewport = viewport }, Cmd.none )
 
         GotReadLetterResp result ->
-            ( { model | userStatus = ReadLetterResp result }, Cmd.none )
+            ( { model | letterStatus =
+                { letterStatus | read = Got result }
+              }
+            , Cmd.none
+            )
 
         LetterInput str ->
             ( { model | letterInput = str }, Cmd.none )
@@ -168,8 +172,12 @@ update msg ( { chatStatus } as model ) =
             case model.letterMaxReadCountInput of
                 Bad _ -> ( model, Cmd.none )
                 Good maxReadCount ->
-                    ( { model | letterStatus = Letter.Sent { maxReadCount = maxReadCount }
-                              , letterInput = ""
+                    ( { model |
+                        letterStatus =
+                            { letterStatus | write =
+                                Letter.Sent { maxReadCount = maxReadCount }
+                            }
+                      , letterInput = ""
                       }
                     , Http.request
                         { method = "PUT"
@@ -194,11 +202,14 @@ update msg ( { chatStatus } as model ) =
                     ( model, Cmd.none )
 
                 Ok letterId ->
-                    case model.letterStatus of
+                    case model.letterStatus.write of
                         Letter.Sent info ->
-                            ( { model | letterStatus = GotId
-                                { id = letterId
-                                , maxReadCount = info.maxReadCount
+                            ( { model | letterStatus =
+                                { letterStatus | write =
+                                    GotId
+                                        { id = letterId
+                                        , maxReadCount = info.maxReadCount
+                                        }
                                 }
                               }
                             , Cmd.none
@@ -526,7 +537,6 @@ view model =
 routeToInitUserStatus : Route -> UserStatus
 routeToInitUserStatus route =
     case route of
-        ReadLetter letterId -> ReadLetterReq letterId
         _ -> Other
 
 

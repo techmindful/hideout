@@ -6,7 +6,5 @@ import Http
 
 
 type UserStatus
-    = ReadLetterReq String
-    | ReadLetterResp ( Result Http.Error LetterMeta )
-    | GotPersistChatIdLetter ( Result Http.Error String )
+    = GotPersistChatIdLetter ( Result Http.Error String )
     | Other
