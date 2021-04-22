@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3cc1a6305e77642e186f19af639195a1e9ce3777fa3f3481a752fac3fc546ce4
+-- hash: b975bbbf46aee6d4fd3bd133455042c89be76cce8b1bc8bcdca613e2be61b3b8
 
 name:           hideout-backend
 version:        0.1.0.0
@@ -55,6 +55,7 @@ library
     , servant-websockets
     , stm
     , text
+    , time
     , wai
     , wai-cors
     , warp
@@ -89,6 +90,7 @@ executable hideout-backend-exe
     , servant-websockets
     , stm
     , text
+    , time
     , wai
     , wai-cors
     , warp
@@ -129,6 +131,7 @@ test-suite hideout-backend-test
     , servant-websockets
     , stm
     , text
+    , time
     , wai
     , wai-cors
     , warp

@@ -19,6 +19,7 @@ import Html.Events
 import Json.Decode as JDec
 import String.Extra exposing ( quote )
 import Tagged exposing ( tag, untag )
+import Time exposing ( millisToPosix, toSecond, utc )
 import Utils.Markdown
 
 
@@ -145,12 +146,19 @@ msgView : Chat.MsgFromServer -> Element m
 msgView msg =
     let
         msgFromClient = msg.msgFromClient
+
+        time =
+            Element.el
+                [ Font.size 16 ] <|
+                Element.text <| String.fromInt <| toSecond utc <| millisToPosix <| msg.posixTime * 1000
     in
     case msgFromClient.msgType of
         Chat.Join ->
             Element.paragraph
                 [ Font.color green ]
-                [ Element.text <| msg.username ++ " joined." ]
+                [ Element.text <| msg.username ++ " joined."
+                , time
+                ]
 
         Chat.NameChange ->
             Element.paragraph

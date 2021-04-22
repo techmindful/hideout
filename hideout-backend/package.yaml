@@ -38,6 +38,7 @@ dependencies:
 - servant-websockets
 - stm
 - text
+- time
 - wai
 - warp
 - wai-cors

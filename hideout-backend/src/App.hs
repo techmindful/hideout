@@ -61,6 +61,7 @@ import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
 import           Data.Pool ( Pool )
 import           Data.Text ( Text )
+import           Data.Time.Clock.POSIX ( getPOSIXTime )
 import           GHC.Generics ( Generic )
 
 
@@ -288,6 +289,9 @@ chatHandler chatIdStr conn = do
                 -- So no need to remove?
                 Nothing -> return ()
                 Just ( chat, users ) -> do
+
+                  posixTime <- getPOSIXTime
+
                   let username = case Map.lookup userId users of
                         Just user -> user ^. #name
                         Nothing -> "[Error: User not found]"
@@ -299,6 +303,7 @@ chatHandler chatIdStr conn = do
                         msgFromClient = msgFromClient
                       , userId = userId
                       , username = username
+                      , posixTime = round posixTime
                       }
                   let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
                       newUsers = Map.delete userId users
@@ -327,6 +332,10 @@ chatHandler chatIdStr conn = do
 
                   msgFromClient <- failWith "Message can't be JSON-decoded." $ Aeson.decode byteStr
 
+                  posixTime <- liftIO getPOSIXTime
+
+                  liftIO $ putStrLn $ show $ round posixTime
+
                   -- Debug print msg.
                   liftIO $ putStrLn $ "Received msg from client: " ++ show msgFromClient
 
@@ -337,6 +346,7 @@ chatHandler chatIdStr conn = do
                         msgFromClient = msgFromClient
                       , userId = userId
                       , username = user ^. #name
+                      , posixTime = round posixTime
                       }
 
                   -- Update chat.

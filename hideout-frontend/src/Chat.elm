@@ -71,14 +71,17 @@ type alias MsgFromServer =
 
     -- Without this field, username in previous messages goes unfound when user leaves.
     , username : String  
+
+    , posixTime : Int
     }
 msgFromServerDecoder : JDec.Decoder MsgFromServer
 msgFromServerDecoder =
-    JDec.map3
+    JDec.map4
         MsgFromServer
         ( JDec.field "msgFromClient" msgFromClientDecoder )
         ( JDec.field "userId" JDec.int )
         ( JDec.field "username" JDec.string )
+        ( JDec.field "posixTime" JDec.int )
 
 
 type alias MsgHistory =
