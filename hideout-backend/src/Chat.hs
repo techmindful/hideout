@@ -27,7 +27,7 @@ data MsgFromServer = MsgFromServer
   { msgFromClient :: MsgFromClient
   , userId :: Int
   , username :: String
-  , posixTime :: Int
+  , posixTimeSec :: Int
   } deriving ( Generic, Read, Show )
 instance FromJSON MsgFromServer
 instance ToJSON   MsgFromServer

@@ -303,7 +303,7 @@ chatHandler chatIdStr conn = do
                         msgFromClient = msgFromClient
                       , userId = userId
                       , username = username
-                      , posixTime = round posixTime
+                      , posixTimeSec = round posixTime
                       }
                   let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
                       newUsers = Map.delete userId users
@@ -346,7 +346,7 @@ chatHandler chatIdStr conn = do
                         msgFromClient = msgFromClient
                       , userId = userId
                       , username = user ^. #name
-                      , posixTime = round posixTime
+                      , posixTimeSec = round posixTime
                       }
 
                   -- Update chat.

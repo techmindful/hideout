@@ -21,6 +21,7 @@ import String.Extra exposing ( quote )
 import Tagged exposing ( tag, untag )
 import Time exposing ( millisToPosix, toSecond, utc )
 import Utils.Markdown
+import Utils.Utils as Utils
 
 
 view : Model -> Element Msg
@@ -149,8 +150,11 @@ msgView msg =
 
         time =
             Element.el
-                [ Font.size 16 ] <|
-                Element.text <| String.fromInt <| toSecond utc <| millisToPosix <| msg.posixTime * 1000
+                [ Font.size 16
+                , Font.color grey
+                ] <|
+                Element.text <|
+                    Utils.formatTime msg.posixTimeSec ( millisToPosix msg.posixTimeSec )
     in
     case msgFromClient.msgType of
         Chat.Join ->
