@@ -4,8 +4,10 @@ import Element exposing ( Element )
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Common.Colors exposing ( red )
+import Common.Colors exposing (..)
+import Time exposing ( Posix )
 import Utils.Types exposing ( PosIntInput(..) )
+import Utils.Utils as Utils
 
 
 plainPara str = Element.paragraph [] [ Element.text str ]
@@ -37,7 +39,6 @@ borderedButton msg labelStr =
         }
 
 
-
 posIntInputHint : PosIntInput -> Element msg
 posIntInputHint input =
     case input of
@@ -46,4 +47,14 @@ posIntInputHint input =
             Element.el
                 [ Font.color red ] <|
                 Element.text "Please input a positive integer."
+
+
+timeText : Posix -> Posix -> Element m
+timeText targetPosix currentPosix =
+    Element.el
+        [ Font.size 16
+        , Font.color grey
+        ] <|
+        Element.text <|
+            Utils.formatTime targetPosix currentPosix
 

@@ -27,6 +27,8 @@ import Json.Decode.Extra as JDec
 import Json.Encode as JEnc
 import List.Extra as List
 import Tagged exposing ( Tagged, tag, untag )
+import Time exposing ( Posix )
+import Utils.Utils as Utils
 
 
 type ChatIdTag = ChatIdTag
@@ -157,6 +159,7 @@ type alias MsgBundle =
     { userId : Int  -- Compare with this, not username.
     , username : String
     , msgs : List MsgFromServer
+    , time : Posix
     }
 
 
@@ -170,6 +173,7 @@ mkMsgBundles msgFromServers =
                     { userId = msg.userId
                     , username = msg.username
                     , msgs = [ msg ]
+                    , time = Utils.posixSecToPosix msg.posixTimeSec
                     } :: bundles
             in
             case

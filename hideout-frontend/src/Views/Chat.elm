@@ -134,9 +134,15 @@ msgBundleView bundle =
         ] <|
         [ case Chat.isMetaBundle bundle of
             False ->
-                Element.paragraph
-                    [ Font.bold ]
-                    [ Element.text bundle.username ]
+                Element.row
+                    [ Element.spacingXY 10 0 ]
+                    [ Element.paragraph
+                        [ Element.width Element.shrink
+                        , Font.bold
+                        ]
+                        [ Element.text bundle.username ]
+                    , Common.Contents.timeText bundle.time bundle.time
+                    ]
 
             True -> Element.none
         ] ++
@@ -148,20 +154,17 @@ msgView msg =
     let
         msgFromClient = msg.msgFromClient
 
-        time =
+        paddedTimeText =
             Element.el
-                [ Font.size 16
-                , Font.color grey
-                ] <|
-                Element.text <|
-                    Utils.formatTime msg.posixTimeSec ( millisToPosix msg.posixTimeSec )
+                [ Element.paddingEach { left = 10, right = 0, top = 0, bottom = 0 } ] <|
+                Common.Contents.timeText ( Utils.posixSecToPosix msg.posixTimeSec ) ( Utils.posixSecToPosix msg.posixTimeSec )
     in
     case msgFromClient.msgType of
         Chat.Join ->
             Element.paragraph
                 [ Font.color green ]
                 [ Element.text <| msg.username ++ " joined."
-                , time
+                , paddedTimeText
                 ]
 
         Chat.NameChange ->
@@ -171,17 +174,20 @@ msgView msg =
                  ++ " changed their name to "
                  ++ ( quote <| untag msgFromClient.msgBody )
                  ++ "."
+                , paddedTimeText
                 ]
 
         Chat.Leave ->
             Element.paragraph
                 [ Font.color red ]
-                [ Element.text <| msg.username ++ " left." ]
+                [ Element.text <| msg.username ++ " left."
+                , paddedTimeText
+                ]
 
         Chat.Content ->
             Element.column
                 [] <|
-                Utils.Markdown.render <| untag msgFromClient.msgBody
+                ( Utils.Markdown.render <| untag msgFromClient.msgBody )
 
 
 userView : ( Int, String ) -> Element m

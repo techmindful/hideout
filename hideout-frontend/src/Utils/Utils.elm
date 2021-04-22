@@ -25,13 +25,9 @@ hasManualScrolledUp viewport margin =
     else False
 
 
-formatTime : Int -> Posix -> String
-formatTime targetPosixSec currentPosix =
+formatTime : Posix -> Posix -> String
+formatTime targetPosix currentPosix =
     let
-        targetPosixMilliSec = targetPosixSec * 1000
-
-        targetPosix = millisToPosix targetPosixMilliSec
-
         year  = toYear   utc targetPosix 
         month = toMonth  utc targetPosix |> monthToInt
         day   = toDay    utc targetPosix 
@@ -43,9 +39,17 @@ formatTime targetPosixSec currentPosix =
         time = String.join ":" <| List.map String.fromInt [ hour, min, sec ]
 
         whole = String.join " - " [ date, time ]
-
     in
     whole
+
+
+posixSecToPosix : Int -> Posix
+posixSecToPosix posixSec =
+    let
+        posixMilliSec = posixSec * 1000
+    in
+    millisToPosix posixMilliSec
+
 
 monthToInt : Month -> Int
 monthToInt month =
@@ -62,6 +66,4 @@ monthToInt month =
         Oct -> 10
         Nov -> 11
         Dec -> 12
-
-
 
