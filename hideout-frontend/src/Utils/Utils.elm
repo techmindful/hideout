@@ -43,6 +43,21 @@ formatTime targetPosix currentPosix =
     whole
 
 
+intToOrdStr : Int -> String
+intToOrdStr n =
+    let
+        postfix =
+            if modBy 100 n >= 10 && modBy 100 n <= 20 then
+                "th"
+            else
+                if modBy 10 n == 1 then "st"
+                else if modBy 10 n == 2 then "nd"
+                else if modBy 10 n == 3 then "rd"
+                else "th"
+    in
+    ( String.fromInt n ) ++ postfix
+
+
 posixSecToPosix : Int -> Posix
 posixSecToPosix posixSec =
     let
