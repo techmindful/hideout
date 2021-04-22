@@ -82,6 +82,7 @@ init flags url navKey =
       , letterInput = ""
       , letterMaxReadCountInput = Good 1
       , letterPersistInput = True
+      , letterStatus = Letter.NotSent
 
       , dispChatMaxJoinCountInput = Good 2
       , persistChatMaxJoinCountInput = Good 2
@@ -167,7 +168,7 @@ update msg ( { chatStatus } as model ) =
             case model.letterMaxReadCountInput of
                 Bad _ -> ( model, Cmd.none )
                 Good maxReadCount ->
-                    ( { model | userStatus = SentLetter
+                    ( { model | letterStatus = Letter.Sent { maxReadCount = maxReadCount }
                               , letterInput = ""
                       }
                     , Http.request
@@ -193,7 +194,21 @@ update msg ( { chatStatus } as model ) =
                     ( model, Cmd.none )
 
                 Ok letterId ->
-                    ( { model | userStatus = GotLetterId letterId }, Cmd.none )
+                    case model.letterStatus of
+                        Letter.Sent info ->
+                            ( { model | letterStatus = GotId
+                                { id = letterId
+                                , maxReadCount = info.maxReadCount
+                                }
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model
+                            , Debug.todo
+                                "Incorrect LetterStatus when letter send is responeded."
+                            )
 
         DispChatMaxJoinCountInput str ->
             ( { model | dispChatMaxJoinCountInput = strToPosIntInput str }
@@ -512,7 +527,6 @@ routeToInitUserStatus : Route -> UserStatus
 routeToInitUserStatus route =
     case route of
         ReadLetter letterId -> ReadLetterReq letterId
-        WriteLetter -> WritingLetter
         _ -> Other
 
 

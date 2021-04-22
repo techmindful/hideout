@@ -21,6 +21,7 @@ type alias Model =
     , letterInput : String
     , letterMaxReadCountInput : PosIntInput
     , letterPersistInput : Bool
+    , letterStatus : Letter.Status
     , dispChatMaxJoinCountInput : PosIntInput
     , persistChatMaxJoinCountInput : PosIntInput
     , chatStatus : Chat.Status

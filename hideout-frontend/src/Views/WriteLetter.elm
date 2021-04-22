@@ -52,7 +52,7 @@ view model =
 
         maxReadCountInput =
             Element.row
-                [ Element.paddingEach { top = 40, bottom = 0, left = 0, right = 0 }
+                [ Element.paddingEach { top = 40, bottom = 10, left = 0, right = 0 }
                 , Element.spacingXY 10 0
                 ]
                 [ Element.text "This letter can be read " 
@@ -120,18 +120,18 @@ view model =
 
         , Element.row
             [ Element.width Element.fill ]
-            [ case model.userStatus of
-                WritingLetter ->
+            [ case model.letterStatus of
+                Letter.NotSent ->
                     letterInputBox
 
-                SentLetter ->
+                Letter.Sent _ ->
                     Element.paragraph
                         [ Element.width Element.fill ]
                         [ Element.text
                             "Letter is sent. Waiting for the letter ID from server..."
                         ]
 
-                GotLetterId letterId ->
+                Letter.GotId info ->
                     Element.textColumn
                         [ Element.width Element.fill
                         , lineSpacing
@@ -139,18 +139,20 @@ view model =
                         , Border.width 2
                         , Border.rounded 6
                         ]
-                        [ plainPara "Your letter can be read (only once) at: "
+                        [ Element.paragraph
+                            []
+                            [ Element.text "Your letter can be read "
+                            , Element.text <| String.fromInt info.maxReadCount
+                            , Element.text " times, at:"
+                            ]
                         , plainPara <|
-                            frontendReadLetterUrl ++ "/" ++ unquote letterId
+                            frontendReadLetterUrl ++ "/" ++ unquote info.id
                         ]
-
-                _ ->
-                    plainPara "Error: Unaddressed UserStatus case. Can you report this to the server owner?"
             , divider
             , preview
             ]
-        , case model.userStatus of
-            WritingLetter ->
+        , case model.letterStatus of
+            Letter.NotSent ->
                 Element.el
                     [ Element.paddingEach
                         { top = 20, bottom = 0, left = 0, right = 0 }

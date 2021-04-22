@@ -15,6 +15,16 @@ type alias LetterMeta =
     }
 
 
+type Status
+    = NotSent
+    | Sent
+        { maxReadCount : Int }
+    | GotId
+        { id : String
+        , maxReadCount : Int
+        }
+
+
 letterJsonDec : JDec.Decoder Letter
 letterJsonDec = JDec.map2 Letter ( field "body" string ) ( field "maxReadCount" int )
 
