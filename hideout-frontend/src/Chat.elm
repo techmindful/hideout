@@ -89,13 +89,15 @@ msgFromServerDecoder =
 type alias MsgHistory =
     { msgs  : List MsgFromServer
     , users : Dict Int String
+    , maxJoinCount : Maybe Int
     }
 msgHistoryDecoder : JDec.Decoder MsgHistory
 msgHistoryDecoder =
-    JDec.map2
+    JDec.map3
         MsgHistory
         ( JDec.field "msgs"  <| JDec.list msgFromServerDecoder )
         ( JDec.field "users" <| JDec.dict2 JDec.int JDec.string )
+        ( JDec.maybe <| JDec.field "maxJoinCount" JDec.int )
 
 
 type alias UserIdMsg = { yourUserId : Int }
@@ -125,6 +127,7 @@ type alias Status =
     , input : MsgBody
     , msgs : List MsgFromServer
     , users : Dict Int String
+    , maxJoinCount : Maybe Int
 
     , hasManualScrolledUp : Bool
     , shouldHintNewMsg : Bool

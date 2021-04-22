@@ -404,6 +404,7 @@ chatHandler chatIdStr conn = do
         let msgHistory = MsgHistory {
           msgs  = chat ^. #msgs
         , users = Map.map ( ^. #name ) users
+        , maxJoinCount = chat ^. #config . #maxJoinCount
         }
         WebSock.sendTextData ( user ^. #conn ) ( Aeson.encode msgHistory )
 

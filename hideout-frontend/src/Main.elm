@@ -92,6 +92,7 @@ init flags url navKey =
           , msgs = []
           , input = tag ""
           , users = Dict.empty
+          , maxJoinCount = Nothing
 
           , hasManualScrolledUp = False
           , shouldHintNewMsg = False
@@ -375,6 +376,7 @@ update msg ( { letterStatus, chatStatus } as model ) =
                               chatStatus =
                                   { chatStatus | msgs  = msgHistory.msgs
                                                , users = msgHistory.users
+                                               , maxJoinCount = msgHistory.maxJoinCount
                                   }
                              }
                            , Cmd.none

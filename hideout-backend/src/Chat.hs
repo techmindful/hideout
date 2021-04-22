@@ -74,6 +74,7 @@ derivePersistField "Chat"
 data MsgHistory = MsgHistory
   { msgs  :: [ MsgFromServer ]
   , users :: Map Int String
+  , maxJoinCount :: Maybe Int
   } deriving ( Generic )
 instance ToJSON MsgHistory 
 

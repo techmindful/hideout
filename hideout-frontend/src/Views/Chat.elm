@@ -121,10 +121,26 @@ view model =
                 [ Element.text "Users" ]
             -- List of users
             , Element.column
-                [ Element.paddingXY 0 40 
+                [ Element.width Element.fill
+                , Element.height <| Element.fillPortion 4
+                , Element.paddingXY 0 40 
                 , Element.spacingXY 0 20
+                , Element.scrollbarY
                 ] <|
                 List.map userView <| Dict.toList model.chatStatus.users
+            -- Room info
+            , Element.column
+                [ Element.height <| Element.fillPortion 1
+                , Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+                , Element.spacingXY 0 10
+                , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
+                ]
+                [ plainPara <| "Join Count: "
+                , plainPara <|
+                    "Max Join Count: " ++ case model.chatStatus.maxJoinCount of
+                        Nothing -> "Unlimited"
+                        Just n  -> String.fromInt n
+                ]
             ]
         ]
 
