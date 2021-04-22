@@ -29,16 +29,19 @@ view model =
     Element.row
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.spacingXY 60 0
+        , Element.spacingXY sideColumnGap 0
         ]
         [ Element.column
-            [ Element.width Element.fill
+            [ Element.width <| Element.maximum
+                ( chatColumnMaxWidthPx model.viewport.viewport.width )
+                Element.fill
             , Element.height Element.fill
             ]
             [ Element.column
                 [ Element.width Element.fill
                 , Element.height Element.fill
-                , Element.spacingXY 0 30
+                , Element.paddingEach { right = 30, left = 0, top = 0, bottom = 0 }
+                , Element.spacingXY 0 30  -- Spacing between msg bundles.
                 , Element.scrollbarY
                 , Element.htmlAttribute <| Html.Attributes.id msgsViewHtmlId
                 , Element.htmlAttribute <|
@@ -108,11 +111,11 @@ view model =
             ]
         -- Right side panel.
         , Element.column
-            [ Element.width <| Element.px 400
+            [ Element.width <| Element.px sideColumnWidthPx
             , Element.height Element.fill
             , Element.paddingXY 30 20
             , Border.widthEach { left = 2, right = 0, top = 0, bottom = 0 }
-            ] <|
+            ]
             [ Element.paragraph
                 [ Font.size 24 ]
                 [ Element.text "Users" ]
@@ -193,6 +196,22 @@ msgView msg =
 userView : ( Int, String ) -> Element m
 userView ( userId, username ) =
     plainPara <| username ++ " (" ++ String.fromInt userId ++ ")"
+
+
+sideColumnWidthPx : Int
+sideColumnWidthPx = 400
+
+
+sideColumnGap : Int
+sideColumnGap = 60
+
+
+chatColumnMaxWidthPx : Float -> Int
+chatColumnMaxWidthPx windowWidth =
+    round <|
+        windowWidth - ( Common.Styles.windowPaddingPx windowWidth ) * 2
+                    - toFloat sideColumnWidthPx
+                    - toFloat sideColumnGap
 
 
 msgsViewHtmlId = "chat-msgs-view"
