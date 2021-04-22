@@ -55,6 +55,8 @@ subscriptions _ =
         [ port_WsReady OnWsReady
         , port_RecvWsMsg OnWsMsg
 
+        , Browser.Events.onResize ( \_ _ -> OnWindowResized )
+
         , Browser.Events.onKeyDown <|
             JDec.map OnKeyDown <| JDec.field "key" JDec.string
 
@@ -67,8 +69,6 @@ init flags url navKey =
 
     let route = getRoute url
         userStatus = routeToInitUserStatus route
-
-        getViewportCmd = Task.perform GotViewport Dom.getViewport
     in
     ( { route = route
       , viewport =
@@ -418,6 +418,9 @@ update msg ( { chatStatus } as model ) =
             , Cmd.none
             )
 
+        OnWindowResized ->
+            ( model, getViewportCmd )
+
         OnKeyDown key ->
             case key of
                 "Enter" ->
@@ -519,6 +522,10 @@ getLetterReq letterId =
         { url = backendReadLetterUrl ++ "/" ++ letterId
         , expect = Http.expectJson GotReadLetterResp letterMetaJsonDec
         }
+
+
+getViewportCmd : Cmd Msg
+getViewportCmd = Task.perform GotViewport Dom.getViewport
 
 
 snapScrollChatMsgsView : Cmd Msg

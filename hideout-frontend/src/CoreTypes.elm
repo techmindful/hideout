@@ -60,6 +60,8 @@ type Msg
     | ChatMsgsViewEvent Chat.MsgsViewEvent
     | OnChatInputFocal Bool
 
+    | OnWindowResized
+
     | OnKeyDown String
     | OnKeyUp   String
 
