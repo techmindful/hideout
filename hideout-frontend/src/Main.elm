@@ -68,10 +68,13 @@ init flags url navKey =
     let route = getRoute url
         userStatus = routeToInitUserStatus route
 
-        getViewportCmd = Task.attempt GotViewport Dom.getViewport
+        getViewportCmd = Task.perform GotViewport Dom.getViewport
     in
     ( { route = route
-      , viewport = Err <| Dom.NotFound "DOM viewport data isn't initialized yet."
+      , viewport =
+           { scene = { width = 1920, height = 1080 }
+           , viewport = { x = 0, y = 0, width = 1920, height = 1080 }
+           }
       , navKey = navKey
       , isWsReady = False
       , userStatus = userStatus
@@ -143,13 +146,8 @@ update msg ( { chatStatus } as model ) =
                 ]
             )
 
-        GotViewport result ->
-            case result of
-                Err err ->
-                    ( { model | viewport = Err err }, Cmd.none )
-
-                Ok viewport ->
-                    ( { model | viewport = Ok viewport }, Cmd.none )
+        GotViewport viewport ->
+            ( { model | viewport = viewport }, Cmd.none )
 
         GotReadLetterResp result ->
             ( { model | userStatus = ReadLetterResp result }, Cmd.none )
@@ -450,13 +448,6 @@ update msg ( { chatStatus } as model ) =
 
 view : Model -> Browser.Document Msg
 view model =
-    let
-        viewportWidth =
-            Result.withDefault 1920.0 <| Result.map (.scene >> .width) model.viewport
-
-        viewportHeight =
-            Result.withDefault 1080.0 <| Result.map (.scene >> .height) model.viewport
-    in
     { title = "Hideout"
     , body =
         [ Element.layout

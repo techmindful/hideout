@@ -14,7 +14,7 @@ import Utils.Types exposing ( PosIntInput )
 
 type alias Model =
     { route : Route
-    , viewport : Result Dom.Error Dom.Viewport
+    , viewport : Dom.Viewport
     , navKey : Nav.Key
     , isWsReady : Bool
     , userStatus : UserStatus
@@ -35,7 +35,7 @@ type alias Model =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
-    | GotViewport ( Result Dom.Error Dom.Viewport )
+    | GotViewport Dom.Viewport
     | GotReadLetterResp ( Result Http.Error LetterMeta )
     | LetterInput String
     | LetterMaxReadCountInput String
