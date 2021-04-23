@@ -2,9 +2,16 @@ module Views.ReadLetter exposing ( view )
 
 import CoreTypes exposing ( Model, Msg(..) )
 import Common.Contents exposing
-    ( plainPara )
+    ( footer
+    , link
+    , newTabLink
+    , plainPara
+    )
 import Common.Styles exposing
-    ( windowPaddingPx )
+    ( widthConstraint
+    , windowPaddingPx
+    )
+import Common.Urls exposing ( aboutUrl )
 import Element exposing ( Element )
 import Element.Border as Border
 import Letter
@@ -46,16 +53,34 @@ view model =
             Letter.Got result ->
                 case result of
                     Err err ->
-                        let
-                            errStr = case err of
-                                Http.BadStatus 404 ->
-                                    """
-                                    Letter not found. Check the letter ID?
-                                    """
+                        case err of
+                            Http.BadStatus 404 ->
+                                Element.column
+                                    [ widthConstraint ]
+                                    [ plainPara
+                                        """
+                                        Hi, welcome to Hideout! The letter can't be found. The reason is:
+                                        """
+                                    , Element.column
+                                        [ Element.paddingEach
+                                            { top = 20, bottom = 100, left = 0, right = 0 }
+                                        , Element.spacingXY 0 10
+                                        ]
+                                        [ plainPara "- Either you entered a wrong link or letter ID;"
+                                        , Element.paragraph
+                                            []
+                                            [ Element.text
+                                                """
+                                                - Or the letter has reached the maximum number of times it can be read. Read more about what it implies 
+                                                """
+                                            , newTabLink aboutUrl "here"
+                                            , Element.text "."
+                                            ]
+                                        ]
+                                    , footer
+                                    ]
 
-                                _ -> httpErrToStr err
-                        in
-                        plainPara errStr
+                            _ -> plainPara <| httpErrToStr err
 
                     Ok letterMeta ->
                         Element.column

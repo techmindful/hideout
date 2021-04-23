@@ -18,8 +18,7 @@ widthConstraint =
     Element.width <| Element.maximum 750 Element.fill
 
 
-linkStyle =
-    [ Font.underline ]
+linkStyle = [ Font.underline ]
 
 
 buttonStyle padding =

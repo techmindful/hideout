@@ -10,6 +10,9 @@ backendUrl = "http://localhost:8080"
 mkBackendUrl = crossOrigin backendUrl
 
 
+rootUrl = absolute [] []
+
+
 aboutUrl = absolute [ "about" ] []
 
 

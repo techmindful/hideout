@@ -3,7 +3,11 @@ module Views.Chat exposing ( view, msgsViewHtmlId )
 import Chat
 import Common.Attributes
 import Common.Colors exposing (..)
-import Common.Contents exposing ( plainPara )
+import Common.Contents exposing
+    ( footer
+    , newTabLink
+    , plainPara
+    )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
@@ -29,14 +33,18 @@ view model =
     case model.chatStatus.err of
         Nothing  -> chatView model
         Just err ->
-            Element.el
-                [ Element.width <| Element.maximum 750 Element.fill ] <|
-                case err of
+            let
+                errContent = case err of
                     Chat.MaxJoined ->
-                        plainPara
-                        """
-                        Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. This means some other participants have joined more than once, by accidentally reloading the page etc. The initiator of the chat needs to make a new chat room, and make sure nobody joins more than once.
-                        """
+                        Element.paragraph
+                            []
+                            [ Element.text
+                                """
+                                Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. Read more about what this implies 
+                                """
+                            , newTabLink aboutUrl "here"
+                            , Element.text "."
+                            ]
 
                     Chat.NotFound ->
                         Element.column
@@ -53,6 +61,14 @@ view model =
                                 , plainPara "- Or the chat is expired and deleted."
                                 ]
                             ]
+            in
+            Element.column
+                [ Element.width <| Element.maximum 750 Element.fill
+                , Element.spacingXY 0 100
+                ]
+                [ errContent
+                , footer
+                ]
 
 
 chatView : Model -> Element Msg

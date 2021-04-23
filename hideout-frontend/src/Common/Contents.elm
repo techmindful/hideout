@@ -5,12 +5,35 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Common.Colors exposing (..)
+import Common.Styles exposing
+    ( linkStyle
+    , widthConstraint
+    )
+import Common.Urls exposing ( rootUrl )
 import Time exposing ( Posix )
 import Utils.Types exposing ( PosIntInput(..) )
 import Utils.Utils as Utils
 
 
 plainPara str = Element.paragraph [] [ Element.text str ]
+
+
+link : String -> String -> Element msg
+link urlStr labelStr =
+    Element.link
+        linkStyle
+        { url = urlStr
+        , label = Element.text labelStr
+        }
+
+
+newTabLink : String -> String -> Element msg
+newTabLink urlStr labelStr =
+    Element.newTabLink
+        linkStyle
+        { url = urlStr
+        , label = Element.text labelStr
+        }
 
 
 italicText : String -> Element msg
@@ -57,4 +80,14 @@ timeText targetPosix currentPosix =
         ] <|
         Element.text <|
             Utils.formatTime targetPosix currentPosix
+
+
+footer : Element msg
+footer =
+    Element.row
+        [ widthConstraint
+        , Element.paddingXY 0 20
+        , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
+        ]
+        [ link rootUrl "Hideout Home" ]
 
