@@ -1,11 +1,13 @@
 module Chat exposing
     ( ChatId
-    , Status
     , ChatMsgMeta
-    , MsgType(..)
+    , CtrlMsg(..)
+    , Err(..)
     , MsgBody
     , MsgBundle
+    , MsgType(..)
     , MsgsViewEvent(..)
+    , Status
     , autoScrollMargin
     , isMetaBundle
     , mkJoinMsg
@@ -28,7 +30,7 @@ import Json.Encode as JEnc
 import List.Extra as List
 import Tagged exposing ( Tagged, tag, untag )
 import Time exposing ( Posix )
-import Utils.Utils as Utils
+import Utils.Utils as Utils exposing ( is )
 
 
 type ChatIdTag = ChatIdTag
@@ -67,26 +69,32 @@ msgFromClientDecoder =
         ( JDec.map tag <| JDec.field "msgBody" JDec.string )
 
 
-type CtrlMsgType
-    = Err
-ctrlMsgTypeDecoder : JDec.Decoder CtrlMsgType
-ctrlMsgTypeDecoder =
-    JDec.field "msgType" JDec.string
-        |> JDec.andThen
-            ( \str ->
-                if str == "err" then JDec.succeed Err
-                else JDec.fail "Invalid ctrl msg type"
-            )
+type CtrlMsg
+    = Err_ Err
+
+type Err
+    = MaxJoined
+
+ctrlMsgTypeDecoder : JDec.Decoder String
+ctrlMsgTypeDecoder = JDec.field "msgType" JDec.string
+
 type CtrlMsgBodyTag = CtrlMsgBodyTag
 type alias CtrlMsgBody = Tagged CtrlMsgBodyTag String
-ctrlMsgBodyDecoder : JDec.Decoder CtrlMsgBody
-ctrlMsgBodyDecoder = JDec.map tag <| JDec.field "msgBody" JDec.string
-type alias CtrlMsg =
-    { msgType : CtrlMsgType
-    , msgBody :  CtrlMsgBody
-    }
+
+errCtrlMsgDecoder : JDec.Decoder CtrlMsg
+errCtrlMsgDecoder =
+    JDec.map Err_
+        ( JDec.field "msgBody" JDec.string
+            |> JDec.andThen
+                ( \str -> if str == "maxJoined" then JDec.succeed MaxJoined
+                          else JDec.fail "Invalid error ctrl msg type"
+                )
+        )
+
 ctrlMsgDecoder : JDec.Decoder CtrlMsg
-ctrlMsgDecoder = JDec.map2 CtrlMsg ctrlMsgTypeDecoder ctrlMsgBodyDecoder
+ctrlMsgDecoder =
+    JDec.oneOf
+        [ JDec.when ctrlMsgTypeDecoder ( is "err" ) errCtrlMsgDecoder ]
 
 
 type alias ChatMsgMeta =
@@ -124,8 +132,7 @@ msgHistoryDecoder =
 
 type alias UserIdMsg = { yourUserId : Int }
 userIdMsgDecoder : JDec.Decoder UserIdMsg
-userIdMsgDecoder =
-    JDec.map UserIdMsg <| JDec.field "yourUserId" JDec.int
+userIdMsgDecoder = JDec.map UserIdMsg <| JDec.field "yourUserId" JDec.int
 
 
 -- A type for conveniently JSON-decoding an incoming ws string
@@ -159,6 +166,8 @@ type alias Status =
     , shouldHintNewMsg : Bool
 
     , isInputFocused : Bool
+
+    , err : Maybe Err
     }
 
 

@@ -256,8 +256,12 @@ chatHandler chatIdStr conn = do
       liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
     -- Chat exists:
     Just ( chat, users ) -> liftIO $ do
-      if isMaxJoined chat then
-        putStrLn "Maximum join count is reached."  -- TODO: Report to client.
+      if isMaxJoined chat then do
+        let ctrlMsg = CtrlMsg {
+              msgType = "err"
+            , msgBody = "maxJoined"
+            }
+        WebSock.sendTextData conn $ Aeson.encode ctrlMsg
       -- Can join:
       else do
         let userId = chat ^. #joinCount

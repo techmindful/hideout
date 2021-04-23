@@ -26,6 +26,21 @@ import Utils.Utils as Utils
 
 view : Model -> Element Msg
 view model =
+    case model.chatStatus.err of
+        Nothing  -> chatView model
+        Just err ->
+            Element.el
+                [ Element.width <| Element.maximum 750 Element.fill ] <|
+                case err of
+                    Chat.MaxJoined ->
+                        plainPara
+                        """
+                        Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. This means some other participants have joined more than once, by accidentally reloading the page etc. The initiator of the chat needs to make a new chat room, and make sure nobody joins more than once.
+                        """
+
+
+chatView : Model -> Element Msg
+chatView model =
     Element.row
         [ Element.width Element.fill
         , Element.height Element.fill

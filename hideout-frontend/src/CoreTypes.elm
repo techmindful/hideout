@@ -37,6 +37,8 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | GotViewport Dom.Viewport
+
+    -- Letter
     | GotReadLetterResp ( Result Http.Error LetterMeta )
     | LetterInput String
     | LetterMaxReadCountInput String
@@ -44,14 +46,17 @@ type Msg
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
 
+    -- Config disp chat
     | DispChatMaxJoinCountInput String
     | SpawnDispChat
     | GotSpawnDispChatResp ( Result Http.Error String )
  
+    -- Config persist chat
     | PersistChatMaxJoinCountInput String
     | SpawnPersistChat
     | GotSpawnPersistChatResp ( Result Http.Error String )
 
+    -- Chatting
     | MessageInput String
     | MessageSend
     | NewNameInput String

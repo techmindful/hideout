@@ -15,6 +15,10 @@ import Time exposing
     )
 
 
+is : a -> a -> Bool
+is x y = x == y
+
+
 hasManualScrolledUp : Dom.Viewport -> Float -> Bool
 hasManualScrolledUp viewport margin =
     if viewport.viewport.y

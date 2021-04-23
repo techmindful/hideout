@@ -33,6 +33,14 @@ instance FromJSON ChatMsgMeta
 instance ToJSON   ChatMsgMeta
 
 
+data CtrlMsg = CtrlMsg
+  { msgType :: String
+  , msgBody :: String
+  } deriving ( Generic )
+instance FromJSON CtrlMsg
+instance ToJSON   CtrlMsg
+
+
 newtype ChatId = ChatId { unChatId :: String }
   deriving ( Eq, Generic, Ord, Read, Show )
 instance FromJSON ChatId

@@ -100,6 +100,8 @@ init flags url navKey =
           , shouldHintNewMsg = False
 
           , isInputFocused = False
+
+          , err = Nothing
           }
       , newNameInput = ""
 
@@ -384,7 +386,13 @@ update msg ( { letterStatus, chatStatus } as model ) =
                             )
 
                         Chat.CtrlMsg_ ctrlMsg ->
-                            ( model, Cmd.none )
+                            case ctrlMsg of
+                                Chat.Err_ err ->
+                                    ( { model | chatStatus =
+                                        { chatStatus | err = Just err }
+                                      }
+                                    , Cmd.none
+                                    )
 
                         Chat.MsgHistory_ msgHistory ->
                            ( { model |
