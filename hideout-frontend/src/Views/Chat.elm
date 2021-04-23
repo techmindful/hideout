@@ -170,7 +170,7 @@ msgBundleView bundle =
         List.map msgView bundle.msgs
 
 
-msgView : Chat.MsgFromServer -> Element m
+msgView : Chat.ChatMsgMeta -> Element m
 msgView msg =
     let
         msgFromClient = msg.msgFromClient

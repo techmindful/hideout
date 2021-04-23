@@ -324,11 +324,11 @@ update msg ( { letterStatus, chatStatus } as model ) =
 
                 Ok wsMsg ->
                     case wsMsg of
-                        Chat.MsgFromServer_ msgFromServer ->
+                        Chat.ChatMsgMeta_ chatMsgMeta ->
                             let
-                                msgFromClient = msgFromServer.msgFromClient
-                                senderId = msgFromServer.userId
-                                senderName = msgFromServer.username
+                                msgFromClient = chatMsgMeta.msgFromClient
+                                senderId = chatMsgMeta.userId
+                                senderName = chatMsgMeta.username
                                 oldUsers = model.chatStatus.users
 
                                 newUsers =
@@ -348,12 +348,12 @@ update msg ( { letterStatus, chatStatus } as model ) =
                                             model.chatStatus.users
 
                                 isMyMsg : Bool
-                                isMyMsg = msgFromServer.userId == model.chatStatus.myUserId
+                                isMyMsg = chatMsgMeta.userId == model.chatStatus.myUserId
                             in
                             ( { model |
                                 chatStatus =
                                     { chatStatus |
-                                      msgs = chatStatus.msgs ++ [ msgFromServer ]
+                                      msgs = chatStatus.msgs ++ [ chatMsgMeta ]
                                     , users = newUsers
                                     , shouldHintNewMsg =
                                         -- If hint is previously needed, keep it.
@@ -382,6 +382,9 @@ update msg ( { letterStatus, chatStatus } as model ) =
                               else
                                 Cmd.none
                             )
+
+                        Chat.CtrlMsg_ ctrlMsg ->
+                            ( model, Cmd.none )
 
                         Chat.MsgHistory_ msgHistory ->
                            ( { model |

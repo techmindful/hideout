@@ -1,7 +1,7 @@
 module Chat exposing
     ( ChatId
     , Status
-    , MsgFromServer
+    , ChatMsgMeta
     , MsgType(..)
     , MsgBody
     , MsgBundle
@@ -12,7 +12,7 @@ module Chat exposing
     , mkContentMsg
     , mkMsgBundles
     , mkNameChangeMsg
-    , msgFromServerDecoder
+    , chatMsgMetaDecoder
     , WsMsg(..)
     , wsMsgDecoder
     )
@@ -67,7 +67,29 @@ msgFromClientDecoder =
         ( JDec.map tag <| JDec.field "msgBody" JDec.string )
 
 
-type alias MsgFromServer =
+type CtrlMsgType
+    = Err
+ctrlMsgTypeDecoder : JDec.Decoder CtrlMsgType
+ctrlMsgTypeDecoder =
+    JDec.field "msgType" JDec.string
+        |> JDec.andThen
+            ( \str ->
+                if str == "err" then JDec.succeed Err
+                else JDec.fail "Invalid ctrl msg type"
+            )
+type CtrlMsgBodyTag = CtrlMsgBodyTag
+type alias CtrlMsgBody = Tagged CtrlMsgBodyTag String
+ctrlMsgBodyDecoder : JDec.Decoder CtrlMsgBody
+ctrlMsgBodyDecoder = JDec.map tag <| JDec.field "msgBody" JDec.string
+type alias CtrlMsg =
+    { msgType : CtrlMsgType
+    , msgBody :  CtrlMsgBody
+    }
+ctrlMsgDecoder : JDec.Decoder CtrlMsg
+ctrlMsgDecoder = JDec.map2 CtrlMsg ctrlMsgTypeDecoder ctrlMsgBodyDecoder
+
+
+type alias ChatMsgMeta =
     { msgFromClient : MsgFromClient
     , userId : Int
 
@@ -76,10 +98,10 @@ type alias MsgFromServer =
 
     , posixTimeSec : Int
     }
-msgFromServerDecoder : JDec.Decoder MsgFromServer
-msgFromServerDecoder =
-    JDec.map4
-        MsgFromServer
+chatMsgMetaDecoder : JDec.Decoder ChatMsgMeta
+chatMsgMetaDecoder =
+      JDec.map4
+        ChatMsgMeta
         ( JDec.field "msgFromClient" msgFromClientDecoder )
         ( JDec.field "userId" JDec.int )
         ( JDec.field "username" JDec.string )
@@ -87,7 +109,7 @@ msgFromServerDecoder =
 
 
 type alias MsgHistory =
-    { msgs  : List MsgFromServer
+    { msgs  : List ChatMsgMeta 
     , users : Dict Int String
     , maxJoinCount : Maybe Int
     }
@@ -95,7 +117,7 @@ msgHistoryDecoder : JDec.Decoder MsgHistory
 msgHistoryDecoder =
     JDec.map3
         MsgHistory
-        ( JDec.field "msgs"  <| JDec.list msgFromServerDecoder )
+        ( JDec.field "msgs"  <| JDec.list chatMsgMetaDecoder )
         ( JDec.field "users" <| JDec.dict2 JDec.int JDec.string )
         ( JDec.maybe <| JDec.field "maxJoinCount" JDec.int )
 
@@ -109,13 +131,15 @@ userIdMsgDecoder =
 -- A type for conveniently JSON-decoding an incoming ws string
 -- Into various possible Elm types.
 type WsMsg
-    = MsgFromServer_ MsgFromServer
+    = ChatMsgMeta_ ChatMsgMeta
+    | CtrlMsg_ CtrlMsg
     | MsgHistory_ MsgHistory
     | UserIdMsg_ UserIdMsg
 wsMsgDecoder : JDec.Decoder WsMsg
 wsMsgDecoder =
     JDec.oneOf
-        [ JDec.map MsgFromServer_ msgFromServerDecoder
+        [ JDec.map ChatMsgMeta_ chatMsgMetaDecoder
+        , JDec.map CtrlMsg_ ctrlMsgDecoder
         , JDec.map MsgHistory_ msgHistoryDecoder
         , JDec.map UserIdMsg_ userIdMsgDecoder
         ]
@@ -125,7 +149,7 @@ type alias Status =
     { chatId : ChatId
     , myUserId : Int
     , input : MsgBody
-    , msgs : List MsgFromServer
+    , msgs : List ChatMsgMeta
     , users : Dict Int String
 
     , maxJoinCount : Maybe Int
@@ -163,15 +187,15 @@ mkWsMsg msgType msgBody =
 type alias MsgBundle =
     { userId : Int  -- Compare with this, not username.
     , username : String
-    , msgs : List MsgFromServer
+    , msgs : List ChatMsgMeta
     , time : Posix
     }
 
 
-mkMsgBundles : List MsgFromServer -> List MsgBundle
-mkMsgBundles msgFromServers =
+mkMsgBundles : List ChatMsgMeta -> List MsgBundle
+mkMsgBundles chatMsgMetas =
     let
-        combine : MsgFromServer -> List MsgBundle -> List MsgBundle
+        combine : ChatMsgMeta -> List MsgBundle -> List MsgBundle
         combine msg bundles =
             let
                 appended =
@@ -205,7 +229,7 @@ mkMsgBundles msgFromServers =
                     appended
 
     in
-    List.foldr combine [] msgFromServers
+    List.foldr combine [] chatMsgMetas
 
 
 isMetaBundle : MsgBundle -> Bool
@@ -215,7 +239,7 @@ isMetaBundle bundle =
         _ -> False
 
 
-isMetaMsg : MsgFromServer -> Bool
+isMetaMsg : ChatMsgMeta -> Bool
 isMetaMsg msg =
     case msg.msgFromClient.msgType of
         Content -> False
