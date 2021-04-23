@@ -299,13 +299,13 @@ chatHandler chatIdStr conn = do
                         msgType = "leave"
                       , msgBody = ""
                       }
-                  let msgFromServer = MsgFromServer {
+                  let chatMsgMeta = ChatMsgMeta {
                         msgFromClient = msgFromClient
                       , userId = userId
                       , username = username
                       , posixTimeSec = round posixTime
                       }
-                  let newChat  = chat & #msgs  %~ ( ++ [ msgFromServer ] )
+                  let newChat  = chat & #msgs  %~ ( ++ [ chatMsgMeta ] )
                       newUsers = Map.delete userId users
                       newChats = Map.insert chatId ( newChat, newUsers ) chats
 
@@ -313,7 +313,7 @@ chatHandler chatIdStr conn = do
                   atomically $ writeTVar ( appState ^. #chats ) newChats
                   -- Important to broadcast to new chat,
                   -- Don't broadcast to disconnected users. That blocks the whole thing.
-                  broadcast ( Map.elems newUsers ) $ Aeson.encode msgFromServer
+                  broadcast ( Map.elems newUsers ) $ Aeson.encode chatMsgMeta
 
         let loop :: TVar ( Map ChatId ( Chat, Map Int User ) ) -> ExceptT String IO ()
             loop chatsTvar = do
@@ -342,7 +342,7 @@ chatHandler chatIdStr conn = do
                   let msgType = msgFromClient ^. #msgType
                       msgBody = msgFromClient ^. #msgBody
 
-                  let msgFromServer = MsgFromServer {
+                  let chatMsgMeta = ChatMsgMeta {
                         msgFromClient = msgFromClient
                       , userId = userId
                       , username = user ^. #name
@@ -352,7 +352,7 @@ chatHandler chatIdStr conn = do
                   -- Update chat.
                   let
                     -- Update chat msgs.
-                    chat'  = chat & #msgs %~ ( ++ [ msgFromServer ] )
+                    chat'  = chat & #msgs %~ ( ++ [ chatMsgMeta ] )
 
                     -- Update users based on msg type.
                     users' =
@@ -379,7 +379,7 @@ chatHandler chatIdStr conn = do
                     return ()
  
                   -- Broadcast the msg.
-                  broadcast ( Map.elems users' ) $ Aeson.encode msgFromServer
+                  broadcast ( Map.elems users' ) $ Aeson.encode chatMsgMeta
 
                 _ -> liftIO $ putStrLn "Data Message is in binary form."
 

@@ -23,14 +23,14 @@ instance FromJSON MsgFromClient
 instance ToJSON   MsgFromClient
 
 
-data MsgFromServer = MsgFromServer
+data ChatMsgMeta = ChatMsgMeta
   { msgFromClient :: MsgFromClient
   , userId :: Int
   , username :: String
   , posixTimeSec :: Int
   } deriving ( Generic, Read, Show )
-instance FromJSON MsgFromServer
-instance ToJSON   MsgFromServer
+instance FromJSON ChatMsgMeta
+instance ToJSON   ChatMsgMeta
 
 
 newtype ChatId = ChatId { unChatId :: String }
@@ -64,7 +64,7 @@ instance FromJSON Expiry
 
 
 data Chat = Chat
-  { msgs :: [ MsgFromServer ]
+  { msgs :: [ ChatMsgMeta ]
   , joinCount :: Int
   , config :: Config
   } deriving ( Generic, Read, Show )
@@ -72,7 +72,7 @@ derivePersistField "Chat"
 
 
 data MsgHistory = MsgHistory
-  { msgs  :: [ MsgFromServer ]
+  { msgs  :: [ ChatMsgMeta ]
   , users :: Map Int String
   , maxJoinCount :: Maybe Int
   } deriving ( Generic )
