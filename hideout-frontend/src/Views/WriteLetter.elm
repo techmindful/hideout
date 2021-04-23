@@ -29,6 +29,7 @@ import Task
 import Url exposing (Url)
 import Url.Parser
 import UserStatus exposing (..)
+import Utils.Errors exposing ( httpErrToStr )
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr )
 
@@ -131,23 +132,28 @@ view model =
                             "Letter is sent. Waiting for the letter ID from server..."
                         ]
 
-                Letter.GotId info ->
-                    Element.textColumn
-                        [ Element.width Element.fill
-                        , lineSpacing
-                        , Element.padding 10
-                        , Border.width 2
-                        , Border.rounded 6
-                        ]
-                        [ Element.paragraph
-                            []
-                            [ Element.text "Your letter can be read "
-                            , Element.text <| String.fromInt info.maxReadCount
-                            , Element.text " times, at:"
-                            ]
-                        , plainPara <|
-                            frontendReadLetterUrl ++ "/" ++ unquote info.id
-                        ]
+                Letter.GotResp result ->
+                    case result of
+                        Err err ->
+                            plainPara <| httpErrToStr err
+
+                        Ok info ->
+                            Element.textColumn
+                                [ Element.width Element.fill
+                                , lineSpacing
+                                , Element.padding 10
+                                , Border.width 2
+                                , Border.rounded 6
+                                ]
+                                [ Element.paragraph
+                                    []
+                                    [ Element.text "Your letter can be read "
+                                    , Element.text <| String.fromInt info.maxReadCount
+                                    , Element.text " times, at:"
+                                    ]
+                                , plainPara <|
+                                    frontendReadLetterUrl ++ "/" ++ unquote info.id
+                                ]
             , divider
             , preview
             ]

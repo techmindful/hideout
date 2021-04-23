@@ -200,29 +200,32 @@ update msg ( { letterStatus, chatStatus } as model ) =
                     )
 
         GotLetterSendResp result ->
-            case result of
-                Err _ ->
-                    ( model, Cmd.none )
-
-                Ok letterId ->
-                    case model.letterStatus.write of
-                        Letter.Sent info ->
-                            ( { model | letterStatus =
-                                { letterStatus | write =
-                                    GotId
-                                        { id = letterId
-                                        , maxReadCount = info.maxReadCount
-                                        }
+            case model.letterStatus.write of
+                Letter.Sent info ->
+                    let
+                        newModel = case result of
+                            Err err ->
+                                { model | letterStatus =
+                                    { letterStatus | write = GotResp <| Err err }
                                 }
-                              }
-                            , Cmd.none
-                            )
 
-                        _ ->
-                            ( model
-                            , Debug.todo
-                                "Incorrect LetterStatus when letter send is responeded."
-                            )
+                            Ok letterId ->
+                                { model | letterStatus =
+                                    { letterStatus | write =
+                                        GotResp <| Ok
+                                            { id = letterId
+                                            , maxReadCount = info.maxReadCount
+                                            }
+                                    }
+                                }
+                    in
+                    ( newModel, Cmd.none )
+
+                _ ->
+                    ( model
+                    , Debug.todo
+                        "Incorrect LetterStatus when letter send is responeded."
+                    )
 
         DispChatMaxJoinCountInput str ->
             ( { model | dispChatMaxJoinCountInput = strToPosIntInput str }

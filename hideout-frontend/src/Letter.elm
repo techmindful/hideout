@@ -32,10 +32,11 @@ type WriteStatus
     = NotSent
     | Sent
         { maxReadCount : Int }
-    | GotId
+    | GotResp ( Result Http.Error
         { id : String
         , maxReadCount : Int
         }
+      )
 
 
 letterJsonDec : JDec.Decoder Letter
