@@ -38,6 +38,22 @@ view model =
                         Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. This means some other participants have joined more than once, by accidentally reloading the page etc. The initiator of the chat needs to make a new chat room, and make sure nobody joins more than once.
                         """
 
+                    Chat.NotFound ->
+                        Element.column
+                            []
+                            [ plainPara
+                                """
+                                Hi, welcome to Hideout! This chat room doesn't exist. The reason can be:
+                                """
+                            , Element.column
+                                [ Element.paddingXY 0 20
+                                , Element.spacingXY 0 10
+                                ]
+                                [ plainPara "- Either you entered a wrong link or chat ID;"
+                                , plainPara "- Or the chat is expired and deleted."
+                                ]
+                            ]
+
 
 chatView : Model -> Element Msg
 chatView model =

@@ -252,16 +252,12 @@ chatHandler chatIdStr conn = do
   -- Before joining, first check if chat exists.
   let maybeChat = Map.lookup chatId chatsBeforeJoin
   case maybeChat of
-    Nothing -> do
-      liftIO $ putStrLn "Chat doesn't exist."  -- TODO: Report to client.
+    Nothing ->
+      liftIO $ WebSock.sendTextData conn $ Aeson.encode Chat.notFoundCtrlMsg
     -- Chat exists:
     Just ( chat, users ) -> liftIO $ do
-      if isMaxJoined chat then do
-        let ctrlMsg = CtrlMsg {
-              msgType = "err"
-            , msgBody = "maxJoined"
-            }
-        WebSock.sendTextData conn $ Aeson.encode ctrlMsg
+      if isMaxJoined chat then
+        WebSock.sendTextData conn $ Aeson.encode Chat.maxJoinedCtrlMsg
       -- Can join:
       else do
         let userId = chat ^. #joinCount

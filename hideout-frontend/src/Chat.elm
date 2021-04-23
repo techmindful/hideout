@@ -74,6 +74,7 @@ type CtrlMsg
 
 type Err
     = MaxJoined
+    | NotFound
 
 ctrlMsgTypeDecoder : JDec.Decoder String
 ctrlMsgTypeDecoder = JDec.field "msgType" JDec.string
@@ -86,8 +87,10 @@ errCtrlMsgDecoder =
     JDec.map Err_
         ( JDec.field "msgBody" JDec.string
             |> JDec.andThen
-                ( \str -> if str == "maxJoined" then JDec.succeed MaxJoined
-                          else JDec.fail "Invalid error ctrl msg type"
+                ( \str ->
+                    if str == "maxJoined" then JDec.succeed MaxJoined
+                    else if str == "notFound" then JDec.succeed NotFound
+                    else JDec.fail "Invalid error ctrl msg type"
                 )
         )
 

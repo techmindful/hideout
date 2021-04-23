@@ -92,3 +92,19 @@ data UserIdMsg = UserIdMsg
   deriving ( Generic )
 instance ToJSON UserIdMsg
 
+
+notFoundCtrlMsg :: CtrlMsg
+notFoundCtrlMsg =
+  CtrlMsg {
+    msgType = "err"
+  , msgBody = "notFound"
+  }
+
+
+maxJoinedCtrlMsg :: CtrlMsg
+maxJoinedCtrlMsg =
+  CtrlMsg {
+    msgType = "err"
+  , msgBody = "maxJoined"
+  }
+
