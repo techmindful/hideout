@@ -8,7 +8,9 @@ import Common.Styles exposing
 import Element exposing ( Element )
 import Element.Border as Border
 import Letter
+import Http
 import UserStatus exposing (..)
+import Utils.Errors exposing ( httpErrToStr )
 import Utils.Markdown
 import Utils.Utils as Utils
 
@@ -44,7 +46,16 @@ view model =
             Letter.Got result ->
                 case result of
                     Err err ->
-                        plainPara <| Debug.toString err
+                        let
+                            errStr = case err of
+                                Http.BadStatus 404 ->
+                                    """
+                                    Letter not found. Check the letter ID?
+                                    """
+
+                                _ -> httpErrToStr err
+                        in
+                        plainPara errStr
 
                     Ok letterMeta ->
                         Element.column

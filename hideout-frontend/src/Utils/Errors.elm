@@ -18,7 +18,7 @@ httpErrToStr err =
 
         Http.BadStatus code ->
             """
-            Bad status. Error code: 
+            Bad status code: 
             """
             ++ String.fromInt code
 
