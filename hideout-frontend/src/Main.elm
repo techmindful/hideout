@@ -302,7 +302,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         MessageSend ->
-            ( { model | chatStatus = { chatStatus | input = tag "" } }
+            ( model  -- Not clearing input field here. What if message send fails?
             , sendChatMsg model.chatStatus.input
             )
 
@@ -312,9 +312,12 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         NameChange ->
-            ( { model | newNameInput = "" }
-            , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
-            )
+            if String.isEmpty model.newNameInput then
+                ( model, Cmd.none )
+            else
+                ( { model | newNameInput = "" }
+                , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
+                )
 
         OnWsReady _ ->
             ( { model | isWsReady = True }
@@ -596,7 +599,10 @@ snapScrollChatMsgsView =
 
 sendChatMsg : Chat.MsgBody -> Cmd Msg
 sendChatMsg msgBody =
-    port_SendWsMsg <| Chat.mkContentMsg msgBody
+    if String.isEmpty <| untag msgBody then
+        Cmd.none
+    else
+        port_SendWsMsg <| Chat.mkContentMsg msgBody
 
 
 main =
