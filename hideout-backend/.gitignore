@@ -1,6 +1,12 @@
 .stack-work/
 *~
 
+# Database
 *.db
 *.db-shm
 *.db-wal
+
+# Cabal
+dist/
+dist-newstyle/
+.ghc.environment*
