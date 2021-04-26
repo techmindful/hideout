@@ -174,13 +174,13 @@ update msg ( { letterStatus, chatStatus } as model ) =
             ( { model | letterPersistInput = input }, Cmd.none )
 
         LetterSend ->
-            case model.letterMaxReadCountInput of
-                Bad _ -> ( model, Cmd.none )
-                Good maxReadCount ->
+            case Letter.validateInput { body = model.letterInput, maxReadCount = posIntInputToStr model.letterMaxReadCountInput } of
+                Err _ -> ( model, Cmd.none )
+                Ok goodInput ->
                     ( { model |
                         letterStatus =
                             { letterStatus | write =
-                                Letter.Sent { maxReadCount = maxReadCount }
+                                Letter.Sent { maxReadCount = goodInput.maxReadCount }
                             }
                       , letterInput = ""
                       }
@@ -191,8 +191,8 @@ update msg ( { letterStatus, chatStatus } as model ) =
                         , body =
                             Http.jsonBody <|
                                 JEnc.object
-                                    [ ( "body", JEnc.string model.letterInput )
-                                    , ( "maxReadCount", JEnc.int maxReadCount )
+                                    [ ( "body", JEnc.string goodInput.body )
+                                    , ( "maxReadCount", JEnc.int goodInput.maxReadCount )
                                     , ( "persist", JEnc.bool model.letterPersistInput )
                                     ]
                         , expect = Http.expectString GotLetterSendResp
