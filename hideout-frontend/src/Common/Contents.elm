@@ -11,7 +11,7 @@ import Common.Styles exposing
     )
 import Common.Urls exposing ( rootUrl )
 import Time exposing ( Posix )
-import Utils.Types exposing ( PosIntInput(..) )
+import Utils.Types exposing ( PosIntInput(..), strToPosIntInput )
 import Utils.Utils as Utils
 
 
@@ -62,9 +62,9 @@ borderedButton msg labelStr =
         }
 
 
-posIntInputHint : PosIntInput -> Element msg
+posIntInputHint : String -> Element msg
 posIntInputHint input =
-    case input of
+    case strToPosIntInput input of
         Good _ -> Element.none
         Bad  _ ->
             Element.el

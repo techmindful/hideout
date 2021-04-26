@@ -63,7 +63,7 @@ view model =
                     , Background.color bgColor
                     ]
                     { onChange = LetterMaxReadCountInput
-                    , text = posIntInputToStr model.letterMaxReadCountInput
+                    , text = model.letterRawInput.maxReadCount
                     , placeholder = Nothing
                     , label = Input.labelHidden ""
                     }
@@ -95,7 +95,7 @@ view model =
                 , Background.color bgColor
                 ]
                 { onChange = LetterInput
-                , text = model.letterInput
+                , text = model.letterRawInput.body
                 , placeholder = Nothing
                 , label = Input.labelAbove [] Element.none
                 , spellcheck = False
@@ -107,7 +107,7 @@ view model =
                 , Element.spacing 30
                 , Element.alignTop
                 ] <|
-                Utils.Markdown.render model.letterInput
+                Utils.Markdown.render model.letterRawInput.body
     in
     Element.column
         [ Element.width Element.fill ]
@@ -115,7 +115,7 @@ view model =
             [ widthConstraint ]
             [ instruction
             , maxReadCountInput
-            , posIntInputHint model.letterMaxReadCountInput
+            , posIntInputHint model.letterRawInput.maxReadCount
             , persistInput
             ]
 

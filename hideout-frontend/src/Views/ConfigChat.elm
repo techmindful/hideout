@@ -84,7 +84,7 @@ view model =
         ]
 
 
-numParticipantsInput : ( String -> Msg ) -> PosIntInput -> Element Msg
+numParticipantsInput : ( String -> Msg ) -> String -> Element Msg
 numParticipantsInput msg input =
     Element.row
         [ Element.paddingXY 0 20 ]
@@ -95,7 +95,7 @@ numParticipantsInput msg input =
             , Background.color bgColor
             ]
             { onChange = msg
-            , text = posIntInputToStr input
+            , text = input
             , placeholder = Nothing
             , label = Input.labelHidden ""
             }

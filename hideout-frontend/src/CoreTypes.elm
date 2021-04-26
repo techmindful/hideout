@@ -5,7 +5,7 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Chat
 import Http
-import Letter exposing (..)
+import Letter exposing ( LetterMeta )
 import Route exposing (..)
 import Url exposing (Url)
 import UserStatus exposing (..)
@@ -18,12 +18,11 @@ type alias Model =
     , navKey : Nav.Key
     , isWsReady : Bool
     , userStatus : UserStatus
-    , letterInput : String
-    , letterMaxReadCountInput : PosIntInput
+    , letterRawInput : Letter.RawInput
     , letterPersistInput : Bool
     , letterStatus : Letter.Status
-    , dispChatMaxJoinCountInput : PosIntInput
-    , persistChatMaxJoinCountInput : PosIntInput
+    , dispChatMaxJoinCountInput : String
+    , persistChatMaxJoinCountInput : String
     , chatStatus : Chat.Status
     , newNameInput : String
 

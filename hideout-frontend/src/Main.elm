@@ -79,13 +79,12 @@ init flags url navKey =
       , isWsReady = False
       , userStatus = userStatus
 
-      , letterInput = ""
-      , letterMaxReadCountInput = Good 1
+      , letterRawInput = { body = "", maxReadCount = "1" }
       , letterPersistInput = True
       , letterStatus = { read = Init, write = Letter.NotSent }
 
-      , dispChatMaxJoinCountInput = Good 2
-      , persistChatMaxJoinCountInput = Good 2
+      , dispChatMaxJoinCountInput = "2"
+      , persistChatMaxJoinCountInput = "2"
       , chatStatus =
           { chatId = tag ""
           , myUserId = -1
@@ -125,7 +124,7 @@ init flags url navKey =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ( { letterStatus, chatStatus } as model ) =
+update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
     case msg of
         UrlRequested req ->
             case req of
@@ -163,10 +162,16 @@ update msg ( { letterStatus, chatStatus } as model ) =
             )
 
         LetterInput str ->
-            ( { model | letterInput = str }, Cmd.none )
+            ( { model | letterRawInput =
+                { letterRawInput | body = str }
+              }
+            , Cmd.none
+            )
 
         LetterMaxReadCountInput str ->
-            ( { model | letterMaxReadCountInput = strToPosIntInput str }
+            ( { model | letterRawInput =
+                { letterRawInput | maxReadCount = str }
+              }
             , Cmd.none
             )
 
@@ -174,15 +179,16 @@ update msg ( { letterStatus, chatStatus } as model ) =
             ( { model | letterPersistInput = input }, Cmd.none )
 
         LetterSend ->
-            case Letter.validateInput { body = model.letterInput, maxReadCount = posIntInputToStr model.letterMaxReadCountInput } of
+            case Letter.validateInput letterRawInput of
                 Err _ -> ( model, Cmd.none )
                 Ok goodInput ->
                     ( { model |
                         letterStatus =
-                            { letterStatus | write =
-                                Letter.Sent { maxReadCount = goodInput.maxReadCount }
-                            }
-                      , letterInput = ""
+                          { letterStatus | write =
+                              Letter.Sent { maxReadCount = goodInput.maxReadCount }
+                          }
+                      , letterRawInput =
+                          { letterRawInput | body = "", maxReadCount = "1" }
                       }
                     , Http.request
                         { method = "PUT"
@@ -230,12 +236,12 @@ update msg ( { letterStatus, chatStatus } as model ) =
                     )
 
         DispChatMaxJoinCountInput str ->
-            ( { model | dispChatMaxJoinCountInput = strToPosIntInput str }
+            ( { model | dispChatMaxJoinCountInput = str }
             , Cmd.none
             )
 
         SpawnDispChat ->
-            case model.dispChatMaxJoinCountInput of
+            case strToPosIntInput model.dispChatMaxJoinCountInput of
                 Bad  _ -> ( model, Cmd.none )
                 Good posInt ->
                     ( model
@@ -263,13 +269,13 @@ update msg ( { letterStatus, chatStatus } as model ) =
                     )
 
         PersistChatMaxJoinCountInput str ->
-            ( { model | persistChatMaxJoinCountInput = strToPosIntInput str }
+            ( { model | persistChatMaxJoinCountInput = str }
             , Cmd.none
             )
 
         SpawnPersistChat ->
             ( model
-            , case model.persistChatMaxJoinCountInput of
+            , case strToPosIntInput model.persistChatMaxJoinCountInput of
                 Bad _ -> Cmd.none
                 Good posInt ->
                     Http.request
