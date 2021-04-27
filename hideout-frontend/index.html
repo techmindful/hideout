@@ -4,13 +4,13 @@
   <head>
     <meta charset="UTF-8">
     <title>Hideout</title>
-    <script src="/main.js"></script>
+    <script type="text/javascript" src="/main.js"></script>
   </head>
 
   <body>
 
     <div id="elm-app"></div>
-    <script>
+    <script type="text/javascript">
       var elmApp = Elm.Main.init({
         node: document.getElementById("elm-app")
       })
@@ -26,7 +26,10 @@
             elmApp.ports.port_SendWsMsg.unsubscribe( portSendWsMsgHandler );
           }
 
-          socket = new WebSocket( "ws://localhost:8080/chat/" + chatId );
+          const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+          const wsHost = `${wsProtocol}//${location.host}`;
+
+          socket = new WebSocket( wsHost + ":9000" + "/api/chat/" + chatId );
 
           let handleOnOpen = function( event )
             {

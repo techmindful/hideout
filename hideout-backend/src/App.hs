@@ -72,13 +72,13 @@ data AppState = AppState
   } deriving ( Generic )
 
 
-type API = "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
-      :<|> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
-      :<|> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] String
-                                   :> Put '[ Servant.JSON ] String
-      :<|> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
-                                   :> Put '[ Servant.JSON ] String
-      :<|> "chat"         :> Capture "chatId" String :> WebSocket
+type API = "api" :> "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
+      :<|> "api" :> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
+      :<|> "api" :> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] String
+                                            :> Put '[ Servant.JSON ] String
+      :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
+                                            :> Put '[ Servant.JSON ] String
+      :<|> "api" :> "chat"         :> Capture "chatId" String :> WebSocket
 
 
 readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
@@ -181,7 +181,7 @@ spawnPersistChat maxJoinCountInput = do
 
       let chatIdLetter = Letter {
             body =
-              "You are invited to a Hideout persistent chat. Below is the link to the chat room. Bookmark the chat (not this letter), and you can send private messages to your contacts at any time.\nDo not post the chat link anywhere.\n[http://localhost:8000/chat/" ++ newChatIdStr ++ "](http://localhost:8000/chat/" ++ newChatIdStr ++ ")"
+              "You are invited to a Hideout persistent chat. Below is the room ID. Copy it, go to Hideout home page, start a chat, and paste it to join the chat. After you join, bookmark the chat room's page (not this letter), and you can send private messages to your contacts at any time.\nDo not post the chat link anywhere.\n" ++ newChatIdStr
 
           , maxReadCount = int
           , persist = True
@@ -498,4 +498,4 @@ initApp = do
 startApp :: IO ()
 startApp = do
   initAppState <- initApp
-  Warp.run 8080 $ mkApp initAppState
+  Warp.run 9000 $ mkApp initAppState

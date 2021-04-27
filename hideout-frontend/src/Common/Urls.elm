@@ -3,11 +3,9 @@ module Common.Urls exposing (..)
 import Url.Builder exposing (..)
 
 
-frontendUrl = "http://localhost:8000"
-backendUrl = "http://localhost:8080"
-
-
-mkBackendUrl = crossOrigin backendUrl
+mkBackendUrl : List String -> List QueryParameter -> String
+mkBackendUrl pathSegments queryParams =
+    absolute ( "api" :: pathSegments ) queryParams
 
 
 rootUrl = absolute [] []
@@ -16,7 +14,7 @@ rootUrl = absolute [] []
 aboutUrl = absolute [ "about" ] []
 
 
-frontendReadLetterUrl = crossOrigin frontendUrl [ "read-letter" ] []
+frontendReadLetterUrl = absolute [ "read-letter" ] []
 backendReadLetterUrl  = mkBackendUrl [ "read-letter" ] []
 
 
@@ -31,7 +29,8 @@ backendSpawnDispChatUrl  = mkBackendUrl [ "spawn-disposable-chat" ] []
 backendSpawnPersistChatUrl = mkBackendUrl [ "spawn-persistent-chat" ] []
 
 
-chatUrl chatId = relative [ "chat", chatId ] []
+frontendChatUrl chatId = absolute [ "chat", chatId ] []
+backendChatUrl chatId = mkBackendUrl [ "chat", chatId ] []
 
 
-sendMessageUrl chatId = crossOrigin backendUrl [ "send-message", chatId ] []
+sendMessageUrl chatId = mkBackendUrl [ "send-message", chatId ] []

@@ -265,7 +265,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     ( { model | chatStatus =
                         { chatStatus | chatId = tag <| unquote chatId }
                       }
-                    , Nav.pushUrl model.navKey <| chatUrl <| unquote chatId
+                    , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatId
                     )
 
         PersistChatMaxJoinCountInput str ->
