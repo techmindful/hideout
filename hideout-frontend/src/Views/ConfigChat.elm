@@ -74,7 +74,10 @@ view model =
                                  (not the content) to the letter below with your contacts.
                                 """
                             ]
-                        , plainPara <| Url.Builder.relative [ frontendReadLetterUrl, unquote letterId ] []
+                        , plainPara <|
+                            model.origin ++
+                            frontendReadLetterUrl ++ "/" ++
+                            unquote letterId
                         ]
                    
            _ -> 
