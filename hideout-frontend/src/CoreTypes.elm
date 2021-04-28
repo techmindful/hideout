@@ -5,6 +5,7 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Chat
 import Http
+import Json.Decode as JDec
 import Letter exposing ( LetterMeta )
 import Route exposing (..)
 import Url exposing (Url)
@@ -17,9 +18,24 @@ type State
     | Normal Model
 
 
+type alias InitFlag =
+    { protocol : String
+    , host : String
+    }
+initFlagDecoder : JDec.Decoder InitFlag
+initFlagDecoder =
+    JDec.map2
+        InitFlag
+            ( JDec.field "protocol" JDec.string )
+            ( JDec.field "host" JDec.string )
+
+
 type alias Model =
-    { host : String
+    { protocol : String
+    , host : String
+    , origin : String
     , route : Route
+
     , viewport : Dom.Viewport
     , navKey : Nav.Key
     , isWsReady : Bool

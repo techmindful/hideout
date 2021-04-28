@@ -152,7 +152,9 @@ view model =
                                     , Element.text " times, at:"
                                     ]
                                 , plainPara <|
-                                    frontendReadLetterUrl ++ "/" ++ unquote info.id
+                                    model.origin ++ 
+                                    frontendReadLetterUrl ++ "/" ++
+                                    unquote info.id
                                 ]
             , divider
             , preview

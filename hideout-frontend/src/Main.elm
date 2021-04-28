@@ -67,15 +67,11 @@ subscriptions _ =
 init : JDec.Value -> Url -> Nav.Key -> ( State, Cmd Msg )
 init jsonFlag url navKey =
     let
-        flagDec : JDec.Decoder String
-        flagDec =
-            JDec.field "host" JDec.string
-
         tryInitModel : Result JDec.Error ( Model, Cmd Msg )
         tryInitModel =
             Result.map
-                ( \hostStr -> initModel hostStr url navKey )
-                ( JDec.decodeValue flagDec jsonFlag )
+                ( \initFlag -> initModel initFlag url navKey )
+                ( JDec.decodeValue initFlagDecoder jsonFlag )
     in
     case tryInitModel of
         Ok ( model, cmd ) ->
@@ -85,15 +81,18 @@ init jsonFlag url navKey =
             ( ErrGetHost, Cmd.none )
 
 
-initModel : String -> Url -> Nav.Key -> ( Model, Cmd Msg )
-initModel hostStr url navKey =
+initModel : InitFlag -> Url -> Nav.Key -> ( Model, Cmd Msg )
+initModel initFlag url navKey =
     let
         route = getRoute url
 
         userStatus = routeToInitUserStatus route
     in
-    ( { host = hostStr
+    ( { protocol = initFlag.protocol
+      , host = initFlag.host
+      , origin = initFlag.protocol ++ "//" ++ initFlag.host
       , route = route
+
       , viewport =
            { scene = { width = 1920, height = 1080 }
            , viewport = { x = 0, y = 0, width = 1920, height = 1080 }

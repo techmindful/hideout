@@ -13,7 +13,10 @@
     <script type="text/javascript">
       var elmApp = Elm.Main.init({
         node: document.getElementById("elm-app")
-      , flags: { "host": location.host }
+      , flags:
+          { "protocol": location.protocol
+          , "host": location.host
+          }
       })
 
       var socket = null;
