@@ -12,8 +12,14 @@ import UserStatus exposing (..)
 import Utils.Types exposing ( PosIntInput )
 
 
+type State
+    = ErrGetHost
+    | Normal Model
+
+
 type alias Model =
-    { route : Route
+    { host : String
+    , route : Route
     , viewport : Dom.Viewport
     , navKey : Nav.Key
     , isWsReady : Bool

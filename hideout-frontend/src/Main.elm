@@ -49,7 +49,7 @@ port port_RecvWsMsg : ( String -> msg ) -> Sub msg
 port port_DebugLog : String -> Cmd msg
 
 
-subscriptions : Model -> Sub Msg
+subscriptions : State -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ port_WsReady OnWsReady
@@ -64,13 +64,36 @@ subscriptions _ =
             JDec.map OnKeyUp <| JDec.field "key" JDec.string
         ]
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url navKey =
+init : JDec.Value -> Url -> Nav.Key -> ( State, Cmd Msg )
+init jsonFlag url navKey =
+    let
+        flagDec : JDec.Decoder String
+        flagDec =
+            JDec.field "host" JDec.string
 
-    let route = getRoute url
+        tryInitModel : Result JDec.Error ( Model, Cmd Msg )
+        tryInitModel =
+            Result.map
+                ( \hostStr -> initModel hostStr url navKey )
+                ( JDec.decodeValue flagDec jsonFlag )
+    in
+    case tryInitModel of
+        Ok ( model, cmd ) ->
+            ( Normal model, cmd )
+
+        Err decErr ->
+            ( ErrGetHost, Cmd.none )
+
+
+initModel : String -> Url -> Nav.Key -> ( Model, Cmd Msg )
+initModel hostStr url navKey =
+    let
+        route = getRoute url
+
         userStatus = routeToInitUserStatus route
     in
-    ( { route = route
+    ( { host = hostStr
+      , route = route
       , viewport =
            { scene = { width = 1920, height = 1080 }
            , viewport = { x = 0, y = 0, width = 1920, height = 1080 }
@@ -123,22 +146,32 @@ init flags url navKey =
     )
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
+update : Msg -> State -> ( State, Cmd Msg )
+update msg state =
+    case state of
+        Normal model ->
+            updateModel msg model
+
+        _ ->
+            ( state, Cmd.none )
+
+
+updateModel : Msg -> Model -> ( State, Cmd Msg )
+updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
     case msg of
         UrlRequested req ->
             case req of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.navKey <| Url.toString url )
+                    ( Normal model, Nav.pushUrl model.navKey <| Url.toString url )
 
                 Browser.External urlStr ->
-                    ( model, Nav.load urlStr )
+                    ( Normal model, Nav.load urlStr )
 
         UrlChanged url ->
             let route = getRoute url
                 userStatus = routeToInitUserStatus route
             in
-            ( { model | route = route
+            ( Normal { model| route = route
                       , userStatus = userStatus              
               }
             , case route of
@@ -152,37 +185,37 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         GotViewport viewport ->
-            ( { model | viewport = viewport }, Cmd.none )
+            ( Normal { model| viewport = viewport }, Cmd.none )
 
         GotReadLetterResp result ->
-            ( { model | letterStatus =
+            ( Normal { model| letterStatus =
                 { letterStatus | read = Got result }
               }
             , Cmd.none
             )
 
         LetterInput str ->
-            ( { model | letterRawInput =
+            ( Normal { model| letterRawInput =
                 { letterRawInput | body = str }
               }
             , Cmd.none
             )
 
         LetterMaxReadCountInput str ->
-            ( { model | letterRawInput =
+            ( Normal { model| letterRawInput =
                 { letterRawInput | maxReadCount = str }
               }
             , Cmd.none
             )
 
         LetterPersistInput input ->
-            ( { model | letterPersistInput = input }, Cmd.none )
+            ( Normal { model| letterPersistInput = input }, Cmd.none )
 
         LetterSend ->
             case Letter.validateInput letterRawInput of
-                Err _ -> ( model, Cmd.none )
+                Err _ -> ( Normal model, Cmd.none )
                 Ok goodInput ->
-                    ( { model |
+                    ( Normal { model|
                         letterStatus =
                           { letterStatus | write =
                               Letter.Sent { maxReadCount = goodInput.maxReadCount }
@@ -213,12 +246,12 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     let
                         newModel = case result of
                             Err err ->
-                                { model | letterStatus =
+                                Normal { model| letterStatus =
                                     { letterStatus | write = GotResp <| Err err }
                                 }
 
                             Ok letterId ->
-                                { model | letterStatus =
+                                Normal { model| letterStatus =
                                     { letterStatus | write =
                                         GotResp <| Ok
                                             { id = letterId
@@ -230,21 +263,21 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     ( newModel, Cmd.none )
 
                 _ ->
-                    ( model
+                    ( Normal model
                     , Debug.todo
                         "Incorrect LetterStatus when letter send is responeded."
                     )
 
         DispChatMaxJoinCountInput str ->
-            ( { model | dispChatMaxJoinCountInput = str }
+            ( Normal { model| dispChatMaxJoinCountInput = str }
             , Cmd.none
             )
 
         SpawnDispChat ->
             case strToPosIntInput model.dispChatMaxJoinCountInput of
-                Bad  _ -> ( model, Cmd.none )
+                Bad  _ -> ( Normal model, Cmd.none )
                 Good posInt ->
-                    ( model
+                    ( Normal model
                     , Http.request
                         { method = "PUT"
                         , headers = []
@@ -259,22 +292,22 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
         GotSpawnDispChatResp result ->
             case result of
                 Err _ ->
-                    ( model, Cmd.none )
+                    ( Normal model, Cmd.none )
 
                 Ok chatId ->
-                    ( { model | chatStatus =
+                    ( Normal { model| chatStatus =
                         { chatStatus | chatId = tag <| unquote chatId }
                       }
                     , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatId
                     )
 
         PersistChatMaxJoinCountInput str ->
-            ( { model | persistChatMaxJoinCountInput = str }
+            ( Normal { model| persistChatMaxJoinCountInput = str }
             , Cmd.none
             )
 
         SpawnPersistChat ->
-            ( model
+            ( Normal model
             , case strToPosIntInput model.persistChatMaxJoinCountInput of
                 Bad _ -> Cmd.none
                 Good posInt ->
@@ -291,36 +324,36 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
 
         GotSpawnPersistChatResp result ->
-            ( { model | userStatus = GotPersistChatIdLetter result }
+            ( Normal { model| userStatus = GotPersistChatIdLetter result }
             , Cmd.none
             )
 
 
         MessageInput str ->
-            ( { model | chatStatus = { chatStatus | input = tag str } }
+            ( Normal { model| chatStatus = { chatStatus | input = tag str } }
             , Cmd.none
             )
 
         MessageSend ->
-            ( model  -- Not clearing input field here. What if message send fails?
+            ( Normal model  -- Not clearing input field here. What if message send fails?
             , sendChatMsg model.chatStatus.input
             )
 
         NewNameInput str ->
-            ( { model | newNameInput = str }
+            ( Normal { model| newNameInput = str }
             , Cmd.none
             )
 
         NameChange ->
             if String.isEmpty model.newNameInput then
-                ( model, Cmd.none )
+                ( Normal model, Cmd.none )
             else
-                ( { model | newNameInput = "" }
+                ( Normal { model| newNameInput = "" }
                 , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
                 )
 
         OnWsReady _ ->
-            ( { model | isWsReady = True }
+            ( Normal { model| isWsReady = True }
             -- If ws is open after user lands on the chat page,
             -- Send the join msg.
             , case model.route of
@@ -331,7 +364,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
         OnWsMsg str ->
             case JDec.decodeString Chat.wsMsgDecoder str of
                 Err _ ->
-                    ( model, Debug.todo "hi" )  -- TODO: Handle error.
+                    ( Normal model, Debug.todo "hi" )  -- TODO: Handle error.
 
                 Ok wsMsg ->
                     case wsMsg of
@@ -361,7 +394,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 isMyMsg : Bool
                                 isMyMsg = chatMsgMeta.userId == model.chatStatus.myUserId
                             in
-                            ( { model |
+                            ( Normal { model|
                                 chatStatus =
                                     { chatStatus |
                                       msgs = chatStatus.msgs ++ [ chatMsgMeta ]
@@ -397,14 +430,14 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                         Chat.CtrlMsg_ ctrlMsg ->
                             case ctrlMsg of
                                 Chat.Err_ err ->
-                                    ( { model | chatStatus =
+                                    ( Normal { model| chatStatus =
                                         { chatStatus | err = Just err }
                                       }
                                     , Cmd.none
                                     )
 
                         Chat.MsgHistory_ msgHistory ->
-                           ( { model |
+                           ( Normal { model|
                               chatStatus =
                                   { chatStatus | msgs  = msgHistory.msgs
                                                , users = msgHistory.users
@@ -415,7 +448,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                            )
 
                         Chat.UserIdMsg_ userIdMsg ->
-                            ( { model | chatStatus =
+                            ( Normal { model| chatStatus =
                                 { chatStatus | myUserId = userIdMsg.yourUserId }
                               }
                             , Cmd.none
@@ -424,10 +457,10 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
         ChatMsgsViewEvent event ->
             case event of
                 Chat.TriedSnapScroll result ->
-                    ( model, Cmd.none )
+                    ( Normal model, Cmd.none )
 
                 Chat.OnManualScrolled ->
-                    ( model
+                    ( Normal model
                     , Task.attempt ( ChatMsgsViewEvent << Chat.GotViewport ) <|
                         Dom.getViewportOf Views.Chat.msgsViewHtmlId
                     )
@@ -435,7 +468,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                 Chat.GotViewport result ->
                     case result of
                         Err err ->
-                            ( model, port_DebugLog <| Debug.toString err )
+                            ( Normal model, port_DebugLog <| Debug.toString err )
 
                         Ok viewport ->
                             let
@@ -447,7 +480,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 hasManualScrolledUp =
                                     Utils.hasManualScrolledUp viewport Chat.autoScrollMargin
                             in
-                            ( { model | chatStatus =
+                            ( Normal { model| chatStatus =
                                 { chatStatus |
                                   hasManualScrolledUp = hasManualScrolledUp
 
@@ -463,7 +496,7 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                             )
 
                 Chat.OnNewMsgHintClicked ->
-                    ( { model | chatStatus =
+                    ( Normal { model| chatStatus =
                         { chatStatus | shouldHintNewMsg = False
                                      , hasManualScrolledUp = False
                         }
@@ -472,19 +505,19 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     )
 
         OnChatInputFocal isFocused ->
-            ( { model | chatStatus =
+            ( Normal { model| chatStatus =
                 { chatStatus | isInputFocused = isFocused }
               }
             , Cmd.none
             )
 
         OnWindowResized ->
-            ( model, getViewportCmd )
+            ( Normal model, getViewportCmd )
 
         OnKeyDown key ->
             case key of
                 "Enter" ->
-                    ( model
+                    ( Normal model
                     , if ( not model.isShiftHeld ) && model.chatStatus.isInputFocused then
                         sendChatMsg model.chatStatus.input
                       else
@@ -492,25 +525,43 @@ update msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     )
 
                 "Shift" ->
-                    ( { model | isShiftHeld = True }, Cmd.none )
+                    ( Normal { model| isShiftHeld = True }, Cmd.none )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( Normal model, Cmd.none )
 
         OnKeyUp key ->
             case key of
                 "Shift" ->
-                    ( { model | isShiftHeld = False }, Cmd.none )
+                    ( Normal { model| isShiftHeld = False }, Cmd.none )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( Normal model, Cmd.none )
 
         Nop ->
-            ( model, Cmd.none )
+            ( Normal model, Cmd.none )
 
 
-view : Model -> Browser.Document Msg
-view model =
+view : State -> Browser.Document Msg
+view state =
+    case state of
+        Normal model ->
+            viewModel model
+
+        _ ->
+            { title = "Hideout got an error D:"
+            , body =
+                [ Element.layout
+                    [ Background.color bgColor
+                    , Font.color white
+                    ] <|
+                    Element.text "Error state!"
+                ]
+            }
+
+
+viewModel : Model -> Browser.Document Msg
+viewModel model =
     { title = "Hideout"
     , body =
         [ Element.layout
