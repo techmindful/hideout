@@ -63,6 +63,7 @@ type Msg
     | GotViewport Dom.Viewport
 
     | JoinChatInput String
+    | JoinChat
 
     -- Letter
     | GotReadLetterResp ( Result Http.Error LetterMeta )

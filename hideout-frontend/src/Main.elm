@@ -195,7 +195,13 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             , Cmd.none
             )
 
-        JoinChatInput str -> ( Normal { model | joinChatInput = str }, Cmd.none )
+        JoinChatInput str ->
+            ( Normal { model | joinChatInput = str }, Cmd.none )
+
+        JoinChat ->
+            ( Normal model
+            , Nav.pushUrl model.navKey <| frontendChatUrl model.joinChatInput
+            )
 
         LetterInput str ->
             ( Normal { model| letterRawInput =
@@ -619,7 +625,7 @@ viewModel model =
                                             , Border.width 2
                                             , Border.rounded 6
                                             ]
-                                            { onPress = Nothing
+                                            { onPress = Just JoinChat
                                             , label = Element.text "Join"
                                             }
                                     ]
