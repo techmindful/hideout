@@ -58,10 +58,7 @@ view model =
                 ]
                 [ Element.text "This letter can be read " 
                 , Input.text
-                    [ Element.width <| Element.px 100
-                    , Element.height <| Element.maximum 40 Element.fill
-                    , Background.color bgColor
-                    ]
+                    inlineInputStyle
                     { onChange = LetterMaxReadCountInput
                     , text = model.letterRawInput.maxReadCount
                     , placeholder = Nothing

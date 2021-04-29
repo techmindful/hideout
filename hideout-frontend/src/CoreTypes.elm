@@ -40,6 +40,9 @@ type alias Model =
     , navKey : Nav.Key
     , isWsReady : Bool
     , userStatus : UserStatus
+
+    , joinChatInput : String
+
     , letterRawInput : Letter.RawInput
     , letterPersistInput : Bool
     , letterStatus : Letter.Status
@@ -58,6 +61,8 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | GotViewport Dom.Viewport
+
+    | JoinChatInput String
 
     -- Letter
     | GotReadLetterResp ( Result Http.Error LetterMeta )

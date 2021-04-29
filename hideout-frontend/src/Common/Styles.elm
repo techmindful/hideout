@@ -1,6 +1,8 @@
 module Common.Styles exposing (..)
 
+import Common.Colors exposing (..)
 import Element
+import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 
@@ -30,3 +32,11 @@ buttonStyle padding =
 
 lineSpacing =
     Element.spacingXY 0 10
+
+
+inlineInputStyle : List ( Element.Attribute msg )
+inlineInputStyle =
+    [ Element.width <| Element.px 100
+    , Element.height <| Element.maximum 40 Element.fill
+    , Background.color bgColor
+    ]

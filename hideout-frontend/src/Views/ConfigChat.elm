@@ -8,7 +8,10 @@ import Common.Contents exposing
     , posIntInputHint
     , underlinedText
     )
-import Common.Styles exposing ( widthConstraint )
+import Common.Styles exposing
+    ( inlineInputStyle
+    , widthConstraint
+    )
 import Common.Urls exposing (..)
 import CoreTypes exposing ( Model, Msg(..) )
 import Element exposing ( Element )
@@ -93,10 +96,7 @@ numParticipantsInput msg input =
         [ Element.paddingXY 0 20 ]
         [ Element.text "Number of participants: "
         , Input.text
-            [ Element.width <| Element.px 100
-            , Element.height <| Element.maximum 40 Element.fill
-            , Background.color bgColor
-            ]
+            inlineInputStyle
             { onChange = msg
             , text = input
             , placeholder = Nothing

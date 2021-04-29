@@ -101,6 +101,8 @@ initModel initFlag url navKey =
       , isWsReady = False
       , userStatus = userStatus
 
+      , joinChatInput = ""
+
       , letterRawInput = { body = "", maxReadCount = "1" }
       , letterPersistInput = True
       , letterStatus = { read = Init, write = Letter.NotSent }
@@ -192,6 +194,8 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
               }
             , Cmd.none
             )
+
+        JoinChatInput str -> ( Normal { model | joinChatInput = str }, Cmd.none )
 
         LetterInput str ->
             ( Normal { model| letterRawInput =
@@ -567,12 +571,12 @@ viewModel model =
             [ Background.color bgColor
             , Font.color white
             ]
-            (Element.el
+            ( Element.el
                 [ Element.width Element.fill
                 , Element.height Element.fill
                 , windowPadding model.viewport.viewport.width
                 ]
-                (case model.route of
+                ( case model.route of
                     Root ->
                         Element.textColumn
                             []
@@ -591,6 +595,34 @@ viewModel model =
                                     { url = configChatUrl 
                                     , label = Element.text "> Start a chat."
                                     }
+                                , Element.row
+                                    [ Element.paddingXY 0 10 ]
+                                    [ Element.text "> Join a chat: "
+                                    , Input.text
+                                        [ Element.width <| Element.px 400
+                                        , Element.height <| Element.maximum 40 Element.fill
+                                        , Background.color bgColor
+                                        ]
+                                        { onChange = JoinChatInput
+                                        , text = model.joinChatInput
+                                        , placeholder = Just <|
+                                            Input.placeholder
+                                                [] <|
+                                                Element.text "Room ID"
+                                        , label = Input.labelHidden ""
+                                        }
+                                    , Element.el
+                                        [ Element.paddingXY 10 0
+                                        ] <|
+                                        Input.button
+                                            [ Element.padding 5
+                                            , Border.width 2
+                                            , Border.rounded 6
+                                            ]
+                                            { onPress = Nothing
+                                            , label = Element.text "Join"
+                                            }
+                                    ]
                                 , Element.link
                                     []
                                     { url = aboutUrl
