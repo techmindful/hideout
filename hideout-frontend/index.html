@@ -3,6 +3,8 @@
 
   <head>
     <meta charset="UTF-8">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
     <title>Hideout</title>
     <script type="text/javascript" src="/main.js"></script>
   </head>
@@ -33,7 +35,7 @@
           const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
           const wsHost = `${wsProtocol}//${location.host}`;
 
-          socket = new WebSocket( wsHost + ":9000" + "/api/chat/" + chatId );
+          socket = new WebSocket( wsHost + "/api/chat/" + chatId );
 
           let handleOnOpen = function( event )
             {
