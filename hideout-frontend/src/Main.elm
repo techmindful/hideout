@@ -36,6 +36,7 @@ import UserStatus exposing (..)
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
 import Utils.Utils as Utils
+import Views.About
 import Views.Chat
 import Views.ConfigChat
 import Views.ReadLetter
@@ -637,8 +638,7 @@ viewModel model =
                                 ]
                             ]
 
-                    About ->
-                        Element.text "About page"
+                    About -> Views.About.view model.viewport.viewport.width
 
                     ReadLetter id -> Views.ReadLetter.view model
                             

@@ -50,6 +50,20 @@ underlinedText str =
         ( Element.text str )
 
 
+sizedText : Int -> String -> Element msg
+sizedText fontSize str =
+    Element.el
+        [ Font.size fontSize ]
+        ( Element.text str )
+
+
+sizedPara : Int -> String -> Element msg
+sizedPara fontSize str =
+    Element.paragraph
+        [ Font.size fontSize ]
+        [ Element.text str ]
+
+
 borderedButton : m -> String -> Element m
 borderedButton msg labelStr =
     Input.button
