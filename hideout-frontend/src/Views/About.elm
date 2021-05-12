@@ -9,14 +9,14 @@ module Views.About exposing
     )
 
 import Common.Contents exposing
-    ( plainPara
+    ( link
+    , plainPara
     , sizedPara
     , sizedText
     , spacedPara
     , underlinedText
     )
-import Common.Styles exposing
-    ( widthConstraint )
+import Common.Urls exposing ( aboutSectionUrl )
 import Element exposing ( Element )
 import Element.Font as Font
 import Element.Input as Input
@@ -222,10 +222,16 @@ why_another_disp model =
                         """
                         3. Some services don't have many features. Hideout plans to implement emojis, file sharing, and voice/video chats. It plans to be as feature-rich as possible.
                         """
-                    , plainPara
-                        """
-                        4. Some services are "time-based", which gives no guarantee of whether a spying adversary can view the messages. Learn more about Hideout's "access-based" approach in the \"How are chats private on Hideout?\" section.
-                        """
+                    , Element.paragraph
+                        []
+                        [ Element.text
+                            """
+                            4. Some services are "time-based", which gives no guarantee of whether a spying adversary can view the messages. Learn more about Hideout's "access-based" approach in
+                            """
+                        , link
+                            ( aboutSectionUrl "how-does-hideout-work" )
+                            "How are chats private on Hideout?"
+                        ]
                     ]
                 ]
     in

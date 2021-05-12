@@ -11,7 +11,7 @@ import Common.Styles exposing
     ( widthConstraint
     , windowPaddingPx
     )
-import Common.Urls exposing ( aboutUrl )
+import Common.Urls exposing ( aboutSectionUrl )
 import Element exposing ( Element )
 import Element.Border as Border
 import Letter
@@ -73,7 +73,9 @@ view model =
                                                 """
                                                 - Or the letter has reached the maximum number of times it can be read. Read more about what it implies 
                                                 """
-                                            , newTabLink aboutUrl "here"
+                                            , newTabLink
+                                                ( aboutSectionUrl "how-does-hideout-work" )
+                                                "here"
                                             , Element.text "."
                                             ]
                                         ]
