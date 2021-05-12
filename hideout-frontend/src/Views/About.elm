@@ -10,6 +10,7 @@ module Views.About exposing
 
 import Common.Contents exposing
     ( link
+    , newTabLink
     , plainPara
     , sizedPara
     , sizedText
@@ -30,7 +31,7 @@ type Section
     | How_Does_Hideout_Work
     | Hideout_Vs_Apps
     | Why_Another_Disp
-    | How_Private
+    | Self_Hosting
     | None
 
 
@@ -44,6 +45,7 @@ urlFragToSection maybeStr =
                 "how-does-hideout-work" -> How_Does_Hideout_Work
                 "hideout-vs-apps" -> Hideout_Vs_Apps
                 "why-another-disp" -> Why_Another_Disp
+                "self-hosting" -> Self_Hosting
                 _ -> None
 
 
@@ -59,6 +61,7 @@ type alias Model =
 
 type Msg
     = OnExpandSection   Section
+    | OnCollapseSection
 
 
 init : Model
@@ -71,6 +74,9 @@ update msg model =
         OnExpandSection section ->
             { model | sectionToShow = section }
 
+        OnCollapseSection ->
+            { model | sectionToShow = None }
+
 
 view : Float -> Model -> Element Msg
 view screenWidth model =
@@ -82,6 +88,7 @@ view screenWidth model =
         , how_does_hideout_work model
         , hideout_vs_apps model
         , why_another_disp model
+        , self_hosting model
         ]
 
 
@@ -226,7 +233,7 @@ why_another_disp model =
                         []
                         [ Element.text
                             """
-                            4. Some services are "time-based", which gives no guarantee of whether a spying adversary can view the messages. Learn more about Hideout's "access-based" approach in
+                            4. Some services are "time-based". A spying adversary can easily view the messages before it expires, and there will be no way of knowing. Learn more about Hideout's "access-based" approach in
                             """
                         , link
                             ( aboutSectionUrl "how-does-hideout-work" )
@@ -236,6 +243,56 @@ why_another_disp model =
                 ]
     in
     mkSection Why_Another_Disp "Why make yet another disposable chat service?" body model
+
+
+self_hosting : Model -> Element Msg
+self_hosting model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """
+                    Hideout is designed to be self-hosted. The idea is that the more privacy-minded and tech-savvy person among a friend group can set up a Hideout server, for them and their friends to use. The server is naturally trusted, as the owner is a friend.
+                    """
+
+                , Element.paragraph
+                    []
+                    [ Element.text
+                        """
+                        However, \"self-hosting\" has a more strict meaning here. Ideally, the server should be run on a device that the person 
+                        """
+                    , underlinedText "physically owns"
+                    , Element.text
+                        """
+                        . To protect the server operator's IP address, the server should be run behind a VPN. I've experimented and confirmed that it's very practical. Mullvad VPN has an open-source VPN client, and offers the ability of port-forwarding. The Hideout server I ran ended up having a URL followed by a port number, like https://www.myhideout.com:12345. Not a big deal since the URL can be bookmarked in the browser. Currently the only inconvenience is that Mullvad's port-forwarding is under development. I couldn't get more than 1 port forwarded. So I couldn't really SSH into my server etc.
+                        """
+                    ]
+
+                , Element.paragraph
+                    []
+                    [ Element.text
+                        """
+                        A less ideal option is to rent a server from a VPS provider that's reputable for respecting user's privacy. Currently I can only think of 
+                        """
+                    , newTabLink "https://njal.la" "Njalla"
+                    , Element.text ". But I'm open to suggestions on that."
+                    ]
+
+                , plainPara
+                    """
+                    The least ideal, almost unacceptable option is to rent a server from a VPS provider that doesn't necessarily respect user's privacy, like Google Cloud, Amazon AWS, and so on. If you can rent a server there, I don't see why you can't rent a server from Njalla.
+                    """
+
+                , plainPara
+                    """
+                    Hideout isn't designed to be hosted on a server that gives service to a large population. People shouldn't place much trust on servers run by strangers. Futhermore, such a server will probably be spammed a lot, as Hideout does not have account registration.
+                    """
+                ]
+    in
+    mkSection Self_Hosting "Hideout is designed to be self-hosted!" body model
+
+                        
 
 
 titleFontStyle : List ( Element.Attribute msg )
@@ -249,7 +306,11 @@ mkSection section titleStr ( Body body ) model =
         title =
             Input.button
                 titleFontStyle
-                { onPress = Just <| OnExpandSection section
+                { onPress = Just <|
+                    if section == model.sectionToShow then
+                        OnCollapseSection
+                    else
+                        OnExpandSection section
                 , label = plainPara titleStr
                 }
     in
