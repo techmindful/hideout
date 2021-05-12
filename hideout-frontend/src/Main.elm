@@ -682,17 +682,17 @@ then only show that section. Otherwise, keep original sections to show.
 updateAboutPageModelWithRoute : Route -> Views.About.Model -> Views.About.Model
 updateAboutPageModelWithRoute route model =
     let
-        previousSections = model.sectionsToShow
+        previousSection = model.sectionToShow
     in
     { model |
-        sectionsToShow =
+        sectionToShow =
             case route of
                 About section ->
                     case section of
-                        Views.About.None -> previousSections
-                        _ -> [ section ]
+                        Views.About.None -> previousSection
+                        _ -> section
 
-                _ -> previousSections
+                _ -> previousSection
     }
 
 
