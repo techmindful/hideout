@@ -28,6 +28,7 @@ import Set exposing ( Set )
 type Section
     = Why_Privacy
     | Hideout_Vs_Apps
+    | How_Private
     | None
 
 
@@ -39,6 +40,7 @@ urlFragToSection maybeStr =
             case str of
                 "why-privacy" -> Why_Privacy
                 "hideout-vs-apps" -> Hideout_Vs_Apps
+                "how-private" -> How_Private
                 _ -> None
 
 
@@ -80,14 +82,13 @@ view screenWidth model =
         ]
         [ why_privacy model
         , hideout_vs_apps model
+        , how_private model
         ]
 
 
 why_privacy : Model -> Element Msg
 why_privacy model =
     let
-        title = Title <| mkTitle Why_Privacy "Why Privacy?" model
-
         body = Body <|
             Element.column
                 [ Element.spacingXY 0 20 ]
@@ -110,18 +111,12 @@ why_privacy model =
                     ]
                 ]
     in
-    mkSection Why_Privacy title body model
+    mkSection Why_Privacy "Why Privacy?" body model
 
 
 hideout_vs_apps : Model -> Element Msg
 hideout_vs_apps model =
     let
-        title = Title <|
-            mkTitle
-                Hideout_Vs_Apps
-                "Why use Hideout, when there are so many secure messaging apps?"
-                model
-
         body = Body <|
             Element.column
                 []
@@ -155,7 +150,45 @@ hideout_vs_apps model =
                 ]
             ]
     in
-    mkSection Hideout_Vs_Apps title body model
+    mkSection
+        Hideout_Vs_Apps
+        "Why use Hideout, when there are so many secure messaging apps?"
+        body
+        model
+
+
+how_private : Model -> Element Msg
+how_private model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """
+                    Hideout is supposed to be a communication tool with people who are unwilling to install and sign up for a secure messaging app like Signal. So the links to Hideout letters and chat rooms will be shared on unprivate platforms like Facebook Messenger. Hideout's threat model assumes that the unprivate platform may access that link and spy on its content at any time. It could do so days after the link is sent, or right away.
+                    """
+
+                , plainPara
+                    """
+                    Hideout counters either of these cases in a very simple way: "Access-based" disposable letters and chats. Taking letters for example, the author of a disposable letter specifies how many times it can be read, which equals to the number of intended recipients. If the author wants 3 of their friends to read the letter, and all 3 of them read it, then the Hideout server deletes the letter from its memory and database. Whatever unprivate platform won't be able to access it later. If the unprivate platform accessed the letter's link before all 3 recipients, then at least one recipient is bound to be unable to read the letter. If this happens consistently and it's made certain that nobody is reloading the letter's page, then it's a fairly clear sign of the unprivate platform's spying behavior. This exposes the creepiness of the unprivate platform to all the recipients in an obvious way, hopefully making them reconsider if they should still use the unprivate platform, if not making some news headlines.
+                   """ 
+
+                , plainPara
+                    """
+                    Being "access-based" is one of the places where Hideout differs from other services, many of whom offer "time-based" disposable chats, where a letter or chat room expires after a certain time. This gives no guarantee at all for whether the messages can be viewed by a spying adversary. With Hideout's access-based letters and chats however, either all intended recipients see the messages while nobody else can, or an adversary accesses the messages, immediately blocking one of the intended recipient from accessing, and immediately exposing the spying that's going on.
+                    """
+
+                , plainPara
+                    """
+                    A very important trait of Hideout is that it's desigend to be self-hosted. Learn more about it in the self-hosting section.
+                    """
+                ]
+    in
+    mkSection
+        How_Private
+        "How are chats private on Hideout?"
+        body
+        model
 
 
 titleFontStyle : List ( Element.Attribute msg )
@@ -170,19 +203,18 @@ titleOnPress isShown section =
         False -> OnExpandSection   section
 
 
-mkTitle : Section -> String -> Model -> Element Msg
-mkTitle section titleStr model =
-    Input.button
-        titleFontStyle
-        { onPress = Just <| titleOnPress ( isSectionShown section model ) section
-        , label = Element.text titleStr
-        }
-
-
-mkSection : Section -> Title -> Body -> Model -> Element Msg
-mkSection section ( Title title ) ( Body body ) model =
+mkSection : Section -> String -> Body -> Model -> Element Msg
+mkSection section titleStr ( Body body ) model =
+    let
+        title =
+            Input.button
+                titleFontStyle
+                { onPress = Just <| titleOnPress ( isSectionShown section model ) section
+                , label = plainPara titleStr
+                }
+    in
     Element.column
-        [ Element.spacingXY 0 20 ]
+        [ Element.spacingXY 0 20 ]  -- Spacing between title and body
         [ title
         , if isSectionShown section model then
             body
@@ -194,6 +226,11 @@ mkSection section ( Title title ) ( Body body ) model =
 isSectionShown : Section -> Model -> Bool
 isSectionShown section model =
     List.member section model.sectionsToShow
+
+
+paraSpacing : Element.Attribute msg
+paraSpacing =
+    Element.spacingXY 0 20
 
 
 sectionSpacing : Element.Attribute msg
