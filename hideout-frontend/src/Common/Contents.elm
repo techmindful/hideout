@@ -64,6 +64,13 @@ sizedPara fontSize str =
         [ Element.text str ]
 
 
+spacedPara : Int -> String -> Element msg
+spacedPara lineSpacing str =
+    Element.paragraph
+        [ Element.spacing lineSpacing ]
+        [ Element.text str ]
+
+
 borderedButton : m -> String -> Element m
 borderedButton msg labelStr =
     Input.button

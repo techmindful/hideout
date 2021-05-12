@@ -102,6 +102,8 @@ initModel initFlag url navKey =
       , isWsReady = False
       , userStatus = userStatus
 
+      , aboutPageModel = Views.About.init
+
       , joinChatInput = ""
 
       , letterRawInput = { body = "", maxReadCount = "1" }
@@ -188,6 +190,11 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
         GotViewport viewport ->
             ( Normal { model| viewport = viewport }, Cmd.none )
+
+        AboutPageMsg aboutPageMsg ->
+            ( Normal { model | aboutPageModel = Views.About.update aboutPageMsg model.aboutPageModel }
+            , Cmd.none
+            )
 
         GotReadLetterResp result ->
             ( Normal { model| letterStatus =
@@ -638,7 +645,12 @@ viewModel model =
                                 ]
                             ]
 
-                    About -> Views.About.view model.viewport.viewport.width
+                    About ->
+                        let
+                            aboutPageView =
+                                Views.About.view model.viewport.viewport.width model.aboutPageModel
+                        in
+                        Element.map AboutPageMsg aboutPageView
 
                     ReadLetter id -> Views.ReadLetter.view model
                             

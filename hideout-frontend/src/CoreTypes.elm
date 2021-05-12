@@ -11,6 +11,7 @@ import Route exposing (..)
 import Url exposing (Url)
 import UserStatus exposing (..)
 import Utils.Types exposing ( PosIntInput )
+import Views.About
 
 
 type State
@@ -41,6 +42,8 @@ type alias Model =
     , isWsReady : Bool
     , userStatus : UserStatus
 
+    , aboutPageModel : Views.About.Model
+
     , joinChatInput : String
 
     , letterRawInput : Letter.RawInput
@@ -61,6 +64,8 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | GotViewport Dom.Viewport
+
+    | AboutPageMsg Views.About.Msg
 
     | JoinChatInput String
     | JoinChat
