@@ -1,8 +1,10 @@
 module Views.About exposing
     ( Model
     , Msg
+    , Section(..)
     , init
     , update
+    , urlFragToSection
     , view
     )
 
@@ -26,6 +28,18 @@ import Set exposing ( Set )
 type Section
     = Why_Privacy
     | Hideout_Vs_Apps
+    | None
+
+
+urlFragToSection : Maybe String -> Section
+urlFragToSection maybeStr =
+    case maybeStr of
+        Nothing  -> None
+        Just str ->
+            case str of
+                "why-privacy" -> Why_Privacy
+                "hideout-vs-apps" -> Hideout_Vs_Apps
+                _ -> None
 
 
 type Title = Title ( Element Msg )

@@ -102,7 +102,7 @@ initModel initFlag url navKey =
       , isWsReady = False
       , userStatus = userStatus
 
-      , aboutPageModel = Views.About.init
+      , aboutPageModel = Views.About.init |> updateAboutPageModelWithRoute route
 
       , joinChatInput = ""
 
@@ -175,9 +175,15 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             let route = getRoute url
                 userStatus = routeToInitUserStatus route
             in
-            ( Normal { model| route = route
-                      , userStatus = userStatus              
-              }
+            ( Normal
+                { model | route = route
+                        , userStatus = userStatus              
+
+                        , aboutPageModel =
+                            updateAboutPageModelWithRoute
+                                route
+                                model.aboutPageModel
+                }
             , case route of
                 Chat chatIdStr ->
                     port_InitWs chatIdStr
@@ -645,10 +651,12 @@ viewModel model =
                                 ]
                             ]
 
-                    About ->
+                    About sectionFromRoute ->
                         let
                             aboutPageView =
-                                Views.About.view model.viewport.viewport.width model.aboutPageModel
+                                Views.About.view
+                                    model.viewport.viewport.width
+                                    model.aboutPageModel
                         in
                         Element.map AboutPageMsg aboutPageView
 
@@ -665,6 +673,26 @@ viewModel model =
                 )
             )
         ]
+    }
+
+
+{-| If route is at about page and specifies a section to show,
+then only show that section. Otherwise, keep original sections to show.
+-}
+updateAboutPageModelWithRoute : Route -> Views.About.Model -> Views.About.Model
+updateAboutPageModelWithRoute route model =
+    let
+        previousSections = model.sectionsToShow
+    in
+    { model |
+        sectionsToShow =
+            case route of
+                About section ->
+                    case section of
+                        Views.About.None -> previousSections
+                        _ -> [ section ]
+
+                _ -> previousSections
     }
 
 
