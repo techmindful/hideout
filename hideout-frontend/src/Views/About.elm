@@ -31,6 +31,7 @@ type Section
     | How_Does_Hideout_Work
     | Hideout_Vs_Apps
     | Why_Another_Disp
+    | Persist_Chat
     | Self_Hosting
     | None
 
@@ -45,6 +46,7 @@ urlFragToSection maybeStr =
                 "how-does-hideout-work" -> How_Does_Hideout_Work
                 "hideout-vs-apps" -> Hideout_Vs_Apps
                 "why-another-disp" -> Why_Another_Disp
+                "persist-chat" -> Persist_Chat
                 "self-hosting" -> Self_Hosting
                 _ -> None
 
@@ -88,6 +90,7 @@ view screenWidth model =
         , how_does_hideout_work model
         , hideout_vs_apps model
         , why_another_disp model
+        , persist_chat model
         , self_hosting model
         ]
 
@@ -243,6 +246,31 @@ why_another_disp model =
                 ]
     in
     mkSection Why_Another_Disp "Why make yet another disposable chat service?" body model
+
+
+persist_chat : Model -> Element Msg
+persist_chat model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """
+                    Persistent chat rooms is a simple yet powerful idea. Such a room is saved on server's disk, so it won't be deleted when server reboots. It can be joined an unlimited number of times, so the participants can keep using the same room, without the need to create and share a lot of new rooms. A vital point is that only the intended participants, and nothing else, know where this room is. 
+                    """
+
+                , plainPara
+                    """
+                    Here's how it works. A person creates a persistent chat room, and sets the number of participants to 4. This makes Hideout generate a chat room that can be joined infinitely on the server. Then, Hideout generates a disposable letter, which contains the room ID. The disposable letter can only be accessed 4 times. The person shares the link to this letter (not the chat!) to their 3 friends. The 4 of them each opens the letter, retrieves the room ID, and uses it to join the chat on Hideout's home page. Hideout deletes the letter after all 4 people have read it. So nothing else can get the room ID. But the 4 people now have a persistent chat room that they can always go back into.
+                    """
+
+                , plainPara
+                    """
+                    Persistent chat is of great value for people who are in situations where it's improper to repeatedly create and share disposable chat room links, as doing so draws unwanted attention. Sure, you can create and send 1000 room links on Discord in US per day. But that's not the same in a lot of other places on the planet.
+                    """
+                ]
+    in
+    mkSection Persist_Chat "Persistent Chat: Where Hideout truly shines!" body model
 
 
 self_hosting : Model -> Element Msg
