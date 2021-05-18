@@ -47,7 +47,7 @@ port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_SendWsMsg : String -> Cmd msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
-port port_NotifyChat : String -> Cmd msg
+port port_NotifyChat : () -> Cmd msg
 port port_DebugLog : String -> Cmd msg
 
 
@@ -455,10 +455,17 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                               else model.chatStatus.input
                                     }
                               }
-                            , if not model.chatStatus.hasManualScrolledUp then
-                                snapScrollChatMsgsView
-                              else
-                                Cmd.none
+                            , Cmd.batch
+                                [ if not model.chatStatus.hasManualScrolledUp then
+                                    snapScrollChatMsgsView
+                                  else
+                                    Cmd.none
+
+                                , if model.windowVisibility == Browser.Events.Hidden then
+                                    port_NotifyChat ()
+                                  else
+                                    Cmd.none
+                                ]
                             )
 
                         Chat.CtrlMsg_ ctrlMsg ->
@@ -485,7 +492,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                             ( Normal { model| chatStatus =
                                 { chatStatus | myUserId = userIdMsg.yourUserId }
                               }
-                            , port_NotifyChat ""
+                            , Cmd.none
                             )
 
         ChatMsgsViewEvent event ->
