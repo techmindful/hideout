@@ -2,6 +2,7 @@ module CoreTypes exposing (..)
 
 import Browser
 import Browser.Dom as Dom
+import Browser.Events
 import Browser.Navigation as Nav
 import Chat
 import Http
@@ -46,6 +47,7 @@ type alias Model =
     , viewport : Dom.Viewport
     , navKey : Nav.Key
     , isWsReady : Bool
+    , windowVisibility : Browser.Events.Visibility
 
     , aboutPageModel : Views.About.Model
 
@@ -106,6 +108,8 @@ type Msg
     | OnChatInputFocal Bool
 
     | OnWindowResized
+
+    | OnVisibilityChange Browser.Events.Visibility
 
     | OnKeyDown String
     | OnKeyUp   String

@@ -18,6 +18,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode as JDec
@@ -78,7 +79,18 @@ chatView model =
         , Element.height Element.fill
         , Element.spacingXY sideColumnGap 0
         ]
-        [ Element.column
+        [ Element.html <|
+            Html.audio
+                [ Html.Attributes.id "notificationAudio" ]
+                [ Html.source
+                    [ Html.Attributes.src
+                        "/static/sounds/notification.wav"
+                    , Html.Attributes.type_ "audio/wav"
+                    ]
+                    []
+                ]
+
+        , Element.column
             [ Element.width <| Element.maximum
                 ( chatColumnMaxWidthPx model.viewport.viewport.width )
                 Element.fill

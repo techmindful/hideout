@@ -11,6 +11,11 @@
 
   <body>
 
+    <audio id="notificationAudio2">
+      <source src="https://archive.org/download/SuperMarioBros.ThemeMusic/SuperMarioBros.mp3" type="audio/mpeg">
+      Can't load notification audio.
+    </audio>
+
     <div id="elm-app"></div>
     <script type="text/javascript">
       var elmApp = Elm.Main.init({
@@ -65,6 +70,13 @@
           //  }
           ////elmApp.ports.port_CloseWs.subscribe( handleClose );
           //socket.addEventListener( "close", handleClose );
+        }
+      );
+
+      elmApp.ports.port_NotifyChat.subscribe(
+        function( str )
+        {
+          document.getElementById( "notificationAudio" ).play();
         }
       );
 

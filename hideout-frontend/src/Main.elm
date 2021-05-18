@@ -47,6 +47,7 @@ port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_SendWsMsg : String -> Cmd msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
+port port_NotifyChat : String -> Cmd msg
 port port_DebugLog : String -> Cmd msg
 
 
@@ -63,6 +64,8 @@ subscriptions _ =
 
         , Browser.Events.onKeyUp <|
             JDec.map OnKeyUp <| JDec.field "key" JDec.string
+
+        , Browser.Events.onVisibilityChange OnVisibilityChange
         ]
 
 init : JDec.Value -> Url -> Nav.Key -> ( State, Cmd Msg )
@@ -98,6 +101,7 @@ initModel initFlag url navKey =
            }
       , navKey = navKey
       , isWsReady = False
+      , windowVisibility = Browser.Events.Visible -- Assume visible..
 
       , aboutPageModel = Views.About.init |> updateAboutPageModelWithRoute route
 
@@ -481,7 +485,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                             ( Normal { model| chatStatus =
                                 { chatStatus | myUserId = userIdMsg.yourUserId }
                               }
-                            , Cmd.none
+                            , port_NotifyChat ""
                             )
 
         ChatMsgsViewEvent event ->
@@ -543,6 +547,11 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
         OnWindowResized ->
             ( Normal model, getViewportCmd )
+
+        OnVisibilityChange visibility ->
+            ( Normal { model | windowVisibility = visibility }
+            , Cmd.none
+            )
 
         OnKeyDown key ->
             case key of
