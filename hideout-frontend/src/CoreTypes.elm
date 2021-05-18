@@ -9,7 +9,6 @@ import Json.Decode as JDec
 import Letter exposing ( LetterMeta )
 import Route exposing (..)
 import Url exposing (Url)
-import UserStatus exposing (..)
 import Utils.Types exposing ( PosIntInput )
 import Views.About
 
@@ -31,6 +30,13 @@ initFlagDecoder =
             ( JDec.field "host" JDec.string )
 
 
+type SpawnPersistChatResp
+    = NotSpawned
+    | Waiting
+    | GotError Http.Error
+    | GotLetterId String
+
+
 type alias Model =
     { protocol : String
     , host : String
@@ -40,11 +46,12 @@ type alias Model =
     , viewport : Dom.Viewport
     , navKey : Nav.Key
     , isWsReady : Bool
-    , userStatus : UserStatus
 
     , aboutPageModel : Views.About.Model
 
     , joinChatInput : String
+
+    , spawnPersistChatResp : SpawnPersistChatResp
 
     , letterRawInput : Letter.RawInput
     , letterPersistInput : Bool

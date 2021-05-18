@@ -13,14 +13,13 @@ import Common.Styles exposing
     , widthConstraint
     )
 import Common.Urls exposing (..)
-import CoreTypes exposing ( Model, Msg(..) )
+import CoreTypes exposing ( Model, Msg(..), SpawnPersistChatResp(..) )
 import Element exposing ( Element )
 import Element.Background as Background
 import Element.Border as Border
 import Element.Input as Input
 import String.Extra exposing ( unquote )
 import Url.Builder
-import UserStatus exposing ( UserStatus(..) )
 import Utils.Types exposing ( PosIntInput, posIntInputToStr )
 
 
@@ -54,39 +53,44 @@ view model =
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
 
-        , case model.userStatus of
-           GotPersistChatIdLetter result ->
-              case result of
-                 Err _ ->
-                     Element.text "Error!"
+        , case model.spawnPersistChatResp of
+            NotSpawned -> 
+                 Element.el
+                     [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
+                     ( borderedButton SpawnPersistChat "Start a persistent chat!" )
 
-                 Ok letterId ->
-                     Element.textColumn
-                        [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
-                        , Element.spacingXY 0 20
+            Waiting ->
+                Element.paragraph
+                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+                    [ Element.text "Waiting for response from the server..." ]
+
+            GotLetterId letterId ->
+                 Element.textColumn
+                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+                    , Element.spacingXY 0 20
+                    ]
+                    [ Element.paragraph
+                        []
+                        [ Element.text
+                            """
+                            A disposable letter that contains the instruction to join the chat has been generated. Share the 
+                            """
+                        , underlinedText "link"
+                        , Element.text
+                            """
+                             (not the content) to the letter below with your contacts.
+                            """
                         ]
-                        [ Element.paragraph
-                            []
-                            [ Element.text
-                                """
-                                A disposable letter that contains the instruction to join the chat has been generated. Share the 
-                                """
-                            , underlinedText "link"
-                            , Element.text
-                                """
-                                 (not the content) to the letter below with your contacts.
-                                """
-                            ]
-                        , plainPara <|
-                            model.origin ++
-                            frontendReadLetterUrl ++ "/" ++
-                            unquote letterId
-                        ]
-                   
-           _ -> 
-               Element.el
-                   [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-                   ( borderedButton SpawnPersistChat "Start a persistent chat!" )
+                    , plainPara <|
+                        model.origin ++
+                        frontendReadLetterUrl ++ "/" ++
+                        unquote letterId
+                    ]           
+
+            GotError error ->
+                Element.paragraph
+                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+                    [ Element.text "Error reaching server!" ]
         ]
 
 

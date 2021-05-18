@@ -16,7 +16,6 @@ import Element exposing ( Element )
 import Element.Border as Border
 import Letter
 import Http
-import UserStatus exposing (..)
 import Utils.Errors exposing ( httpErrToStr )
 import Utils.Markdown
 import Utils.Utils as Utils

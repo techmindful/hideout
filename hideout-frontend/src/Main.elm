@@ -24,7 +24,8 @@ import Html
 import Http
 import Json.Encode as JEnc
 import Json.Decode as JDec
-import Letter exposing (..)
+import Letter exposing
+    ( letterMetaJsonDec )
 import List.Extra as List
 import Route exposing (..)
 import String.Extra exposing (unquote)
@@ -32,7 +33,6 @@ import Tagged exposing ( tag, untag )
 import Task
 import Url exposing (Url)
 import Url.Parser
-import UserStatus exposing (..)
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
 import Utils.Utils as Utils
@@ -86,8 +86,6 @@ initModel : InitFlag -> Url -> Nav.Key -> ( Model, Cmd Msg )
 initModel initFlag url navKey =
     let
         route = getRoute url
-
-        userStatus = routeToInitUserStatus route
     in
     ( { protocol = initFlag.protocol
       , host = initFlag.host
@@ -100,7 +98,6 @@ initModel initFlag url navKey =
            }
       , navKey = navKey
       , isWsReady = False
-      , userStatus = userStatus
 
       , aboutPageModel = Views.About.init |> updateAboutPageModelWithRoute route
 
@@ -108,7 +105,9 @@ initModel initFlag url navKey =
 
       , letterRawInput = { body = "", maxReadCount = "1" }
       , letterPersistInput = True
-      , letterStatus = { read = Init, write = Letter.NotSent }
+      , letterStatus = { read = Letter.Init, write = Letter.NotSent }
+
+      , spawnPersistChatResp = NotSpawned
 
       , dispChatMaxJoinCountInput = "2"
       , persistChatMaxJoinCountInput = "2"
@@ -172,12 +171,11 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     ( Normal model, Nav.load urlStr )
 
         UrlChanged url ->
-            let route = getRoute url
-                userStatus = routeToInitUserStatus route
+            let
+                route = getRoute url
             in
             ( Normal
                 { model | route = route
-                        , userStatus = userStatus              
 
                         , aboutPageModel =
                             updateAboutPageModelWithRoute
@@ -204,7 +202,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
         GotReadLetterResp result ->
             ( Normal { model| letterStatus =
-                { letterStatus | read = Got result }
+                { letterStatus | read = Letter.Got result }
               }
             , Cmd.none
             )
@@ -270,13 +268,13 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                         newModel = case result of
                             Err err ->
                                 Normal { model| letterStatus =
-                                    { letterStatus | write = GotResp <| Err err }
+                                    { letterStatus | write = Letter.GotResp <| Err err }
                                 }
 
                             Ok letterId ->
                                 Normal { model| letterStatus =
                                     { letterStatus | write =
-                                        GotResp <| Ok
+                                        Letter.GotResp <| Ok
                                             { id = letterId
                                             , maxReadCount = info.maxReadCount
                                             }
@@ -347,7 +345,16 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
 
         GotSpawnPersistChatResp result ->
-            ( Normal { model| userStatus = GotPersistChatIdLetter result }
+            ( Normal
+                { model |
+                    spawnPersistChatResp =
+                        case result of
+                            Err err ->
+                                GotError err
+                                
+                            Ok letterId ->
+                                GotLetterId letterId
+                }
             , Cmd.none
             )
 
@@ -694,12 +701,6 @@ updateAboutPageModelWithRoute route model =
 
                 _ -> previousSection
     }
-
-
-routeToInitUserStatus : Route -> UserStatus
-routeToInitUserStatus route =
-    case route of
-        _ -> Other
 
 
 getLetterReq : String -> Cmd Msg

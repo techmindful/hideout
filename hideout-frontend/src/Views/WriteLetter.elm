@@ -28,7 +28,6 @@ import String.Extra exposing (unquote)
 import Task
 import Url exposing (Url)
 import Url.Parser
-import UserStatus exposing (..)
 import Utils.Errors exposing ( httpErrToStr )
 import Utils.Markdown
 import Utils.Types exposing ( PosIntInput(..), posIntInputToStr )
