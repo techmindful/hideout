@@ -46,18 +46,16 @@ import Views.WriteLetter
 port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_WsError : ( () -> msg ) -> Sub msg
-port port_SendWsMsg : String -> Cmd msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
-port port_NotifyChat : () -> Cmd msg
 port port_DebugLog : String -> Cmd msg
 
 
 subscriptions : State -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ port_WsReady OnWsReady
-        , port_WsError ( \_ -> OnWsError )
-        , port_RecvWsMsg OnWsMsg
+        [ port_WsReady <| ChatElmMsg << Chat.OnWsReady
+        , port_WsError ( \_ -> ChatElmMsg Chat.OnWsError )
+        , port_RecvWsMsg <| ChatElmMsg << Chat.OnWsMsg
 
         , Browser.Events.onResize ( \_ _ -> OnWindowResized )
 
@@ -102,7 +100,6 @@ initModel initFlag url navKey =
            , viewport = { x = 0, y = 0, width = 1920, height = 1080 }
            }
       , navKey = navKey
-      , wsStatus = NotOpened
       , windowVisibility = Browser.Events.Visible -- Assume visible..
 
       , aboutPageModel = Views.About.init |> updateAboutPageModelWithRoute route
@@ -117,24 +114,13 @@ initModel initFlag url navKey =
 
       , dispChatMaxJoinCountInput = "2"
       , persistChatMaxJoinCountInput = "2"
-      , chatStatus =
-          { chatId = tag ""
-          , myUserId = -1
-          , msgs = []
-          , input = tag ""
-          , users = Dict.empty
-
-          , maxJoinCount = Nothing
-          , joinCount = 0
-
-          , hasManualScrolledUp = False
-          , shouldHintNewMsg = False
-
-          , isInputFocused = False
-
-          , err = Nothing
-          }
-      , newNameInput = ""
+      , chatStatus = 
+          case route of
+              Chat chatIdStr ->
+                  Chat.OpeningWs <| tag chatIdStr
+                  
+              _ ->
+                  Chat.NotChatting
 
       , isShiftHeld = False
 
@@ -180,23 +166,35 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             let
                 route = getRoute url
             in
-            ( Normal
-                { model | route = route
-
-                        , aboutPageModel =
-                            updateAboutPageModelWithRoute
-                                route
-                                model.aboutPageModel
-                }
-            , case route of
+            case route of
                 Chat chatIdStr ->
-                    port_InitWs chatIdStr
+                    ( Normal { model |
+                        route = route
+                      , chatStatus = Chat.OpeningWs <| tag chatIdStr
+                      }
+                    , port_InitWs chatIdStr
+                    )
 
-                ReadLetter letterId ->
-                    getLetterReq letterId
+                ReadLetter letterIdStr ->
+                    ( Normal { model | route = route }
+                    , getLetterReq letterIdStr
+                    )
 
-                _ -> Cmd.none
-            )
+                About _ ->
+                    ( Normal { model |
+                        route = route
+                      , aboutPageModel =
+                          updateAboutPageModelWithRoute
+                            route
+                            model.aboutPageModel
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( Normal { model | route = route }
+                    , Cmd.none
+                    )
 
         GotViewport viewport ->
             ( Normal { model | viewport = viewport }, Cmd.none )
@@ -318,13 +316,12 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
         GotSpawnDispChatResp result ->
             case result of
+                -- TODO: Handle error.
                 Err _ ->
                     ( Normal model, Cmd.none )
 
                 Ok chatId ->
-                    ( Normal { model | chatStatus =
-                        { chatStatus | chatId = tag <| unquote chatId }
-                      }
+                    ( Normal model
                     , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatId
                     )
 
@@ -349,7 +346,6 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                         }
             )
 
-
         GotSpawnPersistChatResp result ->
             ( Normal
                 { model |
@@ -365,198 +361,13 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
 
-        MessageInput str ->
-            ( Normal { model | chatStatus = { chatStatus | input = tag str } }
-            , Cmd.none
-            )
-
-        MessageSend ->
-            ( Normal model  -- Not clearing input field here. What if message send fails?
-            , sendChatMsg model.chatStatus.input
-            )
-
-        NewNameInput str ->
-            ( Normal { model | newNameInput = str }
-            , Cmd.none
-            )
-
-        NameChange ->
-            if String.isEmpty model.newNameInput then
-                ( Normal model, Cmd.none )
-            else
-                ( Normal { model | newNameInput = "" }
-                , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
-                )
-
-        OnWsReady _ ->
-            ( Normal { model | wsStatus = Opened }
-            -- If ws is open after user lands on the chat page,
-            -- Send the join msg.
-            , case model.route of
-                Chat chatIdStr -> port_SendWsMsg <| Chat.mkJoinMsg <| tag chatIdStr
-                _ -> Cmd.none
-            )
-
-        OnWsError ->
-            ( Normal { model | wsStatus = Error }
-            , Cmd.none
-            )
-
-        OnWsMsg str ->
-            case JDec.decodeString Chat.wsMsgDecoder str of
-                Err _ ->
-                    ( Normal model, Debug.todo "hi" )  -- TODO: Handle error.
-
-                Ok wsMsg ->
-                    case wsMsg of
-                        Chat.ChatMsgMeta_ chatMsgMeta ->
-                            let
-                                msgFromClient = chatMsgMeta.msgFromClient
-                                senderId = chatMsgMeta.userId
-                                senderName = chatMsgMeta.username
-                                oldUsers = model.chatStatus.users
-
-                                newUsers =
-                                    case msgFromClient.msgType of
-                                        Chat.Join ->
-                                            Dict.insert senderId senderName oldUsers
-
-                                        Chat.NameChange ->
-                                            Dict.insert senderId
-                                                ( untag msgFromClient.msgBody )
-                                                oldUsers
-
-                                        Chat.Leave ->
-                                            Dict.remove senderId oldUsers
-
-                                        Chat.Content ->
-                                            model.chatStatus.users
-
-                                isMyMsg : Bool
-                                isMyMsg = chatMsgMeta.userId == model.chatStatus.myUserId
-                            in
-                            ( Normal { model |
-                                chatStatus =
-                                    { chatStatus |
-                                      msgs = chatStatus.msgs ++ [ chatMsgMeta ]
-                                    , users = newUsers
-                                    , shouldHintNewMsg =
-                                        -- If hint is previously needed, keep it.
-                                        model.chatStatus.shouldHintNewMsg || 
-                                        ( model.chatStatus.hasManualScrolledUp &&
-                                          ( not isMyMsg )
-                                        )
-
-                                    -- User ID can tell join count.
-                                    , joinCount =
-                                        if msgFromClient.msgType == Chat.Join then
-                                            senderId + 1
-                                        else
-                                            model.chatStatus.joinCount
-
-                                    -- Clear input field if it's a content msg we sent
-                                    -- And it's confirmed that server already received it.
-                                    , input = if isMyMsg &&
-                                                 msgFromClient.msgType == Chat.Content
-                                              then tag ""
-                                              else model.chatStatus.input
-                                    }
-                              }
-                            , Cmd.batch
-                                [ if not model.chatStatus.hasManualScrolledUp then
-                                    snapScrollChatMsgsView
-                                  else
-                                    Cmd.none
-
-                                , if model.windowVisibility == Browser.Events.Hidden then
-                                    port_NotifyChat ()
-                                  else
-                                    Cmd.none
-                                ]
-                            )
-
-                        Chat.CtrlMsg_ ctrlMsg ->
-                            case ctrlMsg of
-                                Chat.Err_ err ->
-                                    ( Normal { model | chatStatus =
-                                        { chatStatus | err = Just err }
-                                      }
-                                    , Cmd.none
-                                    )
-
-                        Chat.MsgHistory_ msgHistory ->
-                           ( Normal { model |
-                              chatStatus =
-                                  { chatStatus | msgs  = msgHistory.msgs
-                                               , users = msgHistory.users
-                                               , maxJoinCount = msgHistory.maxJoinCount
-                                  }
-                             }
-                           , Cmd.none
-                           )
-
-                        Chat.UserIdMsg_ userIdMsg ->
-                            ( Normal { model | chatStatus =
-                                { chatStatus | myUserId = userIdMsg.yourUserId }
-                              }
-                            , Cmd.none
-                            )
-
-        ChatMsgsViewEvent event ->
-            case event of
-                Chat.TriedSnapScroll result ->
-                    ( Normal model, Cmd.none )
-
-                Chat.OnManualScrolled ->
-                    ( Normal model
-                    , Task.attempt ( ChatMsgsViewEvent << Chat.GotViewport ) <|
-                        Dom.getViewportOf Views.Chat.msgsViewHtmlId
-                    )
-
-                Chat.GotViewport result ->
-                    case result of
-                        Err err ->
-                            ( Normal model, port_DebugLog <| Debug.toString err )
-
-                        Ok viewport ->
-                            let
-                                logViewport =
-                                    port_DebugLog <| String.fromFloat viewport.viewport.y ++ ", "
-                                                  ++ String.fromFloat viewport.viewport.height ++ ", "
-                                                  ++ String.fromFloat viewport.scene.height
-
-                                hasManualScrolledUp =
-                                    Utils.hasManualScrolledUp viewport Chat.autoScrollMargin
-                            in
-                            ( Normal { model | chatStatus =
-                                { chatStatus |
-                                  hasManualScrolledUp = hasManualScrolledUp
-
-                                -- Some boolean logic:
-                                -- Hint new msg only if it was needing the hint,
-                                -- And user has manually scrolled up.
-                                , shouldHintNewMsg =
-                                    model.chatStatus.shouldHintNewMsg &&
-                                    hasManualScrolledUp
-                                }
-                              }
-                            , Cmd.none
-                            )
-
-                Chat.OnNewMsgHintClicked ->
-                    ( Normal { model | chatStatus =
-                        { chatStatus | shouldHintNewMsg = False
-                                     , hasManualScrolledUp = False
-                        }
-                      }
-                    , snapScrollChatMsgsView
-                    )
-
-        OnChatInputFocal isFocused ->
-            ( Normal { model | chatStatus =
-                { chatStatus | isInputFocused = isFocused }
-              }
-            , Cmd.none
+        ChatElmMsg chatElmMsg ->
+            let
+                ( status, cmd ) =
+                    Views.Chat.update chatElmMsg model.chatStatus model.windowVisibility model.navKey
+            in
+            ( Normal { model | chatStatus = status }
+            , Cmd.map ChatElmMsg cmd
             )
 
         OnWindowResized ->
@@ -568,25 +379,27 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         OnKeyDown key ->
-            case key of
-                "Enter" ->
-                    ( Normal model
-                    , if ( not model.isShiftHeld ) && model.chatStatus.isInputFocused then
-                        sendChatMsg model.chatStatus.input
-                      else
-                        Cmd.none
+            case model.route of
+                Chat _ ->
+                    let
+                        ( status, cmd ) = Views.Chat.handleKeyDown model.chatStatus key
+                    in
+                    ( Normal { model | chatStatus = status }
+                    , Cmd.map ChatElmMsg cmd
                     )
-
-                "Shift" ->
-                    ( Normal { model | isShiftHeld = True }, Cmd.none )
 
                 _ ->
                     ( Normal model, Cmd.none )
 
         OnKeyUp key ->
-            case key of
-                "Shift" ->
-                    ( Normal { model | isShiftHeld = False }, Cmd.none )
+            case model.route of
+                Chat _ ->
+                    let
+                        ( status, cmd ) = Views.Chat.handleKeyDown model.chatStatus key
+                    in
+                    ( Normal { model | chatStatus = status }
+                    , Cmd.map ChatElmMsg cmd
+                    )
 
                 _ ->
                     ( Normal model, Cmd.none )
@@ -694,7 +507,10 @@ viewModel model =
                             
                     WriteLetter -> Views.WriteLetter.view model
 
-                    Chat chatId -> Views.Chat.view model
+                    Chat chatId ->
+                        Element.map
+                            ChatElmMsg
+                            ( Views.Chat.view model.chatStatus model.viewport.viewport.width )
 
                     ConfigChat -> Views.ConfigChat.view model
 
@@ -736,25 +552,6 @@ getLetterReq letterId =
 
 getViewportCmd : Cmd Msg
 getViewportCmd = Task.perform GotViewport Dom.getViewport
-
-
-snapScrollChatMsgsView : Cmd Msg
-snapScrollChatMsgsView =
-    Dom.getViewportOf Views.Chat.msgsViewHtmlId
-        |> Task.andThen
-            ( \ viewport ->
-                Dom.setViewportOf
-                    Views.Chat.msgsViewHtmlId 0 viewport.scene.height
-            )
-        |> ( Task.attempt <| ChatMsgsViewEvent << Chat.TriedSnapScroll )
-
-
-sendChatMsg : Chat.MsgBody -> Cmd Msg
-sendChatMsg msgBody =
-    if String.isEmpty <| untag msgBody then
-        Cmd.none
-    else
-        port_SendWsMsg <| Chat.mkContentMsg msgBody
 
 
 main =

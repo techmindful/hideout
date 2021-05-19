@@ -31,12 +31,6 @@ initFlagDecoder =
             ( JDec.field "host" JDec.string )
 
 
-type WsStatus
-    = NotOpened
-    | Opened
-    | Error
-
-
 type SpawnPersistChatResp
     = NotSpawned
     | Waiting
@@ -52,7 +46,6 @@ type alias Model =
 
     , viewport : Dom.Viewport
     , navKey : Nav.Key
-    , wsStatus : WsStatus
     , windowVisibility : Browser.Events.Visibility
 
     , aboutPageModel : Views.About.Model
@@ -67,7 +60,6 @@ type alias Model =
     , dispChatMaxJoinCountInput : String
     , persistChatMaxJoinCountInput : String
     , chatStatus : Chat.Status
-    , newNameInput : String
 
     , isShiftHeld : Bool
 
@@ -103,16 +95,7 @@ type Msg
     | SpawnPersistChat
     | GotSpawnPersistChatResp ( Result Http.Error String )
 
-    -- Chatting
-    | MessageInput String
-    | MessageSend
-    | NewNameInput String
-    | NameChange
-    | OnWsReady String
-    | OnWsError
-    | OnWsMsg String
-    | ChatMsgsViewEvent Chat.MsgsViewEvent
-    | OnChatInputFocal Bool
+    | ChatElmMsg Chat.ElmMsg
 
     | OnWindowResized
 

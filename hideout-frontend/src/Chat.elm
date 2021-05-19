@@ -2,12 +2,14 @@ module Chat exposing
     ( ChatId
     , ChatMsgMeta
     , CtrlMsg(..)
+    , ElmMsg(..)
     , Err(..)
+    , Model
     , MsgBody
     , MsgBundle
     , MsgType(..)
     , MsgsViewEvent(..)
-    , Status
+    , Status(..)
     , autoScrollMargin
     , isMetaBundle
     , mkJoinMsg
@@ -24,6 +26,7 @@ import Common.Contents exposing ( plainPara )
 import Dict exposing ( Dict )
 import Element
 import Element exposing ( Element )
+import Http
 import Json.Decode as JDec
 import Json.Decode.Extra as JDec
 import Json.Encode as JEnc
@@ -31,6 +34,46 @@ import List.Extra as List
 import Tagged exposing ( Tagged, tag, untag )
 import Time exposing ( Posix )
 import Utils.Utils as Utils exposing ( is )
+
+
+type Status
+    = Normal Model
+    | OpeningWs ChatId
+    | WsError
+    | ChatError Err
+    | NotChatting
+
+
+type alias Model =
+    { chatId : ChatId
+    , myUserId : Int
+    , input : MsgBody
+    , newNameInput : String
+    , msgs : List ChatMsgMeta
+    , users : Dict Int String
+
+    , maxJoinCount : Maybe Int
+    , joinCount : Int
+
+    , hasManualScrolledUp : Bool
+    , shouldHintNewMsg : Bool
+
+    , isInputFocused : Bool
+    , isShiftHeld : Bool
+    }
+
+
+type ElmMsg
+    = MessageInput String
+    | MessageSend
+    | NewNameInput String
+    | OnNameChange
+    | OnMsgsViewEvent MsgsViewEvent
+    | OnChatInputFocal Bool
+
+    | OnWsReady String
+    | OnWsError
+    | OnWsMsg String
 
 
 type ChatIdTag = ChatIdTag
@@ -153,25 +196,6 @@ wsMsgDecoder =
         , JDec.map MsgHistory_ msgHistoryDecoder
         , JDec.map UserIdMsg_ userIdMsgDecoder
         ]
-
-
-type alias Status =
-    { chatId : ChatId
-    , myUserId : Int
-    , input : MsgBody
-    , msgs : List ChatMsgMeta
-    , users : Dict Int String
-
-    , maxJoinCount : Maybe Int
-    , joinCount : Int
-
-    , hasManualScrolledUp : Bool
-    , shouldHintNewMsg : Bool
-
-    , isInputFocused : Bool
-
-    , err : Maybe Err
-    }
 
 
 mkJoinMsg : ChatId -> String
