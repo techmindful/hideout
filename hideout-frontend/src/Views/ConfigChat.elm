@@ -1,6 +1,6 @@
 module Views.ConfigChat exposing ( view )
 
-import Common.Colors exposing ( bgColor )
+import Common.Colors exposing ( bgColor, red )
 import Common.Contents exposing
     ( borderedButton
     , italicText
@@ -13,10 +13,16 @@ import Common.Styles exposing
     , widthConstraint
     )
 import Common.Urls exposing (..)
-import CoreTypes exposing ( Model, Msg(..), SpawnPersistChatResp(..) )
+import CoreTypes exposing
+    ( Model
+    , Msg(..)
+    , SpawnDispChatResp(..)
+    , SpawnPersistChatResp(..)
+    )
 import Element exposing ( Element )
 import Element.Background as Background
 import Element.Border as Border
+import Element.Font as Font
 import Element.Input as Input
 import String.Extra exposing ( unquote )
 import Url.Builder
@@ -41,6 +47,30 @@ view model =
         , Element.el
             [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
             ( borderedButton SpawnDispChat "Start a disposable chat!" )
+        , let
+            padding =
+                Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+          in
+          case model.spawnDispChatResp of
+            NotSpawned_Disp ->
+                Element.none
+    
+            Waiting_Disp ->
+                Element.paragraph
+                    [ padding ]
+                    [ Element.text "Waiting for response from the server..." ]
+
+            GotError_Disp err ->
+                Element.paragraph
+                    [ padding
+                    , Font.color red
+                    ]
+                    [ Element.text "Error reaching server!" ]
+
+            GotChatId _ ->
+                Element.none
+
+
         , Element.paragraph
             [ Element.paddingEach { top = 200, bottom = 0, left = 0, right = 0 } ]
             [ Element.text "A "
@@ -52,21 +82,32 @@ view model =
             ]
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
+        , Element.el
+             [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
+             ( borderedButton SpawnPersistChat "Start a persistent chat!" )
+        , let
+            padding =
+                Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+          in
+          case model.spawnPersistChatResp of
+            NotSpawned_Persist -> 
+                Element.none
 
-        , case model.spawnPersistChatResp of
-            NotSpawned -> 
-                 Element.el
-                     [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-                     ( borderedButton SpawnPersistChat "Start a persistent chat!" )
-
-            Waiting ->
+            Waiting_Persist ->
                 Element.paragraph
-                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+                    [ padding ]
                     [ Element.text "Waiting for response from the server..." ]
+
+            GotError_Persist error ->
+                Element.paragraph
+                    [ padding
+                    , Font.color red
+                    ]
+                    [ Element.text "Error reaching server!" ]
 
             GotLetterId letterId ->
                  Element.textColumn
-                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+                    [ padding
                     , Element.spacingXY 0 20
                     ]
                     [ Element.paragraph
@@ -86,11 +127,6 @@ view model =
                         frontendReadLetterUrl ++ "/" ++
                         unquote letterId
                     ]           
-
-            GotError error ->
-                Element.paragraph
-                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
-                    [ Element.text "Error reaching server!" ]
         ]
 
 

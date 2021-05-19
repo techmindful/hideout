@@ -31,10 +31,17 @@ initFlagDecoder =
             ( JDec.field "host" JDec.string )
 
 
+type SpawnDispChatResp
+    = NotSpawned_Disp
+    | Waiting_Disp
+    | GotError_Disp Http.Error
+    | GotChatId String
+
+
 type SpawnPersistChatResp
-    = NotSpawned
-    | Waiting
-    | GotError Http.Error
+    = NotSpawned_Persist
+    | Waiting_Persist
+    | GotError_Persist Http.Error
     | GotLetterId String
 
 
@@ -52,6 +59,7 @@ type alias Model =
 
     , joinChatInput : String
 
+    , spawnDispChatResp : SpawnDispChatResp
     , spawnPersistChatResp : SpawnPersistChatResp
 
     , letterRawInput : Letter.RawInput

@@ -110,7 +110,8 @@ initModel initFlag url navKey =
       , letterPersistInput = True
       , letterStatus = { read = Letter.Init, write = Letter.NotSent }
 
-      , spawnPersistChatResp = NotSpawned
+      , spawnDispChatResp = NotSpawned_Disp
+      , spawnPersistChatResp = NotSpawned_Persist
 
       , dispChatMaxJoinCountInput = "2"
       , persistChatMaxJoinCountInput = "2"
@@ -302,7 +303,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             case strToPosIntInput model.dispChatMaxJoinCountInput of
                 Bad  _ -> ( Normal model, Cmd.none )
                 Good posInt ->
-                    ( Normal model
+                    ( Normal { model | spawnDispChatResp = Waiting_Disp }
                     , Http.request
                         { method = "PUT"
                         , headers = []
@@ -316,14 +317,16 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
         GotSpawnDispChatResp result ->
             case result of
-                -- TODO: Handle error.
-                Err _ ->
-                    ( Normal model, Cmd.none )
-
-                Ok chatId ->
-                    ( Normal model
-                    , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatId
+                Err err ->
+                    ( Normal { model | spawnDispChatResp = GotError_Disp err }
+                    , Cmd.none
                     )
+
+                Ok chatIdStr ->
+                    ( Normal { model | spawnDispChatResp = GotChatId chatIdStr }
+                    , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatIdStr
+                    )
+
 
         PersistChatMaxJoinCountInput str ->
             ( Normal { model | persistChatMaxJoinCountInput = str }
@@ -331,11 +334,11 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         SpawnPersistChat ->
-            ( Normal model
-            , case strToPosIntInput model.persistChatMaxJoinCountInput of
-                Bad _ -> Cmd.none
+            case strToPosIntInput model.persistChatMaxJoinCountInput of
+                Bad _ -> ( Normal model, Cmd.none )
                 Good posInt ->
-                    Http.request
+                    ( Normal { model | spawnPersistChatResp = Waiting_Persist }
+                    , Http.request
                         { method = "PUT"
                         , headers = []
                         , url = backendSpawnPersistChatUrl
@@ -344,7 +347,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                         , timeout = Nothing
                         , tracker = Nothing
                         }
-            )
+                    )
 
         GotSpawnPersistChatResp result ->
             ( Normal
@@ -352,7 +355,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     spawnPersistChatResp =
                         case result of
                             Err err ->
-                                GotError err
+                                GotError_Persist err
                                 
                             Ok letterId ->
                                 GotLetterId letterId
