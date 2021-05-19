@@ -61,6 +61,12 @@
             }
           socket.addEventListener( "message", handleDataFromWs );
 
+          let handleWsError = function( event )
+            {
+              elmApp.ports.port_WsError.send( null );
+            }
+          socket.addEventListener( "error", handleWsError );
+
           //let handleClose = function()
           //  {
           //    socket.close();

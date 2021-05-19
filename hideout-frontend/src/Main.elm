@@ -45,6 +45,7 @@ import Views.WriteLetter
 
 port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
+port port_WsError : ( () -> msg ) -> Sub msg
 port port_SendWsMsg : String -> Cmd msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
 port port_NotifyChat : () -> Cmd msg
@@ -55,6 +56,7 @@ subscriptions : State -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ port_WsReady OnWsReady
+        , port_WsError ( \_ -> OnWsError )
         , port_RecvWsMsg OnWsMsg
 
         , Browser.Events.onResize ( \_ _ -> OnWindowResized )
@@ -100,7 +102,7 @@ initModel initFlag url navKey =
            , viewport = { x = 0, y = 0, width = 1920, height = 1080 }
            }
       , navKey = navKey
-      , isWsReady = False
+      , wsStatus = NotOpened
       , windowVisibility = Browser.Events.Visible -- Assume visible..
 
       , aboutPageModel = Views.About.init |> updateAboutPageModelWithRoute route
@@ -197,7 +199,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         GotViewport viewport ->
-            ( Normal { model| viewport = viewport }, Cmd.none )
+            ( Normal { model | viewport = viewport }, Cmd.none )
 
         AboutPageMsg aboutPageMsg ->
             ( Normal { model | aboutPageModel = Views.About.update aboutPageMsg model.aboutPageModel }
@@ -205,7 +207,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         GotReadLetterResp result ->
-            ( Normal { model| letterStatus =
+            ( Normal { model | letterStatus =
                 { letterStatus | read = Letter.Got result }
               }
             , Cmd.none
@@ -220,27 +222,27 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         LetterInput str ->
-            ( Normal { model| letterRawInput =
+            ( Normal { model | letterRawInput =
                 { letterRawInput | body = str }
               }
             , Cmd.none
             )
 
         LetterMaxReadCountInput str ->
-            ( Normal { model| letterRawInput =
+            ( Normal { model | letterRawInput =
                 { letterRawInput | maxReadCount = str }
               }
             , Cmd.none
             )
 
         LetterPersistInput input ->
-            ( Normal { model| letterPersistInput = input }, Cmd.none )
+            ( Normal { model | letterPersistInput = input }, Cmd.none )
 
         LetterSend ->
             case Letter.validateInput letterRawInput of
                 Err _ -> ( Normal model, Cmd.none )
                 Ok goodInput ->
-                    ( Normal { model|
+                    ( Normal { model |
                         letterStatus =
                           { letterStatus | write =
                               Letter.Sent { maxReadCount = goodInput.maxReadCount }
@@ -271,12 +273,12 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     let
                         newModel = case result of
                             Err err ->
-                                Normal { model| letterStatus =
+                                Normal { model | letterStatus =
                                     { letterStatus | write = Letter.GotResp <| Err err }
                                 }
 
                             Ok letterId ->
-                                Normal { model| letterStatus =
+                                Normal { model | letterStatus =
                                     { letterStatus | write =
                                         Letter.GotResp <| Ok
                                             { id = letterId
@@ -294,7 +296,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     )
 
         DispChatMaxJoinCountInput str ->
-            ( Normal { model| dispChatMaxJoinCountInput = str }
+            ( Normal { model | dispChatMaxJoinCountInput = str }
             , Cmd.none
             )
 
@@ -320,14 +322,14 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     ( Normal model, Cmd.none )
 
                 Ok chatId ->
-                    ( Normal { model| chatStatus =
+                    ( Normal { model | chatStatus =
                         { chatStatus | chatId = tag <| unquote chatId }
                       }
                     , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatId
                     )
 
         PersistChatMaxJoinCountInput str ->
-            ( Normal { model| persistChatMaxJoinCountInput = str }
+            ( Normal { model | persistChatMaxJoinCountInput = str }
             , Cmd.none
             )
 
@@ -364,7 +366,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
 
         MessageInput str ->
-            ( Normal { model| chatStatus = { chatStatus | input = tag str } }
+            ( Normal { model | chatStatus = { chatStatus | input = tag str } }
             , Cmd.none
             )
 
@@ -374,7 +376,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             )
 
         NewNameInput str ->
-            ( Normal { model| newNameInput = str }
+            ( Normal { model | newNameInput = str }
             , Cmd.none
             )
 
@@ -382,17 +384,22 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             if String.isEmpty model.newNameInput then
                 ( Normal model, Cmd.none )
             else
-                ( Normal { model| newNameInput = "" }
+                ( Normal { model | newNameInput = "" }
                 , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
                 )
 
         OnWsReady _ ->
-            ( Normal { model| isWsReady = True }
+            ( Normal { model | wsStatus = Opened }
             -- If ws is open after user lands on the chat page,
             -- Send the join msg.
             , case model.route of
                 Chat chatIdStr -> port_SendWsMsg <| Chat.mkJoinMsg <| tag chatIdStr
                 _ -> Cmd.none
+            )
+
+        OnWsError ->
+            ( Normal { model | wsStatus = Error }
+            , Cmd.none
             )
 
         OnWsMsg str ->
@@ -428,7 +435,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 isMyMsg : Bool
                                 isMyMsg = chatMsgMeta.userId == model.chatStatus.myUserId
                             in
-                            ( Normal { model|
+                            ( Normal { model |
                                 chatStatus =
                                     { chatStatus |
                                       msgs = chatStatus.msgs ++ [ chatMsgMeta ]
@@ -471,14 +478,14 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                         Chat.CtrlMsg_ ctrlMsg ->
                             case ctrlMsg of
                                 Chat.Err_ err ->
-                                    ( Normal { model| chatStatus =
+                                    ( Normal { model | chatStatus =
                                         { chatStatus | err = Just err }
                                       }
                                     , Cmd.none
                                     )
 
                         Chat.MsgHistory_ msgHistory ->
-                           ( Normal { model|
+                           ( Normal { model |
                               chatStatus =
                                   { chatStatus | msgs  = msgHistory.msgs
                                                , users = msgHistory.users
@@ -489,7 +496,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                            )
 
                         Chat.UserIdMsg_ userIdMsg ->
-                            ( Normal { model| chatStatus =
+                            ( Normal { model | chatStatus =
                                 { chatStatus | myUserId = userIdMsg.yourUserId }
                               }
                             , Cmd.none
@@ -521,7 +528,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 hasManualScrolledUp =
                                     Utils.hasManualScrolledUp viewport Chat.autoScrollMargin
                             in
-                            ( Normal { model| chatStatus =
+                            ( Normal { model | chatStatus =
                                 { chatStatus |
                                   hasManualScrolledUp = hasManualScrolledUp
 
@@ -537,7 +544,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                             )
 
                 Chat.OnNewMsgHintClicked ->
-                    ( Normal { model| chatStatus =
+                    ( Normal { model | chatStatus =
                         { chatStatus | shouldHintNewMsg = False
                                      , hasManualScrolledUp = False
                         }
@@ -546,7 +553,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     )
 
         OnChatInputFocal isFocused ->
-            ( Normal { model| chatStatus =
+            ( Normal { model | chatStatus =
                 { chatStatus | isInputFocused = isFocused }
               }
             , Cmd.none
@@ -571,7 +578,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     )
 
                 "Shift" ->
-                    ( Normal { model| isShiftHeld = True }, Cmd.none )
+                    ( Normal { model | isShiftHeld = True }, Cmd.none )
 
                 _ ->
                     ( Normal model, Cmd.none )
@@ -579,7 +586,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
         OnKeyUp key ->
             case key of
                 "Shift" ->
-                    ( Normal { model| isShiftHeld = False }, Cmd.none )
+                    ( Normal { model | isShiftHeld = False }, Cmd.none )
 
                 _ ->
                     ( Normal model, Cmd.none )

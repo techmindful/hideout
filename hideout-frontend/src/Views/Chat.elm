@@ -31,45 +31,52 @@ import Utils.Utils as Utils
 
 view : Model -> Element Msg
 view model =
-    case model.chatStatus.err of
-        Nothing  -> chatView model
-        Just err ->
-            let
-                errContent = case err of
-                    Chat.MaxJoined ->
-                        Element.paragraph
-                            []
-                            [ Element.text
-                                """
-                                Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. Read more about what this implies 
-                                """
-                            , newTabLink aboutUrl "here"
-                            , Element.text "."
-                            ]
+    case model.wsStatus of
+        NotOpened ->
+            mkErrView <|
+                plainPara "Waiting for websocket to be opened..."
 
-                    Chat.NotFound ->
-                        Element.column
-                            []
-                            [ plainPara
-                                """
-                                Hi, welcome to Hideout! This chat room doesn't exist. The reason can be:
-                                """
-                            , Element.column
-                                [ Element.paddingXY 0 20
-                                , Element.spacingXY 0 10
-                                ]
-                                [ plainPara "- Either you entered a wrong link or chat ID;"
-                                , plainPara "- Or the chat is expired and deleted."
-                                ]
-                            ]
-            in
-            Element.column
-                [ Element.width <| Element.maximum 750 Element.fill
-                , Element.spacingXY 0 100
-                ]
-                [ errContent
-                , footer
-                ]
+        Error ->
+            mkErrView <|
+                plainPara
+                    """
+                    Error when opening websocket. Maybe server is unreachable?
+                    """
+
+        _ ->
+            case model.chatStatus.err of
+                Nothing  -> chatView model
+                Just err ->
+                    let
+                        errContent = case err of
+                            Chat.MaxJoined ->
+                                Element.paragraph
+                                    []
+                                    [ Element.text
+                                        """
+                                        Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. Read more about what this implies 
+                                        """
+                                    , newTabLink aboutUrl "here"
+                                    , Element.text "."
+                                    ]
+
+                            Chat.NotFound ->
+                                Element.column
+                                    []
+                                    [ plainPara
+                                        """
+                                        Hi, welcome to Hideout! This chat room doesn't exist. The reason can be:
+                                        """
+                                    , Element.column
+                                        [ Element.paddingXY 0 20
+                                        , Element.spacingXY 0 10
+                                        ]
+                                        [ plainPara "- Either you entered a wrong link or chat ID;"
+                                        , plainPara "- Or the chat is expired and deleted."
+                                        ]
+                                    ]
+                    in
+                    mkErrView errContent
 
 
 chatView : Model -> Element Msg
@@ -292,3 +299,15 @@ chatColumnMaxWidthPx windowWidth =
 
 
 msgsViewHtmlId = "chat-msgs-view"
+
+
+mkErrView : Element msg -> Element msg
+mkErrView content =
+    Element.column
+        [ Element.width <| Element.maximum 750 Element.fill
+        , Element.spacingXY 0 100
+        ]
+        [ content
+        , footer
+        ]
+

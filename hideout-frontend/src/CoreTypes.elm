@@ -31,6 +31,12 @@ initFlagDecoder =
             ( JDec.field "host" JDec.string )
 
 
+type WsStatus
+    = NotOpened
+    | Opened
+    | Error
+
+
 type SpawnPersistChatResp
     = NotSpawned
     | Waiting
@@ -46,7 +52,7 @@ type alias Model =
 
     , viewport : Dom.Viewport
     , navKey : Nav.Key
-    , isWsReady : Bool
+    , wsStatus : WsStatus
     , windowVisibility : Browser.Events.Visibility
 
     , aboutPageModel : Views.About.Model
@@ -103,6 +109,7 @@ type Msg
     | NewNameInput String
     | NameChange
     | OnWsReady String
+    | OnWsError
     | OnWsMsg String
     | ChatMsgsViewEvent Chat.MsgsViewEvent
     | OnChatInputFocal Bool
