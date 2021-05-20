@@ -56,7 +56,7 @@ type alias Model =
 
     , msgs : List ChatMsgMeta
     , users : Dict Int String
-    , typingUsersNames : List String
+    , typingUsers : List Int
 
     , maxJoinCount : Maybe Int
     , joinCount : Int

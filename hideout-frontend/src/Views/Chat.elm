@@ -79,7 +79,7 @@ update elmMsg status windowVisibility =
 
                         , msgs = []
                         , users = Dict.empty
-                        , typingUsersNames = []
+                        , typingUsers = []
                         , isTyping = False
 
                         , maxJoinCount = Nothing
@@ -234,19 +234,22 @@ updateModel elmMsg model windowVisibility =
                                         _ ->
                                             model.users
 
-                                newTypingUsersNames =
+                                newTypingUsers =
                                     case msgFromClient.msgType of
                                         Chat.TypeHint ->
                                             if untag msgFromClient.msgBody == "start" then
                                                 -- Making it unique, in case start typing cooldown and
                                                 -- Stop typing cooldown mismatch, which will cause
                                                 -- Duplicates in the list of typing users.
-                                                model.typingUsersNames ++ [ senderName ] |> List.unique
+                                                model.typingUsers ++ [ senderId ] |> List.unique
                                             else
-                                                List.remove senderName model.typingUsersNames
+                                                List.remove senderId model.typingUsers
+
+                                        Chat.Leave ->
+                                            List.remove senderId model.typingUsers
 
                                         _ ->
-                                            model.typingUsersNames
+                                            model.typingUsers
 
                                 newMsgs =
                                     case msgFromClient.msgType of
@@ -263,7 +266,7 @@ updateModel elmMsg model windowVisibility =
                                 { model |
                                   msgs = newMsgs
                                 , users = newUsers
-                                , typingUsersNames = newTypingUsersNames
+                                , typingUsers = newTypingUsers
                                 , shouldHintNewMsg =
                                     -- If hint is previously needed, keep it.
                                     model.shouldHintNewMsg || 
@@ -459,21 +462,30 @@ chatView model viewportWidth =
                     Html.Events.on "scroll" <| JDec.succeed <| OnMsgsViewEvent OnManualScrolled
                 ] <|
                 ( List.map msgBundleView <| Chat.mkMsgBundles model.msgs ) ++
-                [ if List.length model.typingUsersNames == 0 then
+                [ if List.length model.typingUsers == 0 then
                     Element.none
                   else
                     Element.paragraph
                       [ Element.paddingXY 0 20
                       , Font.color grey
                       ]
-                      [ Element.text <|
-                          ( String.join ", " model.typingUsersNames ) ++
-                          ( if List.length model.typingUsersNames == 1 then
-                              " is "
-                            else
-                              " are "
-                          ) ++
-                          "typing..."
+                      [ let
+                          typingUsersNames = 
+                              List.map
+                                ( \userId ->
+                                    Dict.get userId model.users |>
+                                        Maybe.withDefault "[ErrorUsername]"
+                                )
+                                model.typingUsers
+                        in
+                        Element.text <|
+                            ( String.join ", " typingUsersNames ) ++
+                            ( if List.length model.typingUsers == 1 then
+                                " is "
+                              else
+                                " are "
+                            ) ++
+                            "typing..."
                       ]
                 ]
                            
