@@ -282,7 +282,8 @@ updateModel elmMsg model windowVisibility =
                                     -- If hint is previously needed, keep it.
                                     model.shouldHintNewMsg || 
                                     ( model.hasManualScrolledUp &&
-                                      ( not isMyMsg )
+                                      not isMyMsg &&
+                                      msgFromClient.msgType /= Chat.TypeHint
                                     )
 
                                 -- User ID can tell join count.
