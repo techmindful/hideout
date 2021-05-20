@@ -10,6 +10,7 @@ module Chat exposing
     , MsgType(..)
     , MsgsViewEvent(..)
     , Status(..)
+    , TypingStatus(..)
     , autoScrollMargin
     , isMetaBundle
     , mkJoinMsg
@@ -51,8 +52,7 @@ type alias Model =
 
     , input : MsgBody
     , newNameInput : String
-    , lastInputTime : Time.Posix
-    , isTyping : Bool
+    , typingStatus : TypingStatus
 
     , msgs : List ChatMsgMeta
     , users : Dict Int String
@@ -208,6 +208,11 @@ wsMsgDecoder =
         , JDec.map MsgHistory_ msgHistoryDecoder
         , JDec.map UserIdMsg_ userIdMsgDecoder
         ]
+
+
+type TypingStatus
+    = Typing Time.Posix  -- Last input time
+    | NotTyping
 
 
 mkJoinMsg : ChatId -> String

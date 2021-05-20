@@ -14,6 +14,7 @@ import Chat exposing
     , Model
     , MsgsViewEvent(..)
     , Status(..)
+    , TypingStatus(..)
     , WsMsg(..)
     , mkTypeHintMsg
     , wsMsgDecoder
@@ -75,12 +76,11 @@ update elmMsg status windowVisibility =
 
                         , input = tag ""
                         , newNameInput = ""
-                        , lastInputTime = millisToPosix 0
+                        , typingStatus = NotTyping
 
                         , msgs = []
                         , users = Dict.empty
                         , typingUsers = []
-                        , isTyping = False
 
                         , maxJoinCount = Nothing
                         , joinCount = 0
@@ -114,7 +114,6 @@ updateModel elmMsg model windowVisibility =
             ( Normal
                 { model |
                   input = tag str
-                , isTyping = True
                 }
             , -- HACK: Prevent hitting enter to send the msg from triggering type hint.
               if String.endsWith "\n" str then
@@ -142,8 +141,10 @@ updateModel elmMsg model windowVisibility =
                 )
 
         GotInputTime inputTime ->
-            ( Normal { model | lastInputTime = inputTime }
-            , if durationSec model.lastInputTime inputTime >= 5 then
+            ( Normal { model | typingStatus = Typing inputTime }
+            , 
+              -- Only send "start" type hint when user *just started* to type.
+              if model.typingStatus == NotTyping then
                 port_SendWsMsg <| mkTypeHintMsg True
               else
                 Cmd.none
@@ -326,13 +327,21 @@ updateModel elmMsg model windowVisibility =
 
         GotTime time ->
             let
-                -- Was typing, and stopped just now.
-                hasStoppedTyping =
-                    model.isTyping &&
-                    durationSec model.lastInputTime time >= 5
+                -- Change typing status if user was typing,
+                -- But haven't typed in 5 seconds.
+                newTypingStatus =
+                    case model.typingStatus of
+                        NotTyping -> NotTyping
+                        Typing lastInputTime ->
+                            if durationSec lastInputTime time >= 5 then
+                                NotTyping
+                            else
+                                model.typingStatus
             in
-            ( Normal { model | isTyping = model.isTyping && not hasStoppedTyping }
-            , if hasStoppedTyping then
+            ( Normal { model | typingStatus = newTypingStatus }
+            , 
+              -- Send "stop" type hint if user *just stopped* typing.
+              if model.typingStatus /= NotTyping && newTypingStatus == NotTyping then
                 port_SendWsMsg <| mkTypeHintMsg False
               else
                 Cmd.none
