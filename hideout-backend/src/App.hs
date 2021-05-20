@@ -334,7 +334,7 @@ chatHandler chatIdStr conn = do
 
                   posixTime <- liftIO getPOSIXTime
 
-                  liftIO $ putStrLn $ show $ round posixTime
+                  liftIO $ putStrLn $ "Time ( POSIX seconds ): " ++ ( show $ round posixTime )
 
                   -- Debug print msg.
                   liftIO $ putStrLn $ "Received msg from client: " ++ show msgFromClient
@@ -351,8 +351,10 @@ chatHandler chatIdStr conn = do
 
                   -- Update chat.
                   let
-                    -- Update chat msgs.
-                    chat'  = chat & #msgs %~ ( ++ [ chatMsgMeta ] )
+                    -- Update chat msgs, unless it's TypeHint.
+                    chat'  = case msgType of
+                      "typeHint" -> chat
+                      _ -> chat & #msgs %~ ( ++ [ chatMsgMeta ] )
 
                     -- Update users based on msg type.
                     users' =
