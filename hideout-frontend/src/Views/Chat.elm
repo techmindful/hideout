@@ -38,6 +38,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode as JDec
+import List.Extra as List
 import String.Extra exposing ( quote, unquote )
 import Tagged exposing ( tag, untag )
 import Task
@@ -78,6 +79,7 @@ update elmMsg status windowVisibility navKey =
 
                         , msgs = []
                         , users = Dict.empty
+                        , typingUsersNames = []
 
                         , maxJoinCount = Nothing
                         , joinCount = 0
@@ -225,16 +227,33 @@ updateModel elmMsg model windowVisibility navKey =
                                         Chat.Leave ->
                                             Dict.remove senderId oldUsers
 
-                                        Chat.Content ->
+                                        _ ->
                                             model.users
+
+                                newTypingUsersNames =
+                                    case msgFromClient.msgType of
+                                        Chat.TypeHint ->
+                                            model.typingUsersNames ++ [ senderName ] |> List.unique
+
+                                        _ ->
+                                            model.typingUsersNames
+
+                                newMsgs =
+                                    case msgFromClient.msgType of
+                                        Chat.TypeHint ->
+                                            model.msgs
+
+                                        _ ->
+                                            model.msgs ++ [ chatMsgMeta ]
 
                                 isMyMsg : Bool
                                 isMyMsg = chatMsgMeta.userId == model.myUserId
                             in
                             ( Normal
                                 { model |
-                                  msgs = model.msgs ++ [ chatMsgMeta ]
+                                  msgs = newMsgs
                                 , users = newUsers
+                                , typingUsersNames = newTypingUsersNames
                                 , shouldHintNewMsg =
                                     -- If hint is previously needed, keep it.
                                     model.shouldHintNewMsg || 
@@ -262,7 +281,8 @@ updateModel elmMsg model windowVisibility navKey =
                                   else
                                     Cmd.none
 
-                                , if windowVisibility == Browser.Events.Hidden then
+                                , if windowVisibility == Browser.Events.Hidden &&
+                                     msgFromClient.msgType /= Chat.TypeHint then
                                     port_NotifyChat ()
                                   else
                                     Cmd.none
@@ -414,7 +434,26 @@ chatView model viewportWidth =
                 , Element.htmlAttribute <|
                     Html.Events.on "scroll" <| JDec.succeed <| OnMsgsViewEvent OnManualScrolled
                 ] <|
-                List.map msgBundleView <| Chat.mkMsgBundles model.msgs
+                ( List.map msgBundleView <| Chat.mkMsgBundles model.msgs ) ++
+                [ if List.length model.typingUsersNames == 0 then
+                    Element.none
+                  else
+                    Element.paragraph
+                      [ Element.paddingXY 0 20
+                      , Font.color grey
+                      ]
+                      [ Element.text <|
+                          ( String.join ", " model.typingUsersNames ) ++
+                          ( if List.length model.typingUsersNames == 1 then
+                              " is "
+                            else
+                              " are "
+                          ) ++
+                          "typing..."
+                      ]
+                ]
+                           
+
 
             -- New messages hint if needed
             , Element.el
@@ -576,6 +615,9 @@ msgView msg =
             Element.column
                 [] <|
                 ( Utils.Markdown.render <| untag msgFromClient.msgBody )
+
+        Chat.TypeHint ->
+            Element.none
 
 
 userView : ( Int, String ) -> Element m

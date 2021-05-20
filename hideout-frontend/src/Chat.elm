@@ -55,6 +55,7 @@ type alias Model =
 
     , msgs : List ChatMsgMeta
     , users : Dict Int String
+    , typingUsersNames : List String
 
     , maxJoinCount : Maybe Int
     , joinCount : Int
@@ -90,6 +91,7 @@ type MsgType
     = Content
     | Join
     | NameChange
+    | TypeHint
     | Leave
 
 
@@ -111,6 +113,7 @@ msgFromClientDecoder =
                     if str == "content" then JDec.succeed Content
                     else if str == "join" then JDec.succeed Join
                     else if str == "nameChange" then JDec.succeed NameChange
+                    else if str == "typeHint" then JDec.succeed TypeHint
                     else if str == "leave" then JDec.succeed Leave
                     else JDec.fail "Invalid MsgType"
                 )
