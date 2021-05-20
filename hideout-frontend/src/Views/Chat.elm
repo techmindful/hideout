@@ -480,34 +480,35 @@ chatView model viewportWidth =
                 , Element.htmlAttribute <|
                     Html.Events.on "scroll" <| JDec.succeed <| OnMsgsViewEvent OnManualScrolled
                 ] <|
-                ( List.map msgBundleView <| Chat.mkMsgBundles model.msgs ) ++
-                [ if List.length model.typingUsers == 0 then
+                List.map msgBundleView <| Chat.mkMsgBundles model.msgs
+
+            -- Type hint
+            , Element.el
+                [ Element.height <| Element.px 20
+                , Element.paddingXY 0 10
+                , Font.color grey
+                ]
+                ( if List.length model.typingUsers == 0 then
                     Element.none
                   else
-                    Element.paragraph
-                      [ Element.paddingXY 0 20
-                      , Font.color grey
-                      ]
-                      [ let
-                          typingUsersNames = 
-                              List.map
+                    let
+                        typingUsersNames = 
+                            List.map
                                 ( \userId ->
                                     Dict.get userId model.users |>
-                                        Maybe.withDefault "[ErrorUsername]"
+                                    Maybe.withDefault "[ErrorUsername]"
                                 )
                                 model.typingUsers
-                        in
-                        Element.text <|
-                            ( String.join ", " typingUsersNames ) ++
-                            ( if List.length model.typingUsers == 1 then
-                                " is "
-                              else
-                                " are "
-                            ) ++
-                            "typing..."
-                      ]
-                ]
-                           
+                    in
+                    Element.text <|
+                        ( String.join ", " typingUsersNames ) ++
+                        ( if List.length model.typingUsers == 1 then
+                            " is "
+                          else
+                            " are "
+                        ) ++
+                        "typing..."
+                )
 
 
             -- New messages hint if needed
