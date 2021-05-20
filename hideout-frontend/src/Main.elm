@@ -398,7 +398,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             case model.route of
                 Chat _ ->
                     let
-                        ( status, cmd ) = Views.Chat.handleKeyDown model.chatStatus key
+                        ( status, cmd ) = Views.Chat.handleKeyUp model.chatStatus key
                     in
                     ( Normal { model | chatStatus = status }
                     , Cmd.map ChatElmMsg cmd

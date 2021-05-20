@@ -16,6 +16,7 @@ module Chat exposing
     , mkContentMsg
     , mkMsgBundles
     , mkNameChangeMsg
+    , mkTypeHintMsg
     , chatMsgMetaDecoder
     , WsMsg(..)
     , wsMsgDecoder
@@ -32,7 +33,7 @@ import Json.Decode.Extra as JDec
 import Json.Encode as JEnc
 import List.Extra as List
 import Tagged exposing ( Tagged, tag, untag )
-import Time exposing ( Posix )
+import Time
 import Utils.Utils as Utils exposing ( is )
 
 
@@ -47,8 +48,11 @@ type Status
 type alias Model =
     { chatId : ChatId
     , myUserId : Int
+
     , input : MsgBody
     , newNameInput : String
+    , lastInputTime : Time.Posix
+
     , msgs : List ChatMsgMeta
     , users : Dict Int String
 
@@ -68,6 +72,8 @@ type ElmMsg
     | MessageSend
     | NewNameInput String
     | OnNameChange
+    | GotInputTime Time.Posix
+
     | OnMsgsViewEvent MsgsViewEvent
     | OnChatInputFocal Bool
 
@@ -210,6 +216,10 @@ mkNameChangeMsg : MsgBody -> String
 mkNameChangeMsg = mkWsMsg "nameChange" << untag
 
 
+mkTypeHintMsg : String
+mkTypeHintMsg = mkWsMsg "typeHint" ""
+
+
 mkWsMsg : String -> String -> String
 mkWsMsg msgType msgBody =
     JEnc.encode 0 <| JEnc.object
@@ -224,7 +234,7 @@ type alias MsgBundle =
     { userId : Int  -- Compare with this, not username.
     , username : String
     , msgs : List ChatMsgMeta
-    , time : Posix
+    , time : Time.Posix
     }
 
 

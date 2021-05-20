@@ -15,6 +15,7 @@ import Chat exposing
     , MsgsViewEvent(..)
     , Status(..)
     , WsMsg(..)
+    , mkTypeHintMsg
     , wsMsgDecoder
     )
 import Common.Attributes
@@ -40,7 +41,12 @@ import Json.Decode as JDec
 import String.Extra exposing ( quote, unquote )
 import Tagged exposing ( tag, untag )
 import Task
-import Time exposing ( millisToPosix, toSecond, utc )
+import Time exposing
+    ( millisToPosix
+    , posixToMillis
+    , toSecond
+    , utc
+    )
 import Utils.Markdown
 import Utils.Utils as Utils
 
@@ -65,9 +71,12 @@ update elmMsg status windowVisibility navKey =
                     ( Normal
                         { chatId = chatId
                         , myUserId = -1
-                        , msgs = []
+
                         , input = tag ""
                         , newNameInput = ""
+                        , lastInputTime = millisToPosix 0
+
+                        , msgs = []
                         , users = Dict.empty
 
                         , maxJoinCount = Nothing
@@ -101,7 +110,11 @@ updateModel elmMsg model windowVisibility navKey =
     case elmMsg of
         MessageInput str ->
             ( Normal { model | input = tag str }
-            , Cmd.none
+            , -- HACK: Prevent hitting enter to send the msg from triggering type hint.
+              if String.endsWith "\n" str then
+                  Cmd.none
+              else
+                  Task.perform GotInputTime Time.now
             )
 
         MessageSend ->
@@ -121,6 +134,14 @@ updateModel elmMsg model windowVisibility navKey =
                 ( Normal { model | newNameInput = "" }
                 , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
                 )
+
+        GotInputTime time ->
+            ( Normal { model | lastInputTime = time }
+            , if posixToMillis time - posixToMillis model.lastInputTime >= 5000 then
+                port_SendWsMsg mkTypeHintMsg
+              else
+                Cmd.none
+            )
 
         OnMsgsViewEvent event ->
             case event of
