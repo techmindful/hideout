@@ -262,6 +262,15 @@ updateModel elmMsg model windowVisibility =
 
                                         _ -> model.typingUsers
 
+                                -- HACK: Because hitting Enter to send message with elm-ui
+                                --       Resets type hint cooldown, we have to
+                                --       Reset typing status upon receiving back our own message.
+                                newTypingStatus =
+                                    if msgFromClient.msgType == Chat.Content && isMyMsg then
+                                        NotTyping
+                                    else
+                                        model.typingStatus
+
                                 newMsgs =
                                     case msgFromClient.msgType of
                                         Chat.TypeHint ->
@@ -278,6 +287,7 @@ updateModel elmMsg model windowVisibility =
                                   msgs = newMsgs
                                 , users = newUsers
                                 , typingUsers = newTypingUsers
+                                , typingStatus = newTypingStatus
                                 , shouldHintNewMsg =
                                     -- If hint is previously needed, keep it.
                                     model.shouldHintNewMsg || 
