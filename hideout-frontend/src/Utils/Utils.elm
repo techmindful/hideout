@@ -5,6 +5,7 @@ import Time exposing
     ( Month(..)
     , Posix
     , millisToPosix
+    , posixToMillis
     , toYear
     , toMonth
     , toDay
@@ -68,6 +69,11 @@ posixSecToPosix posixSec =
         posixMilliSec = posixSec * 1000
     in
     millisToPosix posixMilliSec
+
+
+durationSec : Time.Posix -> Time.Posix -> Int
+durationSec startTime endTime =
+    round ( toFloat ( posixToMillis endTime - posixToMillis startTime ) / 1000 )
 
 
 monthToInt : Month -> Int

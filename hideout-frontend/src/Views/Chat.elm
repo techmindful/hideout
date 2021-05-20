@@ -49,7 +49,8 @@ import Time exposing
     , utc
     )
 import Utils.Markdown
-import Utils.Utils as Utils
+import Utils.Utils as Utils exposing
+    ( durationSec )
 
 
 port port_SendWsMsg : String -> Cmd msg
@@ -59,12 +60,11 @@ port port_NotifyChat : () -> Cmd msg
 update : ElmMsg
       -> Status
       -> Browser.Events.Visibility
-      -> Nav.Key
       -> ( Status, Cmd ElmMsg )
-update elmMsg status windowVisibility navKey =
+update elmMsg status windowVisibility =
     case status of
         Normal model ->
-            updateModel elmMsg model windowVisibility navKey
+            updateModel elmMsg model windowVisibility
 
         OpeningWs chatId ->
             case elmMsg of
@@ -80,6 +80,7 @@ update elmMsg status windowVisibility navKey =
                         , msgs = []
                         , users = Dict.empty
                         , typingUsersNames = []
+                        , isTyping = False
 
                         , maxJoinCount = Nothing
                         , joinCount = 0
@@ -106,12 +107,15 @@ update elmMsg status windowVisibility navKey =
 updateModel : ElmMsg
            -> Model
            -> Browser.Events.Visibility
-           -> Nav.Key
            -> ( Status, Cmd ElmMsg )
-updateModel elmMsg model windowVisibility navKey =
+updateModel elmMsg model windowVisibility =
     case elmMsg of
         MessageInput str ->
-            ( Normal { model | input = tag str }
+            ( Normal
+                { model |
+                  input = tag str
+                , isTyping = True
+                }
             , -- HACK: Prevent hitting enter to send the msg from triggering type hint.
               if String.endsWith "\n" str then
                   Cmd.none
@@ -137,10 +141,10 @@ updateModel elmMsg model windowVisibility navKey =
                 , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
                 )
 
-        GotInputTime time ->
-            ( Normal { model | lastInputTime = time }
-            , if posixToMillis time - posixToMillis model.lastInputTime >= 5000 then
-                port_SendWsMsg mkTypeHintMsg
+        GotInputTime inputTime ->
+            ( Normal { model | lastInputTime = inputTime }
+            , if durationSec model.lastInputTime inputTime >= 5 then
+                port_SendWsMsg <| mkTypeHintMsg True
               else
                 Cmd.none
             )
@@ -233,7 +237,13 @@ updateModel elmMsg model windowVisibility navKey =
                                 newTypingUsersNames =
                                     case msgFromClient.msgType of
                                         Chat.TypeHint ->
-                                            model.typingUsersNames ++ [ senderName ] |> List.unique
+                                            if untag msgFromClient.msgBody == "start" then
+                                                -- Making it unique, in case start typing cooldown and
+                                                -- Stop typing cooldown mismatch, which will cause
+                                                -- Duplicates in the list of typing users.
+                                                model.typingUsersNames ++ [ senderName ] |> List.unique
+                                            else
+                                                List.remove senderName model.typingUsersNames
 
                                         _ ->
                                             model.typingUsersNames
@@ -310,6 +320,20 @@ updateModel elmMsg model windowVisibility navKey =
                             ( Normal { model | myUserId = userIdMsg.yourUserId }
                             , Cmd.none
                             )
+
+        GotTime time ->
+            let
+                -- Was typing, and stopped just now.
+                hasStoppedTyping =
+                    model.isTyping &&
+                    durationSec model.lastInputTime time >= 5
+            in
+            ( Normal { model | isTyping = model.isTyping && not hasStoppedTyping }
+            , if hasStoppedTyping then
+                port_SendWsMsg <| mkTypeHintMsg False
+              else
+                Cmd.none
+            )
 
 
 {-| This is part of update. -}

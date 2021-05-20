@@ -9,6 +9,7 @@ import Http
 import Json.Decode as JDec
 import Letter exposing ( LetterMeta )
 import Route exposing (..)
+import Time
 import Url exposing (Url)
 import Utils.Types exposing ( PosIntInput )
 import Views.About
@@ -71,6 +72,8 @@ type alias Model =
 
     , isShiftHeld : Bool
 
+    , time : Time.Posix
+
     , tempResp : String
     }
 
@@ -111,6 +114,8 @@ type Msg
 
     | OnKeyDown String
     | OnKeyUp   String
+
+    | GotTime Time.Posix
 
     | Nop
 

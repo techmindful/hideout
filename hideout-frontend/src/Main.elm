@@ -31,6 +31,8 @@ import Route exposing (..)
 import String.Extra exposing (unquote)
 import Tagged exposing ( tag, untag )
 import Task
+import Time exposing
+    ( millisToPosix )
 import Url exposing (Url)
 import Url.Parser
 import Utils.Markdown
@@ -66,6 +68,9 @@ subscriptions _ =
             JDec.map OnKeyUp <| JDec.field "key" JDec.string
 
         , Browser.Events.onVisibilityChange OnVisibilityChange
+
+        , Time.every 1000 GotTime
+        , Sub.map ChatElmMsg <| Time.every 1000 Chat.GotTime
         ]
 
 init : JDec.Value -> Url -> Nav.Key -> ( State, Cmd Msg )
@@ -124,6 +129,8 @@ initModel initFlag url navKey =
                   Chat.NotChatting
 
       , isShiftHeld = False
+
+      , time = millisToPosix 0
 
       , tempResp = ""
       }
@@ -367,7 +374,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
         ChatElmMsg chatElmMsg ->
             let
                 ( status, cmd ) =
-                    Views.Chat.update chatElmMsg model.chatStatus model.windowVisibility model.navKey
+                    Views.Chat.update chatElmMsg model.chatStatus model.windowVisibility
             in
             ( Normal { model | chatStatus = status }
             , Cmd.map ChatElmMsg cmd
@@ -406,6 +413,9 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
                 _ ->
                     ( Normal model, Cmd.none )
+
+        GotTime time ->
+            ( Normal { model | time = time }, Cmd.none )
 
         Nop ->
             ( Normal model, Cmd.none )

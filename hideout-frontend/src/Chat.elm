@@ -52,6 +52,7 @@ type alias Model =
     , input : MsgBody
     , newNameInput : String
     , lastInputTime : Time.Posix
+    , isTyping : Bool
 
     , msgs : List ChatMsgMeta
     , users : Dict Int String
@@ -81,6 +82,8 @@ type ElmMsg
     | OnWsReady String
     | OnWsError
     | OnWsMsg String
+
+    | GotTime Time.Posix
 
 
 type ChatIdTag = ChatIdTag
@@ -208,26 +211,40 @@ wsMsgDecoder =
 
 
 mkJoinMsg : ChatId -> String
-mkJoinMsg = mkWsMsg "join" << untag
+mkJoinMsg = mkWsMsg Join << tag << untag
 
 
 mkContentMsg : MsgBody -> String
-mkContentMsg = mkWsMsg "content" << untag
+mkContentMsg = mkWsMsg Content
 
 
 mkNameChangeMsg : MsgBody -> String
-mkNameChangeMsg = mkWsMsg "nameChange" << untag
+mkNameChangeMsg = mkWsMsg NameChange
 
 
-mkTypeHintMsg : String
-mkTypeHintMsg = mkWsMsg "typeHint" ""
+mkTypeHintMsg : Bool -> String
+mkTypeHintMsg isTyping =
+    let
+        bodyStr = case isTyping of
+            True  -> "start"
+            False -> "stop"
+    in
+    mkWsMsg TypeHint ( tag bodyStr )
 
 
-mkWsMsg : String -> String -> String
+mkWsMsg : MsgType -> MsgBody -> String
 mkWsMsg msgType msgBody =
+    let
+        msgTypeStr = case msgType of
+            Content -> "content"
+            Join -> "join"
+            NameChange -> "nameChange"
+            TypeHint -> "typeHint"
+            Leave -> "leave"
+    in
     JEnc.encode 0 <| JEnc.object
-        [ ( "msgType", JEnc.string msgType )
-        , ( "msgBody", JEnc.string msgBody )
+        [ ( "msgType", JEnc.string msgTypeStr )
+        , ( "msgBody", JEnc.string <| untag msgBody )
         ]
 
 
