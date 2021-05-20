@@ -82,6 +82,9 @@ update elmMsg status windowVisibility navKey =
                     , port_SendWsMsg <| Chat.mkJoinMsg chatId
                     )
 
+                OnWsError ->
+                    ( WsError, Cmd.none )
+
                 _ ->
                     ( status, Cmd.none )
 
