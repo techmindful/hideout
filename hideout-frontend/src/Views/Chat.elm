@@ -123,7 +123,14 @@ updateModel elmMsg model windowVisibility =
             )
 
         MessageSend ->
-            ( Normal model  -- Not clearing input field here. What if message send fails?
+            ( -- Not clearing input field here. What if message send fails?
+              Normal
+                { model |
+                    -- This is the right place to change typing status, instead of OnWsMsg.
+                    -- Let client side change to NotTyping immediately on MessageSend.
+                    -- Client won't send a "stop" type hint, if this message lags.
+                    typingStatus = NotTyping
+                }
             , sendChatMsg model.input
             )
 
@@ -236,6 +243,9 @@ updateModel elmMsg model windowVisibility =
                                             model.users
 
                                 newTypingUsers =
+                                    let
+                                        senderRemoved = List.remove senderId model.typingUsers
+                                    in
                                     case msgFromClient.msgType of
                                         Chat.TypeHint ->
                                             if untag msgFromClient.msgBody == "start" then
@@ -244,13 +254,13 @@ updateModel elmMsg model windowVisibility =
                                                 -- Duplicates in the list of typing users.
                                                 model.typingUsers ++ [ senderId ] |> List.unique
                                             else
-                                                List.remove senderId model.typingUsers
+                                                senderRemoved
 
-                                        Chat.Leave ->
-                                            List.remove senderId model.typingUsers
+                                        Chat.Leave -> senderRemoved
 
-                                        _ ->
-                                            model.typingUsers
+                                        Chat.Content -> senderRemoved
+
+                                        _ -> model.typingUsers
 
                                 newMsgs =
                                     case msgFromClient.msgType of
