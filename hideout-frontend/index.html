@@ -82,7 +82,15 @@
       elmApp.ports.port_NotifyChat.subscribe(
         function()
         {
+          document.title = "Hideout - New messages!"
           document.getElementById( "notificationAudio" ).play();
+        }
+      );
+
+      // Simply clears new messages notification in tab name.
+      window.addEventListener( "focus", function( event )
+        {
+          document.title = "Hideout"
         }
       );
 
