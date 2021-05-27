@@ -43,6 +43,7 @@ type Status
     | OpeningWs ChatId
     | WsError
     | ChatError Err
+    | DomError String
     | NotChatting
 
 
@@ -54,15 +55,17 @@ type alias Model =
     , newNameInput : String
     , typingStatus : TypingStatus
 
+    , hasManualScrolledUp : Bool
+    , shouldHintNewMsg : Bool
+
+    , emojisBuffer : List String
+
     , msgs : List ChatMsgMeta
     , users : Dict Int String
     , typingUsers : List Int
 
     , maxJoinCount : Maybe Int
     , joinCount : Int
-
-    , hasManualScrolledUp : Bool
-    , shouldHintNewMsg : Bool
 
     , isInputFocused : Bool
     , isShiftHeld : Bool
@@ -78,6 +81,9 @@ type ElmMsg
 
     | OnMsgsViewEvent MsgsViewEvent
     | OnChatInputFocal Bool
+
+    | OnEmojiScrolled
+    | GotEmojiViewport ( Result Dom.Error Dom.Viewport )
 
     | OnWsReady String
     | OnWsError

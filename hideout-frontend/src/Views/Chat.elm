@@ -26,7 +26,8 @@ import Common.Contents exposing
     , newTabLink
     , plainPara
     )
-import Common.Styles exposing (..)
+import Common.Styles exposing
+    ( buttonStyle )
 import Common.Urls exposing (..)
 import Dict exposing ( Dict )
 import Element
@@ -35,11 +36,13 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Element.Lazy exposing ( lazy )
 import Html
 import Html.Attributes
 import Html.Events
 import Json.Decode as JDec
 import List.Extra as List
+import Emoji
 import String.Extra exposing ( quote, unquote )
 import Tagged exposing ( tag, untag )
 import Task
@@ -78,15 +81,17 @@ update elmMsg status windowVisibility =
                         , newNameInput = ""
                         , typingStatus = NotTyping
 
+                        , hasManualScrolledUp = False
+                        , shouldHintNewMsg = False
+
+                        , emojisBuffer = List.take 100 Emoji.allHex
+
                         , msgs = []
                         , users = Dict.empty
                         , typingUsers = []
 
                         , maxJoinCount = Nothing
                         , joinCount = 0
-
-                        , hasManualScrolledUp = False
-                        , shouldHintNewMsg = False
 
                         , isInputFocused = False
                         , isShiftHeld = False
@@ -203,6 +208,41 @@ updateModel elmMsg model windowVisibility =
             ( Normal { model | isInputFocused = isFocused }
             , Cmd.none
             )
+
+        OnEmojiScrolled ->
+            ( Normal model
+            , Task.attempt
+                GotEmojiViewport <|
+                Dom.getViewportOf emojiPickerHtmlId
+            )
+
+        GotEmojiViewport result ->
+            case result of
+                Err err ->
+                    ( DomError emojiPickerHtmlId
+                    , Cmd.none
+                    )
+
+                Ok viewport ->
+                    let
+                        shouldLoadMoreEmojis =
+                            viewport.viewport.y
+                          > viewport.scene.height
+                          - viewport.viewport.height
+                          - 50
+
+                        newEmojisBuffer : List String
+                        newEmojisBuffer =
+                            if not shouldLoadMoreEmojis then
+                                model.emojisBuffer
+                            else
+                                List.take
+                                    ( List.length model.emojisBuffer + 100 )
+                                    Emoji.allHex
+                    in
+                    ( Normal { model | emojisBuffer = newEmojisBuffer }
+                    , Cmd.none
+                    )
 
         -- TODO: Shouldn't receive this. How to handle?
         OnWsReady _ ->
@@ -453,6 +493,9 @@ view status viewportWidth =
             in
             mkErrView errContent
 
+        DomError idStr ->
+            plainPara <| "Can't find DOM element with ID " ++ idStr
+
         NotChatting ->
             mkErrView <| plainPara "Chat status is NotChatting. Internal logical error?"
 
@@ -562,13 +605,16 @@ chatView model viewportWidth =
                 [ Element.paddingXY 0 10
                 , Element.spacingXY 10 0
                 ]
-                [ Input.button
+                [ -- Send button
+                  Input.button
                     [ Element.padding 5
                     , Background.color <| Element.rgb255 0 100 0 ]
                     { onPress = Just MessageSend
                     , label = Element.text "Send"
                     }
-                , Input.text
+
+                , -- Name change
+                  Input.text
                     [ Background.color bgColor ]
                     { onChange = NewNameInput
                     , text = model.newNameInput
@@ -579,6 +625,37 @@ chatView model viewportWidth =
                             { onPress = Just OnNameChange
                             , label = Element.text "Change Name: "
                             }
+                    }
+
+                , -- Emoji
+                  let
+                      mkEmoji : String -> Element ElmMsg
+                      mkEmoji hex =
+                          Element.image
+                              []
+                              { src = "/static/OpenMoji/" ++ hex ++ ".png"
+                              , description = ""
+                              }
+
+                      emojiPicker : Element ElmMsg
+                      emojiPicker =
+                          Element.wrappedRow
+                              [ Element.width  <| Element.px 500
+                              , Element.height <| Element.px 500
+                              , Element.scrollbarY
+                              , Element.htmlAttribute <|
+                                  Html.Attributes.id emojiPickerHtmlId
+                              , Element.htmlAttribute <|
+                                  Html.Events.on "scroll" <| JDec.succeed OnEmojiScrolled
+                              ] <|
+                              List.map mkEmoji model.emojisBuffer
+                  in
+                  Input.button
+                    ( ( buttonStyle 5 ) ++
+                      [ Element.above emojiPicker ]
+                    )
+                    { onPress = Nothing
+                    , label = Element.text "Emoji"
                     }
                 ]
             ]
@@ -708,7 +785,12 @@ chatColumnMaxWidthPx windowWidth =
                     - toFloat sideColumnGap
 
 
+msgsViewHtmlId : String
 msgsViewHtmlId = "chat-msgs-view"
+
+
+emojiPickerHtmlId : String
+emojiPickerHtmlId = "emoji-picker"
 
 
 sendChatMsg : Chat.MsgBody -> Cmd ElmMsg
