@@ -59,6 +59,7 @@ type alias Model =
     , shouldHintNewMsg : Bool
 
     , emojisBuffer : List String
+    , isEmojiOpened : Bool
 
     , msgs : List ChatMsgMeta
     , users : Dict Int String
@@ -82,6 +83,8 @@ type ElmMsg
     | OnMsgsViewEvent MsgsViewEvent
     | OnChatInputFocal Bool
 
+    | OnEmojiToggled
+    | OnEmojiChosen String
     | OnEmojiScrolled
     | GotEmojiViewport ( Result Dom.Error Dom.Viewport )
 

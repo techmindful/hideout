@@ -85,6 +85,7 @@ update elmMsg status windowVisibility =
                         , shouldHintNewMsg = False
 
                         , emojisBuffer = List.take 100 Emoji.allHex
+                        , isEmojiOpened = False
 
                         , msgs = []
                         , users = Dict.empty
@@ -206,6 +207,19 @@ updateModel elmMsg model windowVisibility =
 
         OnChatInputFocal isFocused ->
             ( Normal { model | isInputFocused = isFocused }
+            , Cmd.none
+            )
+
+        OnEmojiToggled ->
+            ( Normal { model | isEmojiOpened = not model.isEmojiOpened }
+            , Cmd.none
+            )
+
+        OnEmojiChosen hex ->
+            ( Normal
+                { model |
+                    input = tag ( untag model.input ++ ":" ++ hex ++ ":" )
+                }
             , Cmd.none
             )
 
@@ -631,10 +645,13 @@ chatView model viewportWidth =
                   let
                       mkEmoji : String -> Element ElmMsg
                       mkEmoji hex =
-                          Element.image
-                              []
-                              { src = "/static/OpenMoji/" ++ hex ++ ".png"
-                              , description = ""
+                          Input.button
+                              [ Element.width  <| Element.px 72
+                              , Element.height <| Element.px 72
+                              , Background.image <| "/static/OpenMoji/" ++ hex ++ ".png"
+                              ]
+                              { onPress = Just <| OnEmojiChosen hex
+                              , label = Element.none
                               }
 
                       emojiPicker : Element ElmMsg
@@ -656,13 +673,16 @@ chatView model viewportWidth =
                   in
                   Input.button
                     ( ( buttonStyle 5 ) ++
-                      [ Element.above <|
-                            Element.el
-                                [ Element.paddingEach { bottom = 10, top = 0, left = 0, right = 0 } ]
-                                emojiPicker
-                      ]
+                      if model.isEmojiOpened then
+                          [ Element.above <|
+                                Element.el
+                                    [ Element.paddingEach { bottom = 10, top = 0, left = 0, right = 0 } ]
+                                    emojiPicker
+                          ]
+                      else
+                          []
                     )
-                    { onPress = Nothing
+                    { onPress = Just OnEmojiToggled
                     , label = Element.text "Emoji"
                     }
                 ]
