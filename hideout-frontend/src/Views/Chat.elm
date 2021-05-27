@@ -643,6 +643,10 @@ chatView model viewportWidth =
                               [ Element.width  <| Element.px 500
                               , Element.height <| Element.px 500
                               , Element.scrollbarY
+                              , Element.padding 5
+                              , Border.width 2
+                              , Border.rounded 4
+
                               , Element.htmlAttribute <|
                                   Html.Attributes.id emojiPickerHtmlId
                               , Element.htmlAttribute <|
@@ -652,7 +656,11 @@ chatView model viewportWidth =
                   in
                   Input.button
                     ( ( buttonStyle 5 ) ++
-                      [ Element.above emojiPicker ]
+                      [ Element.above <|
+                            Element.el
+                                [ Element.paddingEach { bottom = 10, top = 0, left = 0, right = 0 } ]
+                                emojiPicker
+                      ]
                     )
                     { onPress = Nothing
                     , label = Element.text "Emoji"
