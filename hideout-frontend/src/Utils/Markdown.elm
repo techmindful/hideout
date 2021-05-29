@@ -13,10 +13,27 @@ import Element.Region as Region
 import Html
 import Html.Attributes
 import List
-import Markdown.Block as Block exposing ( Block, Inline, ListItem(..), Task(..) )
+import Markdown.Block exposing
+    ( Block
+    , Inline
+    , ListItem(..)
+    , Task(..)
+    , walkInlines
+    )
 import Markdown.Html
 import Markdown.Parser exposing ( deadEndToString, parse )
 import Markdown.Renderer exposing ( defaultHtmlRenderer )
+import Parser exposing
+    ( Parser
+    , chompIf
+    , chompUntil
+    , chompUntilEndOr
+    , chompWhile
+    , getChompedString
+    , succeed
+    , (|.)
+    , (|=)
+    )
 
 
 render : String -> List ( Element msg )
@@ -24,6 +41,7 @@ render str =
     let
         result =
             str |> Markdown.Parser.parse
+                |> Result.map handleEmojis_Blocks
                 |> Result.mapError
                     ( \error -> error |> List.map Markdown.Parser.deadEndToString |> String.join "\n" )
                 |> Result.andThen (Markdown.Renderer.render renderer)
@@ -31,6 +49,48 @@ render str =
     case result of
         Err errStr  -> [ plainPara errStr ]
         Ok rendered -> rendered
+
+
+handleEmojis_Blocks : List Block -> List Block
+handleEmojis_Blocks =
+    List.map <|
+        ( \ block ->
+            case block of
+                Markdown.Block.Paragraph inlines ->
+                    Markdown.Block.Paragraph <| handleEmojis_Inlines inlines
+
+                _ -> block
+        )
+
+
+handleEmojis_Inlines : List Inline -> List Inline
+handleEmojis_Inlines inlines =
+    inlines
+        |> List.map
+            ( \inline ->
+                case inline of
+                    Markdown.Block.Text str ->
+                        replaceEmojis str
+
+                    _ -> [ inline ]
+            )
+        |> List.concat
+
+
+replaceEmojis : String -> List Inline
+replaceEmojis str =
+    case Parser.run emojisParser str of
+        Err _ -> [ Markdown.Block.Text str ]
+        Ok inline  -> [ inline ]
+
+
+emojisParser : Parser Inline
+emojisParser =
+    succeed Markdown.Block.Text
+      |. chompUntil ":"
+      |. chompIf ( \c -> c == ':' )
+      |= ( getChompedString <| chompUntil ":" )
+      |. chompUntilEndOr "\n"
 
 
 renderer : Markdown.Renderer.Renderer ( Element msg )
@@ -157,15 +217,15 @@ rawTextToId rawText =
         |> String.toLower
 
 
-heading : { level : Block.HeadingLevel, rawText : String, children : List (Element msg) } -> Element msg
+heading : { level : Markdown.Block.HeadingLevel, rawText : String, children : List (Element msg) } -> Element msg
 heading { level, rawText, children } =
     Element.paragraph
         [ Font.size
             (case level of
-                Block.H1 ->
+                Markdown.Block.H1 ->
                     36
 
-                Block.H2 ->
+                Markdown.Block.H2 ->
                     24
 
                 _ ->
@@ -173,7 +233,7 @@ heading { level, rawText, children } =
             )
         , Font.bold
         , Font.family [ Font.typeface "Montserrat" ]
-        , Region.heading (Block.headingLevelToInt level)
+        , Region.heading (Markdown.Block.headingLevelToInt level)
         , Element.htmlAttribute
             (Html.Attributes.attribute "name" (rawTextToId rawText))
         , Element.htmlAttribute
