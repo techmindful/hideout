@@ -648,7 +648,7 @@ chatView model viewportWidth =
                           Input.button
                               [ Element.width  <| Element.px 72
                               , Element.height <| Element.px 72
-                              , Background.image <| "/static/OpenMoji/" ++ hex ++ ".png"
+                              , Background.image <| Emoji.hexToPath hex
                               ]
                               { onPress = Just <| OnEmojiChosen hex
                               , label = Element.none

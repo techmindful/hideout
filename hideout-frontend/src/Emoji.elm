@@ -1,4 +1,11 @@
-module Emoji exposing ( allHex )
+module Emoji exposing
+    ( allHex
+    , hexToPath
+    )
+
+hexToPath : String -> String
+hexToPath hex =
+    "/static/OpenMoji/" ++ hex ++ ".png"
 
 allHex : List String
 allHex =

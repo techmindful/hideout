@@ -10,9 +10,11 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
+import Emoji
 import Html
 import Html.Attributes
 import List
+import List.Extra as List
 import Markdown.Block exposing
     ( Block
     , Inline
@@ -25,15 +27,20 @@ import Markdown.Parser exposing ( deadEndToString, parse )
 import Markdown.Renderer exposing ( defaultHtmlRenderer )
 import Parser exposing
     ( Parser
+    , Step(..)
+    , backtrackable
     , chompIf
     , chompUntil
     , chompUntilEndOr
     , chompWhile
     , getChompedString
     , succeed
+    , symbol
     , (|.)
     , (|=)
     )
+import Regex exposing ( Regex )
+import String.Extra as String
 
 
 render : String -> List ( Element msg )
@@ -79,18 +86,85 @@ handleEmojis_Inlines inlines =
 
 replaceEmojis : String -> List Inline
 replaceEmojis str =
-    case Parser.run emojisParser str of
-        Err _ -> [ Markdown.Block.Text str ]
-        Ok inline  -> [ inline ]
+    let
+        regex : Regex.Regex
+        regex = Maybe.withDefault Regex.never <| Regex.fromString ":[^:]+:"
+
+        texts : List String
+        texts = Regex.split regex str
+
+        textInlines : List Markdown.Block.Inline
+        textInlines = List.map Markdown.Block.Text texts
+
+        emojiMatches : List Regex.Match
+        emojiMatches = Regex.find regex str
+
+        emojiNames : List String
+        emojiNames = List.map .match emojiMatches
+
+        emojiInlines : List Markdown.Block.Inline
+        emojiInlines =
+            List.map
+                ( \emojiName ->
+                    Markdown.Block.Image
+                        ( Emoji.hexToPath <| String.unsurround ":" emojiName )
+                        Nothing
+                        []
+                )
+                emojiNames
+
+        beginsWithEmoji : Bool
+        beginsWithEmoji =
+            case List.head emojiMatches of
+                Nothing -> False
+                Just firstEmojiMatch ->
+                    firstEmojiMatch.index == 0
+    in
+    List.interweave textInlines emojiInlines
 
 
-emojisParser : Parser Inline
-emojisParser =
-    succeed Markdown.Block.Text
-      |. chompUntil ":"
-      |. chompIf ( \c -> c == ':' )
-      |= ( getChompedString <| chompUntil ":" )
-      |. chompUntilEndOr "\n"
+--emojisParser : Parser ( List Inline )
+--emojisParser =
+--    let
+--        chompColon : Parser ()
+--        chompColon = chompIf ( \c -> c == ':' )
+--
+--        chompUntilColon : Parser String
+--        chompUntilColon = getChompedString <| chompUntil ":"
+--
+--        step : List Inline -> Parser ( Step ( List Inline ) ( List Inline ) )
+--        step inlines =
+--            let
+--                plainTextParser : Parser ( Step ( List Inline ) ( List Inline ) )
+--                plainTextParser =
+--                    succeed
+--                        ( \ newStr -> Loop <| inlines ++ [ Markdown.Block.Text newStr ] )
+--                        |= chompUntilColon
+--
+--                emojiParser : Parser ( Step ( List Inline ) ( List Inline ) )
+--                emojiParser =
+--                    Parser.map
+--                        ( \ emojiStr -> Loop <|
+--                            inlines ++
+--                            [ Markdown.Block.Image ( Emoji.hexToPath emojiStr ) Nothing [] ]
+--                        )
+--                        (  getChompedString <|
+--                           symbol ":"
+--                        |. chompUntil ":"
+--                        |. symbol ":"
+--                        )
+--
+--                endParser : Parser ( Step ( List Inline ) ( List Inline ) )
+--                endParser =
+--                    Parser.end |> Parser.map ( \_ -> Done inlines )
+--            in
+--            Parser.oneOf
+--                [ emojiParser
+--                , plainTextParser
+--                , endParser
+--                ]
+--    in
+--    Parser.loop [] step
 
 
 renderer : Markdown.Renderer.Renderer ( Element msg )
@@ -118,14 +192,15 @@ renderer =
                         body
                 }
     , hardLineBreak = Html.br [] [] |> Element.html
+
     , image =
         \image ->
-            case image.title of
-                Just title ->
-                    Element.image [ Element.width Element.fill ] { src = image.src, description = image.alt }
+            Element.image
+                []
+                { src = image.src
+                , description = image.alt
+                }
 
-                Nothing ->
-                    Element.image [ Element.width Element.fill ] { src = image.src, description = image.alt }
     , blockQuote =
         \children ->
             Element.paragraph
@@ -192,8 +267,22 @@ renderer =
             Element.paragraph
                 tableBorder
                 children
-    , html = Markdown.Html.oneOf []
+    , html =
+        Markdown.Html.oneOf
+            [ Markdown.Html.tag "emoji"
+                renderEmojiTag
+                |> Markdown.Html.withAttribute "name"
+            ]
     }
+
+
+renderEmojiTag : String -> List ( Element msg ) -> Element msg
+renderEmojiTag emojiName rendererdChildren =
+    Element.image
+        []
+        { src = Emoji.hexToPath emojiName
+        , description = ""
+        }
 
 
 alternateTableRowBackground =
