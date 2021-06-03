@@ -646,8 +646,8 @@ chatView model viewportWidth =
                       mkEmoji : String -> Element ElmMsg
                       mkEmoji hex =
                           Input.button
-                              [ Element.width  <| Element.px 72
-                              , Element.height <| Element.px 72
+                              [ Element.width  <| Element.px 48
+                              , Element.height <| Element.px 48
                               , Background.image <| Emoji.hexToPath hex
                               ]
                               { onPress = Just <| OnEmojiChosen hex

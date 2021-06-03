@@ -5,7 +5,7 @@ module Emoji exposing
 
 hexToPath : String -> String
 hexToPath hex =
-    "/static/OpenMoji/" ++ hex ++ ".png"
+    "/static/OpenMoji/48x48/" ++ hex ++ ".png"
 
 allHex : List String
 allHex =
