@@ -657,8 +657,8 @@ chatView model viewportWidth =
                       emojiPicker : Element ElmMsg
                       emojiPicker =
                           Element.wrappedRow
-                              [ Element.width  <| Element.px 500
-                              , Element.height <| Element.px 500
+                              [ Element.width  <| Element.px 370
+                              , Element.height <| Element.px 400
                               , Element.scrollbarY
                               , Element.padding 5
                               , Border.width 2
