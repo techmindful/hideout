@@ -42,15 +42,22 @@ capString n str =
 formatTime : Posix -> Posix -> String
 formatTime targetPosix currentPosix =
     let
-        year  = toYear   utc targetPosix 
+        prefixZero : Int -> String
+        prefixZero n =
+            if abs n < 10 then
+                "0" ++ String.fromInt n
+            else
+                String.fromInt n
+
+        year  = toYear   utc targetPosix
         month = toMonth  utc targetPosix |> monthToInt
-        day   = toDay    utc targetPosix 
-        hour  = toHour   utc targetPosix 
-        min   = toMinute utc targetPosix 
+        day   = toDay    utc targetPosix
+        hour  = toHour   utc targetPosix
+        min   = toMinute utc targetPosix
         sec   = toSecond utc targetPosix 
 
-        date = String.join "/" <| List.map String.fromInt [ year, month, day ]
-        time = String.join ":" <| List.map String.fromInt [ hour, min, sec ]
+        date = String.join "/" <| List.map prefixZero [ year, month, day ]
+        time = String.join ":" <| List.map prefixZero [ hour, min, sec ]
 
         whole = String.join " - " [ date, time ]
     in
