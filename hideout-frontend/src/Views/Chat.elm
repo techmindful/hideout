@@ -564,7 +564,8 @@ chatView model viewportWidth =
                             List.map
                                 ( \userId ->
                                     Dict.get userId model.users |>
-                                    Maybe.withDefault "[ErrorUsername]"
+                                    Maybe.withDefault "[ErrorUsername]" |>
+                                    capUsername
                                 )
                                 model.typingUsers
                     in
@@ -735,11 +736,10 @@ msgBundleView bundle =
             False ->
                 Element.row
                     [ Element.spacingXY 10 0 ]
-                    [ Element.paragraph
-                        [ Element.width Element.shrink
-                        , Font.bold
-                        ]
-                        [ Element.text bundle.username ]
+                    [ Element.el
+                        [ Font.bold ] <|
+                        Element.text <| capUsername bundle.username
+
                     , Common.Contents.timeText bundle.time bundle.time
                     ]
 
@@ -762,16 +762,16 @@ msgView msg =
         Chat.Join ->
             Element.paragraph
                 [ Font.color green ]
-                [ Element.text <| msg.username ++ " joined."
+                [ Element.text <| capUsername msg.username ++ " joined."
                 , paddedTimeText
                 ]
 
         Chat.NameChange ->
             Element.paragraph
                 [ Font.color yellow ]
-                [ Element.text <| quote msg.username
+                [ Element.text <| ( quote <| capUsername msg.username )
                  ++ " changed their name to "
-                 ++ ( quote <| untag msgFromClient.msgBody )
+                 ++ ( quote <| capUsername <| untag msgFromClient.msgBody )
                  ++ "."
                 , paddedTimeText
                 ]
@@ -779,7 +779,7 @@ msgView msg =
         Chat.Leave ->
             Element.paragraph
                 [ Font.color red ]
-                [ Element.text <| msg.username ++ " left."
+                [ Element.text <| capUsername msg.username ++ " left."
                 , paddedTimeText
                 ]
 
@@ -794,7 +794,7 @@ msgView msg =
 
 userView : ( Int, String ) -> Element m
 userView ( userId, username ) =
-    plainPara <| username ++ " (" ++ String.fromInt userId ++ ")"
+    plainPara <| Utils.capString 16 username ++ " (" ++ String.fromInt userId ++ ")"
 
 
 sideColumnWidthPx : Int
@@ -848,4 +848,9 @@ mkErrView content =
         [ content
         , footer
         ]
+
+
+capUsername : String -> String
+capUsername username =
+    Utils.capString 24 username
 

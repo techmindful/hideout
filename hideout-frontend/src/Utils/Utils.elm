@@ -30,6 +30,15 @@ hasManualScrolledUp viewport margin =
     else False
 
 
+{-| Limit a string to n characters. Replace the rest with "..." -}
+capString : Int -> String -> String
+capString n str =
+    if String.length str <= n then
+        str
+    else
+        String.left n str ++ "..."
+
+
 formatTime : Posix -> Posix -> String
 formatTime targetPosix currentPosix =
     let
