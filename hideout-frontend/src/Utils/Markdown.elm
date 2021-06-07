@@ -44,6 +44,7 @@ import Parser exposing
     )
 import Regex exposing ( Regex )
 import String.Extra as String
+import Tuple
 
 
 render : String -> List ( Element msg )
@@ -94,40 +95,43 @@ handleEmojis_Inlines inlines =
 replaceEmojis : String -> List Inline
 replaceEmojis str =
     let
-        regex : Regex.Regex
-        regex = Maybe.withDefault Regex.never <| Regex.fromString ":[^:]+:"
+        colonIndices : List Int
+        colonIndices = String.indices ":" str
 
-        texts : List String
-        texts = Regex.split regex str
-
-        textInlines : List Markdown.Block.Inline
-        textInlines = List.map Markdown.Block.Text texts
-
-        emojiMatches : List Regex.Match
-        emojiMatches = Regex.find regex str
-
-        emojiNames : List String
-        emojiNames = List.map .match emojiMatches
-
-        emojiInlines : List Markdown.Block.Inline
-        emojiInlines =
-            List.map
-                ( \emojiName ->
-                    Markdown.Block.Image
-                        ( Emoji.hexToPath <| String.unsurround ":" emojiName )
-                        Nothing
-                        []
-                )
-                emojiNames
-
-        beginsWithEmoji : Bool
-        beginsWithEmoji =
-            case List.head emojiMatches of
-                Nothing -> False
-                Just firstEmojiMatch ->
-                    firstEmojiMatch.index == 0
+        firstColonPair : Maybe ( Int, Int )
+        firstColonPair =
+            Maybe.map2 Tuple.pair
+                ( List.getAt 0 colonIndices )
+                ( List.getAt 1 colonIndices )
     in
-    List.interweave textInlines emojiInlines
+    case firstColonPair of
+        -- No pair of colons. No emojis.
+        Nothing ->
+            [ Markdown.Block.Text str ]
+
+        Just pair ->
+            let
+                firstColonIndex = Tuple.first pair
+                secondColonIndex = Tuple.second pair
+
+                possibleEmojiName =
+                    String.slice ( firstColonIndex + 1 ) secondColonIndex str
+
+                isEmoji = List.member possibleEmojiName Emoji.allHex
+            in
+            -- Has colon of pairs, but it doesn't match an emoji name.
+            if not isEmoji then
+                ( Markdown.Block.Text <| String.left secondColonIndex str ) ::
+                ( replaceEmojis <| String.dropLeft secondColonIndex str )
+            -- Found a emoji.
+            else
+                [ Markdown.Block.Text <| String.left firstColonIndex str
+                , Markdown.Block.Image
+                    ( Emoji.hexToPath possibleEmojiName )
+                    Nothing
+                    []
+                ] ++
+                ( replaceEmojis <| String.dropLeft ( secondColonIndex + 1 ) str )
 
 
 --emojisParser : Parser ( List Inline )
