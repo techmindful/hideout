@@ -100,7 +100,7 @@ view model =
         preview =
             Element.column
                 [ letterInputWidthConstraint
-                , Element.spacing 30
+                , Utils.Markdown.viewSpacing
                 , Element.alignTop
                 ] <|
                 Utils.Markdown.render model.letterRawInput.body

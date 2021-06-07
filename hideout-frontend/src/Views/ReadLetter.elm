@@ -110,7 +110,8 @@ view model =
                                 [ Element.text "Below is the letter." ]
                             -- Letter
                             , Element.column
-                                [ Element.width Element.fill
+                                [ Utils.Markdown.viewSpacing
+                                , Element.width Element.fill
                                 , Element.paddingEach { top = 60, bottom = 0, left = 0, right = 0 }
                                 , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
                                 ] <|

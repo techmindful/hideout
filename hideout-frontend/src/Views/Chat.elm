@@ -542,7 +542,10 @@ chatView model viewportWidth =
                 [ Element.width Element.fill
                 , Element.height Element.fill
                 , Element.paddingEach { right = 30, left = 0, top = 0, bottom = 0 }
-                , Element.spacingXY 0 30  -- Spacing between msg bundles.
+
+                , -- Spacing between msg bundles, not Markdown's rendered views.
+                  -- Using viewSpacing just to be consistent with that.
+                  Utils.Markdown.viewSpacing  
                 , Element.scrollbarY
                 , Element.htmlAttribute <| Html.Attributes.id msgsViewHtmlId
                 , Element.htmlAttribute <|
@@ -730,9 +733,10 @@ msgBundleView : Chat.MsgBundle -> Element m
 msgBundleView bundle =
     Element.textColumn
         [ Element.width Element.fill
-        , Element.spacingXY 0 10
+        , Element.spacingXY 0 30
         ] <|
         [ case Chat.isMetaBundle bundle of
+            -- Note username and time for bundles of content messages.
             False ->
                 Element.row
                     [ Element.spacingXY 10 0 ]
@@ -785,7 +789,7 @@ msgView msg =
 
         Chat.Content ->
             Element.column
-                [] <|
+                [ Utils.Markdown.viewSpacing ] <|
                 ( Utils.Markdown.render <| untag msgFromClient.msgBody )
 
         Chat.TypeHint ->

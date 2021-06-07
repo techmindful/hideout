@@ -1,4 +1,7 @@
-module Utils.Markdown exposing (..)
+module Utils.Markdown exposing
+    ( render
+    , viewSpacing
+    )
 
 {-| Copied a lot from https://ellie-app.com/bQLgjtbgdkZa1 -}
 
@@ -24,7 +27,7 @@ import Markdown.Block exposing
     )
 import Markdown.Html
 import Markdown.Parser exposing ( deadEndToString, parse )
-import Markdown.Renderer exposing ( defaultHtmlRenderer )
+import Markdown.Renderer
 import Parser exposing
     ( Parser
     , Step(..)
@@ -56,6 +59,10 @@ render str =
     case result of
         Err errStr  -> [ plainPara errStr ]
         Ok rendered -> rendered
+
+
+viewSpacing : Element.Attribute msg
+viewSpacing = Element.spacingXY 0 30
 
 
 handleEmojis_Blocks : List Block -> List Block
