@@ -9,6 +9,7 @@ module Chat exposing
     , MsgBundle
     , MsgType(..)
     , MsgsViewEvent(..)
+    , NameChangeStatus(..)
     , Status(..)
     , TypingStatus(..)
     , autoScrollMargin
@@ -38,13 +39,14 @@ import Time
 import Utils.Utils as Utils exposing ( is )
 
 
-type Status
-    = Normal Model
-    | OpeningWs ChatId
-    | WsError
-    | ChatError Err
-    | DomError String
-    | NotChatting
+type NameChangeStatus
+    = NotChanging
+    | ChangingTo String
+
+
+type TypingStatus
+    = Typing Time.Posix  -- Last input time
+    | NotTyping
 
 
 type alias Model =
@@ -52,7 +54,7 @@ type alias Model =
     , myUserId : Int
 
     , input : MsgBody
-    , newNameInput : String
+    , nameChangeStatus : NameChangeStatus
     , typingStatus : TypingStatus
 
     , hasManualScrolledUp : Bool
@@ -73,11 +75,24 @@ type alias Model =
     }
 
 
+type Status
+    = Normal Model
+    | OpeningWs ChatId
+    | WsError
+    | ChatError Err
+    | DomError String
+    | NotChatting
+
+
 type ElmMsg
     = MessageInput String
     | MessageSend
-    | NewNameInput String
-    | OnNameChange
+
+    -- Name Change
+    | OnBeginNameChange
+    | OnNewNameInput String
+    | OnFinishNameChange Bool  -- True means confirmed, False means cancelled.
+
     | GotInputTime Time.Posix
 
     | OnMsgsViewEvent MsgsViewEvent
@@ -217,11 +232,6 @@ wsMsgDecoder =
         , JDec.map MsgHistory_ msgHistoryDecoder
         , JDec.map UserIdMsg_ userIdMsgDecoder
         ]
-
-
-type TypingStatus
-    = Typing Time.Posix  -- Last input time
-    | NotTyping
 
 
 mkJoinMsg : ChatId -> String

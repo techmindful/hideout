@@ -13,6 +13,7 @@ import Chat exposing
     ( ElmMsg(..)
     , Model
     , MsgsViewEvent(..)
+    , NameChangeStatus(..)
     , Status(..)
     , TypingStatus(..)
     , WsMsg(..)
@@ -78,7 +79,7 @@ update elmMsg status windowVisibility =
                         , myUserId = -1
 
                         , input = tag ""
-                        , newNameInput = ""
+                        , nameChangeStatus = NotChanging
                         , typingStatus = NotTyping
 
                         , hasManualScrolledUp = False
@@ -140,18 +141,36 @@ updateModel elmMsg model windowVisibility =
             , sendChatMsg model.input
             )
 
-        NewNameInput str ->
-            ( Normal { model | newNameInput = str }
+        OnNewNameInput str ->
+            ( Normal { model | nameChangeStatus = ChangingTo str }
             , Cmd.none
             )
 
-        OnNameChange ->
-            if String.isEmpty model.newNameInput then
-                ( Normal model, Cmd.none )
-            else
-                ( Normal { model | newNameInput = "" }
-                , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag model.newNameInput
-                )
+        OnBeginNameChange ->
+            ( Normal { model | nameChangeStatus = ChangingTo "" }
+            , Cmd.none
+            )
+
+        OnFinishNameChange isConfirmed ->
+            case model.nameChangeStatus of
+                ChangingTo newNameInput ->
+                    -- Reset model if user cancels.
+                    if not isConfirmed then
+                        ( Normal { model | nameChangeStatus = NotChanging }
+                        , Cmd.none
+                        )
+                    else
+                        -- Do nothing if new name input is empty.
+                        if String.isEmpty newNameInput then
+                            ( Normal model, Cmd.none )
+                        else
+                            ( Normal { model | nameChangeStatus = NotChanging }
+                            , port_SendWsMsg <| Chat.mkNameChangeMsg <| tag newNameInput
+                            )
+
+                -- TODO: Handle impossible case?
+                NotChanging ->
+                    ( Normal model, Cmd.none )
 
         GotInputTime inputTime ->
             ( Normal { model | typingStatus = Typing inputTime }
@@ -517,10 +536,59 @@ view status viewportWidth =
 chatView : Model -> Float -> Element ElmMsg
 chatView model viewportWidth =
     Element.row
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        , Element.spacingXY sideColumnGap 0
-        ]
+        ( [ Element.width Element.fill
+          , Element.height Element.fill
+          , Element.spacingXY sideColumnGap 0
+          ] ++
+          case model.nameChangeStatus of
+            NotChanging -> []
+            ChangingTo newNameInput ->
+                [ let
+                    bgColor = Background.color <| Element.rgb255 69 102 122
+                  in
+                  Element.inFront <|
+                    Element.el
+                        [ Element.width Element.fill
+                        , Element.height Element.fill
+                        ] <|
+                        Element.column
+                            [ Element.centerX
+                            , Element.centerY
+                            , Element.paddingXY 35 30
+                            , Element.spacingXY 0 20
+                            , bgColor
+                            ]
+                            [ Element.el
+                                [ Element.centerX ]
+                                ( Element.text "Changing name to" )
+                            , Input.text
+                                [ bgColor ]
+                                { onChange = OnNewNameInput
+                                , text = newNameInput
+                                , placeholder = Nothing
+                                , label = Input.labelHidden ""
+                                }
+                            , Element.row
+                                [ Element.centerX
+                                , Element.spacingXY 40 0
+                                ] <|
+                                let
+                                    style = bgColor :: buttonStyle 5
+                                in
+                                [ Input.button
+                                    style
+                                    { onPress = Just <| OnFinishNameChange True
+                                    , label = Element.text "Confirm"
+                                    }
+                                , Input.button
+                                    style
+                                    { onPress = Just <| OnFinishNameChange False
+                                    , label = Element.text "Cancel"
+                                    }
+                                ]
+                            ]
+                ]
+        )
         [ Element.html <|
             Html.audio
                 [ Html.Attributes.id "notificationAudio" ]
@@ -632,17 +700,12 @@ chatView model viewportWidth =
                     }
 
                 , -- Name change
-                  Input.text
-                    [ Background.color bgColor ]
-                    { onChange = NewNameInput
-                    , text = model.newNameInput
-                    , placeholder = Nothing
-                    , label = Input.labelLeft [] <|
-                        Input.button
-                            []
-                            { onPress = Just OnNameChange
-                            , label = Element.text "Change Name: "
-                            }
+                  Input.button
+                    [ Element.padding 5
+                    , Background.color <| Element.rgb255 80 80 80
+                    ]
+                    { onPress = Just OnBeginNameChange
+                    , label = Element.text "Change Name"
                     }
 
                 , -- Emoji
