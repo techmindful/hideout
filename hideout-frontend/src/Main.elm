@@ -296,9 +296,10 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     ( newModel, Cmd.none )
 
                 _ ->
+                    -- TODO: Handle error state?
+                    -- "Incorrect LetterStatus when letter send is responeded."
                     ( Normal model
-                    , Debug.todo
-                        "Incorrect LetterStatus when letter send is responeded."
+                    , Cmd.none
                     )
 
         DispChatMaxJoinCountInput str ->

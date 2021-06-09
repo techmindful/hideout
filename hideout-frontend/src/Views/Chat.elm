@@ -289,7 +289,8 @@ updateModel elmMsg model windowVisibility =
         OnWsMsg str ->
             case JDec.decodeString wsMsgDecoder str of
                 Err _ ->
-                    ( Normal model, Debug.todo "hi" )  -- TODO: Handle error.
+                    -- TODO: Handle error when decoding ws msg from server with JSON.
+                    ( Normal model, Cmd.none ) 
 
                 Ok wsMsg ->
                     case wsMsg of
