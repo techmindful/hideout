@@ -63,7 +63,7 @@ render str =
 
 
 viewSpacing : Element.Attribute msg
-viewSpacing = Element.spacingXY 0 30
+viewSpacing = Element.spacingXY 0 15
 
 
 handleEmojis_Blocks : List Block -> List Block
@@ -183,7 +183,7 @@ renderer =
     { heading = heading
     , paragraph =
         Element.paragraph
-            [ Element.spacingXY 0 15 ]
+            [ Element.spacingXY 0 5 ]
     , thematicBreak = Element.none
     , text = \value -> Element.paragraph [] [ Element.text value ]
     , strong = \content -> Element.paragraph [ Font.bold ] content
@@ -223,7 +223,7 @@ renderer =
                 children
     , unorderedList =
         \items ->
-            Element.column [ Element.spacing 15 ]
+            Element.column [ Element.spacing 10 ]
                 (items
                     |> List.map
                         (\(ListItem task children) ->
@@ -248,7 +248,7 @@ renderer =
                 )
     , orderedList =
         \startingIndex items ->
-            Element.column [ Element.spacing 15 ]
+            Element.column [ Element.spacing 10 ]
                 (items
                     |> List.indexedMap
                         (\index itemBlocks ->
