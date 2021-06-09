@@ -10,6 +10,8 @@ module Views.About exposing
     )
 
 import AssocList exposing ( Dict )
+import Common.Colors exposing
+    ( green )
 import Common.Contents exposing
     ( link
     , newTabLink
@@ -19,7 +21,10 @@ import Common.Contents exposing
     , spacedPara
     , underlinedText
     )
-import Common.Urls exposing ( aboutUrl )
+import Common.Urls exposing
+    ( aboutUrl
+    , rootUrl
+    )
 import Element exposing ( Element )
 import Element.Font as Font
 import Element.Input as Input
@@ -34,10 +39,10 @@ type Section
     | Use_Cases
     | Threat_Model
     | How_Private
+    | Persist_Chat
     | Troubleshooting
     | Hideout_Vs_Apps
     | Why_Another_Disp
-    | Persist_Chat
     | Self_Hosting
     | None
 
@@ -49,10 +54,10 @@ urlFragAndSectionAssoc =
         , ( "use-cases", Use_Cases )
         , ( "threat-model", Threat_Model )
         , ( "how-private", How_Private )
+        , ( "persist-chat", Persist_Chat )
         , ( "troubleshooting", Troubleshooting )
         , ( "hideout-vs-apps", Hideout_Vs_Apps )
         , ( "why-another-disp", Why_Another_Disp )
-        , ( "persist-chat", Persist_Chat )
         , ( "self-hosting", Self_Hosting )
         ]
 
@@ -112,22 +117,28 @@ update msg model =
 
 view : Float -> Model -> Element Msg
 view screenWidth model =
+    let
+        sectionViews =
+            List.map
+                ( \ sectionView -> sectionView model )
+                [ why_privacy
+                , use_cases
+                , threat_model
+                , how_private
+                , persist_chat
+                , troubleshooting
+                , hideout_vs_apps
+                , why_another_disp
+                , self_hosting
+                ]
+    in
     Element.column
         [ Element.width <| Element.maximum 1000 Element.fill
         , sectionSpacing
         ] <|
-        List.map
-            ( \ sectionView -> sectionView model )
-            [ why_privacy
-            , use_cases
-            , threat_model
-            , how_private
-            , troubleshooting
-            , hideout_vs_apps
-            , why_another_disp
-            , persist_chat
-            , self_hosting
-            ]
+        [ link rootUrl "<< Hideout Home"
+        ] ++
+        sectionViews
 
 
 why_privacy : Model -> Element Msg
@@ -168,10 +179,15 @@ use_cases model =
                     """
                     1. Hideout is useful when you want to have a private conversation with your friends, but you are currently using a service that violates user's privacy, e.g. Facebook Messenger, Discord, Gmail, and so on. By using Hideout, the conversation is simply moved away from the unprivate service, leaving it nothing to collect and spy on.
                     """
-                , plainPara
-                    """
-                    2. Hideout is particularly useful if you want a chat room that's persistent, yet still private, which you and your friends can bookmark and keep going back to.
-                    """
+                , Element.paragraph
+                    [ Font.color green ]
+                    [ Element.text
+                        """
+                        2. Hideout is particularly useful if you want a chat room that's persistent, yet still private, which you and your friends can bookmark and keep going back to. Learn more 
+                        """
+                    , link ( sectionToUrl Persist_Chat ) "here"
+                    , Element.text "."
+                    ]
                 , plainPara
                     """
                     3. Hideout is useful if your friends are scattered across multiple messaging apps. Someone on Snapchat can't talk to someone on Signal. But they can convene in a Hideout chat room.
@@ -327,17 +343,20 @@ persist_chat model =
                 [ paraSpacing ]
                 [ plainPara
                     """
-                    Persistent chat rooms is a simple yet powerful idea. Such a room is saved on server's disk, so it won't be deleted when server reboots. It can be joined an unlimited number of times, so the participants can keep using the same room, without the need to create and share a lot of new rooms. A vital point is that only the intended participants, and nothing else, know where this room is. 
+                    Persistent chat rooms is a simple yet powerful idea. It's a private chat room that doesn't expire, so the participants can keep going back to it, without having to create a new room every time they talk. Hideout achieves this in a very simple way.
+                    """
+                , plainPara
+                    """
+                    Imagine you have already created a disposable chat room and you are chatting with your friends. Everything you say in this room is private. If you go ahead and create a second chat room, you can share the link of this new room privately with your friends. Since only you and your friends know about this new room, it doesn't have to expire. Hideout just automates this process.
+                    """
+                , plainPara
+                    """
+                    Here are the details of how it's automated. A person creates a persistent chat room, and sets the number of participants to 4, for example. This makes Hideout generate a chat room that can be joined infinitely on the server. Then, Hideout generates a disposable letter, which contains the room ID. The disposable letter can only be accessed 4 times. The person shares the link to this letter (not the chat!) to their 3 friends. The 4 of them each opens the letter, retrieves the room ID, and uses it to join the chat on Hideout's home page. Hideout deletes the letter after all 4 people have read it. So nothing else can get the room ID. But the 4 people now have a persistent chat room that they can always go back into.
                     """
 
                 , plainPara
                     """
-                    Here's how it works. A person creates a persistent chat room, and sets the number of participants to 4. This makes Hideout generate a chat room that can be joined infinitely on the server. Then, Hideout generates a disposable letter, which contains the room ID. The disposable letter can only be accessed 4 times. The person shares the link to this letter (not the chat!) to their 3 friends. The 4 of them each opens the letter, retrieves the room ID, and uses it to join the chat on Hideout's home page. Hideout deletes the letter after all 4 people have read it. So nothing else can get the room ID. But the 4 people now have a persistent chat room that they can always go back into.
-                    """
-
-                , plainPara
-                    """
-                    Persistent chat is of great value for people who are in situations where it's improper to repeatedly create and share disposable chat room links, as doing so draws unwanted attention. Sure, you can create and send 1000 room links on Discord in US per day. But that's not the same in a lot of other places on the planet.
+                    Persistent chat is of great value for people who are in situations where it's improper to repeatedly create and share disposable chat room links, as doing so draws unwanted attention. Sure, you can create and send 1000 room links on Discord in the United States per day. But that's not the same in a lot of other places on the planet.
                     """
                 ]
     in
