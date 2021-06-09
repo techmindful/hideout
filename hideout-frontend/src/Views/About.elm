@@ -13,7 +13,8 @@ import AssocList exposing ( Dict )
 import Common.Colors exposing
     ( green )
 import Common.Contents exposing
-    ( link
+    ( italicText
+    , link
     , newTabLink
     , plainPara
     , sizedPara
@@ -44,6 +45,7 @@ type Section
     | Hideout_Vs_Apps
     | Why_Another_Disp
     | Self_Hosting
+    | Func_Prog
     | None
 
 
@@ -59,6 +61,7 @@ urlFragAndSectionAssoc =
         , ( "hideout-vs-apps", Hideout_Vs_Apps )
         , ( "why-another-disp", Why_Another_Disp )
         , ( "self-hosting", Self_Hosting )
+        , ( "func-prog", Func_Prog )
         ]
 
 
@@ -130,6 +133,7 @@ view screenWidth model =
                 , hideout_vs_apps
                 , why_another_disp
                 , self_hosting
+                , func_prog
                 ]
     in
     Element.column
@@ -411,6 +415,41 @@ self_hosting model =
     mkSection Self_Hosting "Hideout is designed to be self-hosted!" body model
 
                         
+func_prog : Model -> Element Msg
+func_prog model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ Element.paragraph
+                    []
+                    [ Element.text
+                        """
+                        Hideout is built with 2 functional programming languages: Haskell and Elm. Functional programming is a programming paradigm that deserves a lot more attention and 
+                        """
+                    , italicText "should"
+                    , Element.text
+                        """
+                         be the future. In brief, it encourages separation of side-effects, and type safety, which eliminates classes of bugs, while making refactoring and testing a charm, instead of a pain. It's also the first paradigm where I find myself actively seeking to learn more, because of its deep yet playful nature. The ultimate goal of functional programming is \"If it compiles, it works.\" So if you prefer to solve compile errors, rather than wrestle with runtime bugs, you'll like functional programming.
+                        """
+                    ]
+                , Element.paragraph
+                    []
+                    [ Element.text "I found "
+                    , newTabLink "http://learnyouahaskell.com/chapters" "Learn You a Haskell for Great Good"
+                    , Element.text
+                        """
+                         to be a great tutorial to get into functional programming with Haskell. Too bad it's non-HTTPS, so it's insecure to buy a copy with credit card. You can still read it for free though. Alternatively, 
+                        """
+                    , newTabLink "https://guide.elm-lang.org/" "Elm"
+                    , Element.text
+                        """
+                         is famous for being easy to learn.
+                        """
+                    ]
+                ]
+    in
+    mkSection Func_Prog "Functional Programming" body model
 
 
 titleFontStyle : List ( Element.Attribute msg )
