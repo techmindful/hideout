@@ -3,11 +3,13 @@ module Views.About exposing
     , Msg
     , Section(..)
     , init
+    , sectionToUrl
     , update
     , urlFragToSection
     , view
     )
 
+import AssocList exposing ( Dict )
 import Common.Contents exposing
     ( link
     , newTabLink
@@ -17,13 +19,14 @@ import Common.Contents exposing
     , spacedPara
     , underlinedText
     )
-import Common.Urls exposing ( aboutSectionUrl )
+import Common.Urls exposing ( aboutUrl )
 import Element exposing ( Element )
 import Element.Font as Font
 import Element.Input as Input
 import List
 import List.Extra as List
 import Set exposing ( Set )
+import Url.Builder
 
 
 type Section
@@ -32,7 +35,6 @@ type Section
     | Threat_Model
     | How_Private
     | Troubleshooting
-    | How_Does_Hideout_Work  -- Not using
     | Hideout_Vs_Apps
     | Why_Another_Disp
     | Persist_Chat
@@ -40,23 +42,43 @@ type Section
     | None
 
 
+urlFragAndSectionAssoc : Dict String Section
+urlFragAndSectionAssoc =
+    AssocList.fromList
+        [ ( "why-privacy", Why_Privacy )
+        , ( "use-cases", Use_Cases )
+        , ( "threat-model", Threat_Model )
+        , ( "how-private", How_Private )
+        , ( "troubleshooting", Troubleshooting )
+        , ( "hideout-vs-apps", Hideout_Vs_Apps )
+        , ( "why-another-disp", Why_Another_Disp )
+        , ( "persist-chat", Persist_Chat )
+        , ( "self-hosting", Self_Hosting )
+        ]
+
+
 urlFragToSection : Maybe String -> Section
 urlFragToSection maybeStr =
     case maybeStr of
         Nothing  -> None
         Just str ->
-            case str of
-                "why-privacy" -> Why_Privacy
-                "use-cases" -> Use_Cases
-                "threat-model" -> Threat_Model
-                "how-private" -> How_Private
-                "troubleshooting" -> Troubleshooting
-                "how-does-hideout-work" -> How_Does_Hideout_Work
-                "hideout-vs-apps" -> Hideout_Vs_Apps
-                "why-another-disp" -> Why_Another_Disp
-                "persist-chat" -> Persist_Chat
-                "self-hosting" -> Self_Hosting
-                _ -> None
+            AssocList.get str urlFragAndSectionAssoc
+                |> Maybe.withDefault None
+
+
+sectionToUrl : Section -> String
+sectionToUrl section =
+    let
+        urlFrag : String
+        urlFrag =
+            urlFragAndSectionAssoc
+                |> AssocList.toList
+                |> List.filter ( \( _, section_ ) -> section == section_ )
+                |> List.head
+                |> Maybe.map Tuple.first
+                |> Maybe.withDefault "[Error: Section missing]"
+    in
+    Url.Builder.custom Url.Builder.Relative [ aboutUrl ] [] ( Just urlFrag )
 
 
 type Title = Title ( Element Msg )
@@ -212,46 +234,6 @@ troubleshooting model =
     mkSection Troubleshooting "Troubleshooting" body model
 
 
-how_does_hideout_work : Model -> Element Msg
-how_does_hideout_work model =
-    let
-        body = Body <|
-            Element.column
-                [ paraSpacing ]
-                [ plainPara
-                    """
-                    Hideout makes private conversations possible, for those who are unwilling to move away from unprivate platforms like Facebook Messenger, Discord, Gmail, and install secure messaging apps like Signal, Element, and Wire.
-                    """
-                ,   plainPara
-                    """
-                    Hideout provides "access-based" disposable letters and chat rooms. The idea is simple. If you want to send a letter to 3 of your friends, and want to make sure only the 3 of them can see the content, then you can create a Hideout letter, and set the maximum number of times it can be read to 3.
-                    """
-
-                , plainPara
-                    """
-                    This way, either all 3 of your friends read the letter while nothing else can; or a spying adversary reads the letter, which immediately blocks one of the friends from reading it, and immediately exposes its spying behavior to everyone. The exposure hopefully motivates everyone to move to a secure messaging app* like Signal, Element, wire, etc, while potentially making some news headline.
-                    """
-
-                , plainPara "Same things for Hideout chats."
-
-                , Element.paragraph
-                    []
-                    [ underlinedText "Troubleshooting"
-                    , Element.text 
-                        """
-                        : If you received a link to a Hideout letter or chat, but it tells you that the maximum number of time it can be accessed is reached, then maybe some of the intended participants reloaded the letter page or rejoined the chat. If it's made certain that nobody is accessing multiple times, then very grimly, the communication among your friends is being spied on, and you all should move to secure messaging apps*.
-                        """
-                    ]
-
-                , sizedPara 16
-                    """
-                    * Actually, it doesn't necessarily mean that it's the unprivate apps like Facebook Messenger and Discord who's the spying adversary. Unprivate operating systems like Windows 10 can be the spying one too. Another possibility is that someone's computer is hacked, and moving to a secure messaging app only obscures the hack. Overall, one should follow good security and privacy practices.
-                    """
-                ]
-    in
-    mkSection How_Does_Hideout_Work "How does Hideout work?" body model
-
-
 hideout_vs_apps : Model -> Element Msg
 hideout_vs_apps model =
     let
@@ -328,7 +310,7 @@ why_another_disp model =
                             4. Some services are "time-based". A spying adversary can easily view the messages before it expires, and there will be no way of knowing. Learn more about Hideout's "access-based" approach in
                             """
                         , link
-                            ( aboutSectionUrl "how-does-hideout-work" )
+                            ( sectionToUrl How_Private )
                             "How are chats private on Hideout?"
                         ]
                     ]

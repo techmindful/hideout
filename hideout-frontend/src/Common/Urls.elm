@@ -14,11 +14,6 @@ rootUrl = absolute [] []
 aboutUrl = absolute [ "about" ] []
 
 
-aboutSectionUrl : String -> String
-aboutSectionUrl sectionStr =
-    custom Relative [ aboutUrl ] [] ( Just sectionStr )
-
-
 frontendReadLetterUrl = absolute [ "read-letter" ] []
 backendReadLetterUrl  = mkBackendUrl [ "read-letter" ] []
 

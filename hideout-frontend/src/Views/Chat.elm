@@ -56,6 +56,7 @@ import Time exposing
 import Utils.Markdown
 import Utils.Utils as Utils exposing
     ( durationSec )
+import Views.About
 
 
 port port_SendWsMsg : String -> Cmd msg
@@ -504,7 +505,7 @@ view status viewportWidth =
                                 """
                                 Hi, welcome to Hideout! Unfortunately, this chat room has reached the maximum number of times it can be joined. Read more about what this implies 
                                 """
-                            , newTabLink aboutUrl "here"
+                            , newTabLink ( Views.About.sectionToUrl Views.About.Troubleshooting ) "here"
                             , Element.text "."
                             ]
 
