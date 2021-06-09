@@ -28,7 +28,11 @@ import Set exposing ( Set )
 
 type Section
     = Why_Privacy
-    | How_Does_Hideout_Work
+    | Use_Cases
+    | Threat_Model
+    | How_Private
+    | Troubleshooting
+    | How_Does_Hideout_Work  -- Not using
     | Hideout_Vs_Apps
     | Why_Another_Disp
     | Persist_Chat
@@ -43,6 +47,10 @@ urlFragToSection maybeStr =
         Just str ->
             case str of
                 "why-privacy" -> Why_Privacy
+                "use-cases" -> Use_Cases
+                "threat-model" -> Threat_Model
+                "how-private" -> How_Private
+                "troubleshooting" -> Troubleshooting
                 "how-does-hideout-work" -> How_Does_Hideout_Work
                 "hideout-vs-apps" -> Hideout_Vs_Apps
                 "why-another-disp" -> Why_Another_Disp
@@ -85,14 +93,19 @@ view screenWidth model =
     Element.column
         [ Element.width <| Element.maximum 1000 Element.fill
         , sectionSpacing
-        ]
-        [ why_privacy model
-        , how_does_hideout_work model
-        , hideout_vs_apps model
-        , why_another_disp model
-        , persist_chat model
-        , self_hosting model
-        ]
+        ] <|
+        List.map
+            ( \ sectionView -> sectionView model )
+            [ why_privacy
+            , use_cases
+            , threat_model
+            , how_private
+            , troubleshooting
+            , hideout_vs_apps
+            , why_another_disp
+            , persist_chat
+            , self_hosting
+            ]
 
 
 why_privacy : Model -> Element Msg
@@ -121,6 +134,82 @@ why_privacy model =
                 ]
     in
     mkSection Why_Privacy "Why Privacy?" body model
+
+
+use_cases : Model -> Element Msg
+use_cases model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """
+                    1. Hideout is useful when you want to have a private conversation with your friends, but you are currently using a service that violates user's privacy, e.g. Facebook Messenger, Discord, Gmail, and so on. By using Hideout, the conversation is simply moved away from the unprivate service, leaving it nothing to collect and spy on.
+                    """
+                , plainPara
+                    """
+                    2. Hideout is particularly useful if you want a chat room that's persistent, yet still private, which you and your friends can bookmark and keep going back to.
+                    """
+                , plainPara
+                    """
+                    3. Hideout is useful if your friends are scattered across multiple messaging apps. Someone on Snapchat can't talk to someone on Signal. But they can convene in a Hideout chat room.
+                    """
+                ]
+    in
+    mkSection Use_Cases "Use Cases" body model
+
+
+threat_model : Model -> Element Msg
+threat_model model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """
+                    Hideout assumes your communication on the unprivate service isn't compromised. If you want a private conversation without it being logged by the unprivate service, Hideout can help. If your communication on the unprivate service is being actively monitored and tampered with, you'll need to establish a new private communication channel with your friends, preferably in person.
+                    """
+                ]
+    in
+    mkSection Threat_Model "Threat Model" body model
+
+
+how_private : Model -> Element Msg
+how_private model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """
+                    - Hideout is designed to be self-hosted. The idea is that the more privacy-aware and tech-savvy person among a friend group will host the server, to use with their friends. So trust is already a given. The user trusts the server as much as they trust the person hosting.
+                    """
+                , plainPara
+                    """
+                    - Disposable letters can't be read after a max read limit is reached. A disposable chat room can't be joined after the max join limit is reached. This "access-based" approach gives a stronger guarantee of privacy than the "time-based" approach. If a message or chat room is set to be deleted after 15 minutes, nothing stops it from being viewed by unwanted parties at the 14th minute.
+                    """
+                ]
+    in
+    mkSection How_Private "How is Hideout private?" body model
+
+
+troubleshooting : Model -> Element Msg
+troubleshooting model =
+    let
+        body = Body <|
+            Element.column
+                [ paraSpacing ]
+                [ plainPara
+                    """ 
+                    If you received a link to a Hideout letter or chat, but it tells you that the maximum number of time it can be accessed is reached, then maybe some of the intended participants reloaded the letter page or rejoined the chat. If it's made certain that nobody is accessing multiple times, then the grim reality is probably that the communication among your friends is being spied on, and you all should move to secure messaging apps*.
+                    """
+                , sizedPara 16
+                    """
+                    * Actually, it doesn't necessarily mean that it's the unprivate apps like Facebook Messenger and Discord who's the spying adversary. Unprivate operating systems like Windows 10 can be the spying one too. Another possibility is that someone's computer is hacked, and moving to a secure messaging app only obscures the hack. Overall, one should follow good security and privacy practices.
+                    """
+                ]
+    in
+    mkSection Troubleshooting "Troubleshooting" body model
 
 
 how_does_hideout_work : Model -> Element Msg
