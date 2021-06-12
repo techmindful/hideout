@@ -68,6 +68,7 @@ import           GHC.Generics ( Generic )
 data AppState = AppState
   { dbConnPool :: Pool SqlBackend
   , letterMetas :: TVar ( Map String LetterMeta )
+  , entrances :: TVar ( Map String Entrance )
   , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
   } deriving ( Generic )
 
@@ -78,7 +79,8 @@ type API = "api" :> "read-letter"  :> Capture "letterId" String :> Get '[ Servan
                                             :> Put '[ Servant.JSON ] String
       :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
                                             :> Put '[ Servant.JSON ] String
-      :<|> "api" :> "chat"         :> Capture "chatId" String :> WebSocket
+      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" String :> Get '[ Servant.JSON ] String
+      :<|> "api" :> "chat" :> Capture "chatId" String :> WebSocket
 
 
 readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
@@ -169,8 +171,11 @@ spawnDispChat maxJoinCountInput = do
 spawnPersistChat :: String -> ReaderT AppState Servant.Handler String
 spawnPersistChat maxJoinCountInput = do
 
+  appState <- ask
+
   case readPosInt maxJoinCountInput of
-    Just int -> do
+    Nothing -> Servant.throwError Servant.err400
+    Just maxJoinCount -> do
       newChatIdStr <- mkNewChat $
         Chat.Config
           { maxJoinCount = Nothing
@@ -179,17 +184,28 @@ spawnPersistChat maxJoinCountInput = do
           , sendHistory = True
           }
 
-      let chatIdLetter = Letter {
-            body =
-              "You are invited to a Hideout persistent chat. Below is the room ID. Copy it, go to Hideout home page, start a chat, and paste it to join the chat. After you join, bookmark the chat room's page (not this letter), and you can send private messages to your contacts at any time.\nDo not post the chat link anywhere.\n" ++ newChatIdStr
+      newEntranceId <- liftIO $ getRandomHash
 
-          , maxReadCount = int
-          , persist = True
-          }
+      -- Save new entrance.
+      liftIO $ do
 
-      mkNewLetter chatIdLetter
+        oldEntrances <- atomically $ readTVar $ appState ^. #entrances
 
-    Nothing -> Servant.throwError Servant.err400
+        let newEntrance = Entrance {
+              chatId = newChatIdStr
+            , maxViewCount = maxJoinCount
+            , viewCount = 0
+            }
+            
+            newEntrances = Map.insert newEntranceId newEntrance oldEntrances
+
+        atomically $ writeTVar ( appState ^. #entrances ) newEntrances
+
+        runSqlPool
+          ( Persist.insert_ $ DbEntrance newEntranceId newEntrance )
+          ( appState ^. #dbConnPool )
+
+        return newEntranceId
 
 
 mkNewChat :: Chat.Config -> ReaderT AppState Servant.Handler String
@@ -236,6 +252,38 @@ isMaxJoined chat =
       else False
 
     _ -> False
+
+
+persistChatEntrance :: String -> ReaderT AppState Servant.Handler String
+persistChatEntrance entranceId = do
+
+  appState <- ask
+
+  oldEntrances <- liftIO $ atomically $ readTVar $ appState ^. #entrances
+
+  case Map.lookup entranceId oldEntrances of
+    Nothing -> Servant.throwError Servant.err404
+    Just entrance -> liftIO $ do
+      -- View count isn't reached.
+      if ( entrance ^. #viewCount ) + 1 < entrance ^. #maxViewCount then do
+        let newEntrance  = entrance & #viewCount %~ ( (+1) :: Int -> Int )
+            newEntrances = Map.insert entranceId newEntrance oldEntrances
+
+        atomically $ writeTVar ( appState ^. #entrances ) newEntrances
+
+        runSqlPool
+          ( Persist.updateWhere
+            [ DbEntranceEntranceId ==. entranceId ]
+            [ DbEntranceVal =. newEntrance ]
+          )
+          ( appState ^. #dbConnPool )
+      -- View count is reached.
+      else do
+        let newEntrances = Map.delete entranceId oldEntrances
+        atomically $ writeTVar ( appState ^. #entrances ) newEntrances
+        runSqlPool ( Persist.deleteBy $ UniqueEntranceId entranceId ) ( appState ^. #dbConnPool )
+        
+      return $ entrance ^. #chatId
 
 
 chatHandler :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
@@ -428,6 +476,7 @@ server = readLetter
     :<|> writeLetter
     :<|> spawnDispChat
     :<|> spawnPersistChat
+    :<|> persistChatEntrance
     :<|> chatHandler
 
 
@@ -463,13 +512,26 @@ initApp = do
 
   let dbLetterMetas = fmap Persist.entityVal dbLetterMetaEnts
 
-      split :: DbLetterMeta -> ( String, LetterMeta )
-      split dbLetterMeta =
+      splitLetterMeta :: DbLetterMeta -> ( String, LetterMeta )
+      splitLetterMeta dbLetterMeta =
         ( dbLetterMeta & dbLetterMetaLetterId
         , dbLetterMeta & dbLetterMetaVal
         )
 
-      idLetterMetaPairs = fmap split dbLetterMetas
+      idLetterMetaPairs = fmap splitLetterMeta dbLetterMetas
+
+  dbEntranceEnts :: [ Persist.Entity DbEntrance ] <-
+    runSqlPool ( selectList [] [] ) dbConnPool
+
+  let dbEntrances = fmap Persist.entityVal dbEntranceEnts
+
+      splitEntrance :: DbEntrance -> ( String, Entrance )
+      splitEntrance dbEntrance =
+        ( dbEntrance & dbEntranceEntranceId
+        , dbEntrance & dbEntranceVal
+        )
+
+      entrances = fmap splitEntrance dbEntrances
 
   dbChatEnts :: [ Persist.Entity DbChat ] <-
     runSqlPool ( selectList [] [] ) dbConnPool
@@ -488,10 +550,12 @@ initApp = do
       rooms = fmap mkRoom dbChats
 
   initLetterMetas <- atomically $ newTVar $ Map.fromList idLetterMetaPairs
+  initEntrances   <- atomically $ newTVar $ Map.fromList entrances
   initRooms       <- atomically $ newTVar $ Map.fromList rooms
   let initAppState = AppState {
       dbConnPool   = dbConnPool
     , letterMetas  = initLetterMetas
+    , entrances    = initEntrances
     , chats        = initRooms
     }
   return initAppState

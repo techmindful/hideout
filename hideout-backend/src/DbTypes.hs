@@ -40,6 +40,11 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     UniqueLetterId letterId  -- Uniqueness Constraint
     deriving Show
 
+  DbEntrance
+    entranceId String
+    val Entrance
+    UniqueEntranceId entranceId
+
   DbChat
     chatId ChatId
     val Chat

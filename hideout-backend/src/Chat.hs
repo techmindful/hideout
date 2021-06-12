@@ -71,6 +71,14 @@ data Expiry
 instance FromJSON Expiry
 
 
+data Entrance = Entrance
+  { chatId       :: String
+  , maxViewCount :: Int
+  , viewCount    :: Int
+  } deriving ( Generic, Read, Show )
+derivePersistField "Entrance"
+
+
 data Chat = Chat
   { msgs :: [ ChatMsgMeta ]
   , joinCount :: Int
