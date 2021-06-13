@@ -13,6 +13,7 @@ import Time
 import Url exposing (Url)
 import Utils.Types exposing ( PosIntInput )
 import Views.About
+import Views.Entrance
 
 
 type State
@@ -43,7 +44,7 @@ type SpawnPersistChatResp
     = NotSpawned_Persist
     | Waiting_Persist
     | GotError_Persist Http.Error
-    | GotLetterId String
+    | GotEntranceId String
 
 
 type alias Model =
@@ -62,6 +63,8 @@ type alias Model =
 
     , spawnDispChatResp : SpawnDispChatResp
     , spawnPersistChatResp : SpawnPersistChatResp
+
+    , entranceStatus : Views.Entrance.Status
 
     , letterRawInput : Letter.RawInput
     , letterPersistInput : Bool
@@ -105,6 +108,8 @@ type Msg
     | PersistChatMaxJoinCountInput String
     | SpawnPersistChat
     | GotSpawnPersistChatResp ( Result Http.Error String )
+
+    | GotEntranceResp ( Result Http.Error String )
 
     | ChatElmMsg Chat.ElmMsg
 

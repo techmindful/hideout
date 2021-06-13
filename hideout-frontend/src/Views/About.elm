@@ -22,6 +22,8 @@ import Common.Contents exposing
     , spacedPara
     , underlinedText
     )
+import Common.Styles exposing
+    ( paraSpacing )
 import Common.Urls exposing
     ( aboutUrl
     , rootUrl
@@ -479,11 +481,6 @@ mkSection section titleStr ( Body body ) model =
           else
             Element.none
         ]
-
-
-paraSpacing : Element.Attribute msg
-paraSpacing =
-    Element.spacingXY 0 20
 
 
 sectionSpacing : Element.Attribute msg

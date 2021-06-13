@@ -105,8 +105,8 @@ view model =
                     ]
                     [ Element.text "Error reaching server!" ]
 
-            GotLetterId letterId ->
-                 Element.textColumn
+            GotEntranceId entranceId ->
+                 Element.column
                     [ padding
                     , Element.spacingXY 0 20
                     ]
@@ -114,18 +114,12 @@ view model =
                         []
                         [ Element.text
                             """
-                            A disposable letter that contains the instruction to join the chat has been generated. Share the 
-                            """
-                        , underlinedText "link"
-                        , Element.text
-                            """
-                             (not the content) to the letter below with your contacts.
+                            A persistent chat room has been generated. Share the link to the entrance (not the chat room) with your friends.
                             """
                         ]
                     , plainPara <|
                         model.origin ++
-                        frontendReadLetterUrl ++ "/" ++
-                        unquote letterId
+                        ( frontendEntranceUrl <| unquote entranceId )
                     ]           
         ]
 

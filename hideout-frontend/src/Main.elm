@@ -41,6 +41,7 @@ import Utils.Utils as Utils
 import Views.About
 import Views.Chat
 import Views.ConfigChat
+import Views.Entrance
 import Views.ReadLetter
 import Views.WriteLetter
 
@@ -120,6 +121,9 @@ initModel initFlag url navKey =
 
       , dispChatMaxJoinCountInput = "2"
       , persistChatMaxJoinCountInput = "2"
+
+      , entranceStatus = Views.Entrance.NotEntering
+
       , chatStatus = 
           case route of
               Chat chatIdStr ->
@@ -138,11 +142,17 @@ initModel initFlag url navKey =
         [ getViewportCmd
 
         , case route of
-            Chat chatIdStr ->
-                port_InitWs chatIdStr
-
             ReadLetter letterId ->
                 getLetterReq letterId
+
+            Entrance entranceId ->
+                Http.get
+                    { url = backendEntranceUrl entranceId
+                    , expect = Http.expectString GotEntranceResp
+                    }
+
+            Chat chatIdStr ->
+                port_InitWs chatIdStr
 
             _ -> Cmd.none
         ]
@@ -175,19 +185,6 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                 route = getRoute url
             in
             case route of
-                Chat chatIdStr ->
-                    ( Normal { model |
-                        route = route
-                      , chatStatus = Chat.OpeningWs <| tag chatIdStr
-                      }
-                    , port_InitWs chatIdStr
-                    )
-
-                ReadLetter letterIdStr ->
-                    ( Normal { model | route = route }
-                    , getLetterReq letterIdStr
-                    )
-
                 About _ ->
                     ( Normal { model |
                         route = route
@@ -197,6 +194,27 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                             model.aboutPageModel
                       }
                     , Cmd.none
+                    )
+
+                ReadLetter letterIdStr ->
+                    ( Normal { model | route = route }
+                    , getLetterReq letterIdStr
+                    )
+
+                Entrance entranceId ->
+                    ( Normal { model | route = route }
+                    , Http.get
+                        { url = backendEntranceUrl entranceId
+                        , expect = Http.expectString GotEntranceResp
+                        }
+                    )
+
+                Chat chatIdStr ->
+                    ( Normal { model |
+                        route = route
+                      , chatStatus = Chat.OpeningWs <| tag chatIdStr
+                      }
+                    , port_InitWs chatIdStr
                     )
 
                 _ ->
@@ -365,12 +383,24 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                             Err err ->
                                 GotError_Persist err
                                 
-                            Ok letterId ->
-                                GotLetterId letterId
+                            Ok entranceId ->
+                                GotEntranceId entranceId
                 }
             , Cmd.none
             )
 
+        GotEntranceResp result ->
+            case result of
+                Ok roomId ->
+                    ( Normal
+                        { model | entranceStatus = Views.Entrance.GotRoomId <| unquote roomId }
+                    , Cmd.none
+                    )
+
+                Err err ->
+                    ( Normal { model | entranceStatus = Views.Entrance.GotError err }
+                    , Cmd.none
+                    )
 
         ChatElmMsg chatElmMsg ->
             let
@@ -521,12 +551,14 @@ viewModel model =
                             
                     WriteLetter -> Views.WriteLetter.view model
 
+                    ConfigChat -> Views.ConfigChat.view model
+
+                    Entrance id -> Views.Entrance.view model.entranceStatus
+
                     Chat chatId ->
                         Element.map
                             ChatElmMsg
                             ( Views.Chat.view model.chatStatus model.viewport.viewport.width )
-
-                    ConfigChat -> Views.ConfigChat.view model
 
                     NotFound ->
                         Element.text "404"

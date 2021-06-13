@@ -34,6 +34,10 @@ lineSpacing =
     Element.spacingXY 0 10
 
 
+paraSpacing =
+    Element.spacingXY 0 20
+
+
 inlineInputStyle : List ( Element.Attribute msg )
 inlineInputStyle =
     [ Element.width <| Element.px 100
