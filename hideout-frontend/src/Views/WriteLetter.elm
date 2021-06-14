@@ -6,7 +6,9 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Common.Colors exposing (..)
 import Common.Contents exposing
-    ( plainPara
+    ( Tabness(..)
+    , footer
+    , plainPara
     , posIntInputHint
     )
 import Common.Styles exposing (..)
@@ -170,6 +172,8 @@ view model =
 
             _ ->
                 Element.none
+
+        , footer 200 SameTab
         ]
 
 

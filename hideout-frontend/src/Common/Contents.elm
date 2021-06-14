@@ -9,7 +9,7 @@ import Common.Styles exposing
     ( linkStyle
     , widthConstraint
     )
-import Common.Urls exposing ( rootUrl )
+import Common.Urls exposing ( rootUrl, aboutUrl )
 import Time exposing ( Posix )
 import Utils.Types exposing ( PosIntInput(..), strToPosIntInput )
 import Utils.Utils as Utils
@@ -103,12 +103,44 @@ timeText targetPosix currentPosix =
             Utils.formatTime targetPosix currentPosix
 
 
-footer : Element msg
-footer =
-    Element.row
-        [ widthConstraint
-        , Element.paddingXY 0 20
-        , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
-        ]
-        [ link rootUrl "Hideout Home" ]
+rootLink : Element msg
+rootLink = link rootUrl "Hideout Home"
+
+
+type Tabness
+    = SameTab
+    | NewTab
+
+
+linkForTabness tabness =
+    case tabness of
+        SameTab -> Element.link
+        NewTab  -> Element.newTabLink
+
+
+footer : Int -> Tabness -> Element msg
+footer topPadding tabness =
+    Element.el
+        [ Element.paddingEach { top = topPadding, bottom = 0, left = 0, right = 0 }
+        , Element.width Element.fill
+        ] <|
+        Element.column
+            [ widthConstraint
+            , Element.paddingXY 0 20
+            , Element.spacingXY 0 10
+            , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
+            ]
+            [ ( linkForTabness tabness )
+                []
+                { url = aboutUrl
+                , label = Element.text "What is Hideout?"
+                }
+            , ( linkForTabness tabness )
+                []
+                { url = rootUrl
+                , label = Element.text "Hideout Home"
+                }
+            ]
+
+
 

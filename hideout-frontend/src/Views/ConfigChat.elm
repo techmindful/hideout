@@ -2,7 +2,9 @@ module Views.ConfigChat exposing ( view )
 
 import Common.Colors exposing ( bgColor, red )
 import Common.Contents exposing
-    ( borderedButton
+    ( Tabness(..)
+    , borderedButton
+    , footer
     , italicText
     , plainPara
     , posIntInputHint
@@ -139,7 +141,8 @@ view model =
                         [ shareEntranceButton
                         , accessEntranceButton
                         ]
-                    ]           
+                    ]
+        , footer 120 SameTab
         ]
 
 

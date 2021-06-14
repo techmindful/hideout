@@ -23,12 +23,15 @@ import Chat exposing
 import Common.Attributes
 import Common.Colors exposing (..)
 import Common.Contents exposing
-    ( footer
+    ( Tabness(..)
+    , footer
     , newTabLink
     , plainPara
     )
 import Common.Styles exposing
-    ( buttonStyle )
+    ( buttonStyle
+    , widthConstraint
+    )
 import Common.Urls exposing (..)
 import Dict exposing ( Dict )
 import Element
@@ -911,11 +914,9 @@ snapScrollChatMsgsView =
 mkErrView : Element msg -> Element msg
 mkErrView content =
     Element.column
-        [ Element.width <| Element.maximum 750 Element.fill
-        , Element.spacingXY 0 100
-        ]
+        [ widthConstraint ]
         [ content
-        , footer
+        , footer 60 NewTab
         ]
 
 

@@ -5,7 +5,9 @@ module Views.Entrance exposing
     )
 
 import Common.Contents exposing
-    ( newTabLink
+    ( Tabness(..)
+    , footer
+    , newTabLink
     , plainPara
     , underlinedText
     )
@@ -47,16 +49,20 @@ view status =
             GotError err ->
                 case err of
                     Http.BadStatus 404 ->
-                        Element.paragraph
+                        Element.column
                             []
-                            [ Element.text
-                                """
-                                You were invited to a Hideout persistent chat room! But the entrance ID isn't found. Learn more about what this implies 
-                                """
-                            , newTabLink
-                                ( Views.About.sectionToUrl Views.About.Troubleshooting )
-                                "here"
-                            , Element.text "."
+                            [ Element.paragraph
+                                []
+                                [ Element.text
+                                    """
+                                    You were invited to a Hideout persistent chat room! But the entrance ID isn't found. Learn more about what this implies 
+                                    """
+                                , newTabLink
+                                    ( Views.About.sectionToUrl Views.About.Troubleshooting )
+                                    "here"
+                                , Element.text "."
+                                ]
+                            , footer 100 NewTab
                             ]
 
                     _ ->
@@ -91,5 +97,6 @@ view status =
                             , label = Element.text "Join"
                             }
                         ]
+                    , footer 100 NewTab
                     ]
 

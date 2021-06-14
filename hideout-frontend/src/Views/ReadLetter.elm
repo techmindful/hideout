@@ -2,7 +2,8 @@ module Views.ReadLetter exposing ( view )
 
 import CoreTypes exposing ( Model, Msg(..) )
 import Common.Contents exposing
-    ( footer
+    ( Tabness(..)
+    , footer
     , link
     , newTabLink
     , plainPara
@@ -62,7 +63,7 @@ view model =
                                         """
                                     , Element.column
                                         [ Element.paddingEach
-                                            { top = 20, bottom = 100, left = 0, right = 0 }
+                                            { top = 20, bottom = 0, left = 0, right = 0 }
                                         , Element.spacingXY 0 10
                                         ]
                                         [ plainPara "- Either you entered a wrong link or letter ID;"
@@ -78,7 +79,7 @@ view model =
                                             , Element.text "."
                                             ]
                                         ]
-                                    , footer
+                                    , footer 100 NewTab
                                     ]
 
                             _ -> plainPara <| httpErrToStr err
@@ -116,6 +117,8 @@ view model =
                                 , Border.widthEach { top = 2, bottom = 0, left = 0, right = 0 }
                                 ] <|
                                 Utils.Markdown.render letterMeta.letter.body
+
+                            , footer 200 NewTab
                             ]
 
             _ -> plainPara "Error: Unaddressed UserStatus case!"
