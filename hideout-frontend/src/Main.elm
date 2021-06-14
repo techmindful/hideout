@@ -390,9 +390,9 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             , Cmd.none
             )
 
-        OnCopyEntranceLink ->
+        OnCopyEntranceLink link ->
             ( Normal model
-            , port_CopyEntranceLink "test-link"
+            , port_CopyEntranceLink link
             )
 
         GotEntranceResp result ->

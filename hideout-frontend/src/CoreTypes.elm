@@ -108,7 +108,7 @@ type Msg
     | PersistChatMaxJoinCountInput String
     | SpawnPersistChat
     | GotSpawnPersistChatResp ( Result Http.Error String )
-    | OnCopyEntranceLink
+    | OnCopyEntranceLink String
 
     | GotEntranceResp ( Result Http.Error String )
 

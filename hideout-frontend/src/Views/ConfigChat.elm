@@ -106,23 +106,25 @@ view model =
                     [ Element.text "Error reaching server!" ]
 
             GotEntranceId entranceId ->
-                 Element.column
-                    [ padding
-                    , Element.spacingXY 0 20
-                    ]
-                    [ Element.paragraph
-                        []
-                        [ Element.text
-                            """
-                            A persistent chat room has been generated. Share the link to the entrance (not the chat room) with your friends.
-                            """
-                        ]
-                    , plainPara <|
+                let
+                    entranceLink =
                         model.origin ++
                         ( frontendEntranceUrl <| unquote entranceId )
-
-                    , borderedButton OnCopyEntranceLink "Share entrance"
-                    ]           
+                in
+                Element.column
+                   [ padding
+                   , Element.spacingXY 0 20
+                   ]
+                   [ Element.paragraph
+                       []
+                       [ Element.text
+                           """
+                           A persistent chat room has been generated. Share the link to the entrance (not the chat room) with your friends.
+                           """
+                       ]
+                   , plainPara entranceLink
+                   , borderedButton ( OnCopyEntranceLink entranceLink ) "Share entrance"
+                   ]           
         ]
 
 
