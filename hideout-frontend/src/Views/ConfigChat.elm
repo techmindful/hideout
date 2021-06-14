@@ -21,6 +21,7 @@ import CoreTypes exposing
     , Msg(..)
     , SpawnDispChatResp(..)
     , SpawnPersistChatResp(..)
+    , CopyToClipboardResult(..)
     )
 import Element exposing ( Element )
 import Element.Background as Background
@@ -108,7 +109,7 @@ view model =
                     ]
                     [ Element.text "Error reaching server!" ]
 
-            GotEntranceId entranceId ->
+            GotEntranceId ( entranceId, copyToClipboardResult ) ->
                 let
                     entranceLink =
                         model.origin ++
@@ -141,6 +142,14 @@ view model =
                         [ shareEntranceButton
                         , accessEntranceButton
                         ]
+                    , case copyToClipboardResult of
+                        NotCopied -> Element.none
+                        Succeeded -> Element.text "Entrance link is copied!"
+                        Failed    ->
+                            plainPara
+                                """
+                                Copying entrance link to clipboard failed. Are you using an old browser like IE?
+                                """
                     ]
         , footer 120 SameTab
         ]

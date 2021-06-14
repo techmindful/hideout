@@ -21,11 +21,30 @@
           }
       })
 
-      elmApp.ports.port_CopyEntranceLink.subscribe( function( link )
-        {
-          navigator.clipboard.writeText( link );
-        }
-      );
+      // Copy to clipboard
+      function setupCopyToClipboard( port_Instigator, port_ResultHandler )
+      {
+        port_Instigator.subscribe
+        (
+          function( payload )
+          {
+            navigator.clipboard.writeText( payload ).then
+            ( onFulfilled = function()
+              {
+                port_ResultHandler.send( true );
+              }
+            , onRejected = function()
+              {
+                port_ResultHandler.send( false );
+              }
+            );
+          }
+        );
+      }
+      setupCopyToClipboard
+        ( elmApp.ports.port_CopyEntranceLink
+        , elmApp.ports.port_OnCopyEntranceLinkResult
+        );
 
       var socket = null;
       var portSendWsMsgHandler = null

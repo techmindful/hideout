@@ -46,7 +46,8 @@ import Views.ReadLetter
 import Views.WriteLetter
 
 
-port port_CopyEntranceLink : String -> Cmd msg
+port port_CopyEntranceLink: String -> Cmd msg
+port port_OnCopyEntranceLinkResult: ( Bool -> msg ) -> Sub msg
 port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_WsError : ( () -> msg ) -> Sub msg
@@ -57,7 +58,9 @@ port port_DebugLog : String -> Cmd msg
 subscriptions : State -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ port_WsReady <| ChatElmMsg << Chat.OnWsReady
+        [ port_OnCopyEntranceLinkResult OnCopyEntranceLinkResult
+
+        , port_WsReady <| ChatElmMsg << Chat.OnWsReady
         , port_WsError ( \_ -> ChatElmMsg Chat.OnWsError )
         , port_RecvWsMsg <| ChatElmMsg << Chat.OnWsMsg
 
@@ -385,7 +388,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 GotError_Persist err
                                 
                             Ok entranceId ->
-                                GotEntranceId entranceId
+                                GotEntranceId ( entranceId, NotCopied )
                 }
             , Cmd.none
             )
@@ -393,6 +396,25 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
         OnShareEntrance link ->
             ( Normal model
             , port_CopyEntranceLink link
+            )
+
+        OnCopyEntranceLinkResult succeeded ->
+            ( case model.spawnPersistChatResp of
+                GotEntranceId ( entranceId, _ ) ->
+                    Normal
+                        { model | spawnPersistChatResp =
+                            GotEntranceId
+                                ( entranceId
+                                , if succeeded then Succeeded else Failed
+                                )
+                        }
+
+                _ ->
+                    LogicError
+                        """
+                        OnCopyEntranceLinkResult happened when model.spawnPersistChatResp isn't GotEntranceId?
+                        """
+            , Cmd.none
             )
 
         GotEntranceResp result ->

@@ -17,8 +17,9 @@ import Views.Entrance
 
 
 type State
-    = ErrGetHost
-    | Normal Model
+    = Normal Model
+    | LogicError String
+    | ErrGetHost
 
 
 type alias InitFlag =
@@ -44,7 +45,16 @@ type SpawnPersistChatResp
     = NotSpawned_Persist
     | Waiting_Persist
     | GotError_Persist Http.Error
-    | GotEntranceId String
+    | GotEntranceId
+        ( String
+        , CopyToClipboardResult
+        )
+
+
+type CopyToClipboardResult
+    = NotCopied
+    | Succeeded
+    | Failed
 
 
 type alias Model =
@@ -109,6 +119,7 @@ type Msg
     | SpawnPersistChat
     | GotSpawnPersistChatResp ( Result Http.Error String )
     | OnShareEntrance String
+    | OnCopyEntranceLinkResult Bool
 
     | GotEntranceResp ( Result Http.Error String )
 
