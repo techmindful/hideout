@@ -46,6 +46,7 @@ import Views.ReadLetter
 import Views.WriteLetter
 
 
+port port_CopyEntranceLink : String -> Cmd msg
 port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_WsError : ( () -> msg ) -> Sub msg
@@ -387,6 +388,11 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 GotEntranceId entranceId
                 }
             , Cmd.none
+            )
+
+        OnCopyEntranceLink ->
+            ( Normal model
+            , port_CopyEntranceLink "test-link"
             )
 
         GotEntranceResp result ->

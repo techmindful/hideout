@@ -23,11 +23,14 @@ widthConstraint =
 linkStyle = [ Font.underline ]
 
 
-buttonStyle padding =
+roundedBorder padding =
     [ Element.padding padding
     , Border.width 2
     , Border.rounded 6
     ]
+
+
+buttonStyle = roundedBorder
 
 
 lineSpacing =

@@ -11,6 +11,7 @@ import Common.Contents exposing
     )
 import Common.Styles exposing
     ( buttonStyle
+    , lineSpacing
     , paraSpacing
     , widthConstraint
     )
@@ -66,21 +67,22 @@ view status =
                     [ paraSpacing ]
                     [ plainPara
                         """
-                        You are invited to a Hideout persistent chat room! After you join, bookmark the webpage. Then you'll have a private chat room with your friends, that is accessible one-click in your browser.
+                        You are invited to a Hideout persistent chat room! After you enter the room, bookmark the room page. Then you'll have a private chat room with your friends, that is accessible one-click in your browser.
                         """
-                    , Element.paragraph
-                        []
-                        [ Element.text
+                    , Element.column
+                        [ lineSpacing ]
+                        [ plainPara "Two important things:"
+                        , plainPara
                             """
-                            You can share the link to this entrance page with other friends. 
+                            * Don't share the link to the room itself on any unprivate platform. That will make the room no longer private.
                             """
-                        , underlinedText
+                        , plainPara
                             """
-                            But never share the link to the chat room itself on any unprivate platform.
+                            * Don't access this entrance page more than once, like refreshing the page or so on. That will block other participants' access.
                             """
                         ]
                     , Element.column
-                        [ Element.paddingXY 0 40
+                        [ Element.paddingXY 0 20
                         , Element.spacingXY 0 20
                         ]
                         [ Element.newTabLink

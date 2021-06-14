@@ -120,6 +120,8 @@ view model =
                     , plainPara <|
                         model.origin ++
                         ( frontendEntranceUrl <| unquote entranceId )
+
+                    , borderedButton OnCopyEntranceLink "Share entrance"
                     ]           
         ]
 

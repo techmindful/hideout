@@ -11,11 +11,6 @@
 
   <body>
 
-    <audio id="notificationAudio2">
-      <source src="https://archive.org/download/SuperMarioBros.ThemeMusic/SuperMarioBros.mp3" type="audio/mpeg">
-      Can't load notification audio.
-    </audio>
-
     <div id="elm-app"></div>
     <script type="text/javascript">
       var elmApp = Elm.Main.init({
@@ -25,6 +20,12 @@
           , "host": location.host
           }
       })
+
+      elmApp.ports.port_CopyEntranceLink.subscribe( function( link )
+        {
+          navigator.clipboard.writeText( link );
+        }
+      );
 
       var socket = null;
       var portSendWsMsgHandler = null
