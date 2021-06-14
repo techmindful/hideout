@@ -9,7 +9,8 @@ import Common.Contents exposing
     , underlinedText
     )
 import Common.Styles exposing
-    ( inlineInputStyle
+    ( buttonStyle
+    , inlineInputStyle
     , widthConstraint
     )
 import Common.Urls exposing (..)
@@ -110,21 +111,35 @@ view model =
                     entranceLink =
                         model.origin ++
                         ( frontendEntranceUrl <| unquote entranceId )
+
+                    shareEntranceButton =
+                        borderedButton ( OnShareEntrance entranceLink ) "Share Entrance"
+
+                    accessEntranceButton =
+                        Element.newTabLink
+                            ( buttonStyle 5 )
+                            { url = entranceLink
+                            , label = Element.text "Access Entrance"
+                            }
                 in
                 Element.column
-                   [ padding
-                   , Element.spacingXY 0 20
-                   ]
-                   [ Element.paragraph
-                       []
-                       [ Element.text
-                           """
-                           A persistent chat room has been generated. Share the link to the entrance (not the chat room) with your friends.
-                           """
-                       ]
-                   , plainPara entranceLink
-                   , borderedButton ( OnCopyEntranceLink entranceLink ) "Share entrance"
-                   ]           
+                    [ padding
+                    , Element.spacingXY 0 20
+                    ]
+                    [ Element.paragraph
+                        []
+                        [ Element.text
+                            """
+                            A persistent chat room has been generated. Share the link to the entrance (not the chat room) with your friends.
+                            """
+                        ]
+                    , plainPara entranceLink
+                    , Element.row
+                        [ Element.spacingXY 40 0 ]
+                        [ shareEntranceButton
+                        , accessEntranceButton
+                        ]
+                    ]           
         ]
 
 

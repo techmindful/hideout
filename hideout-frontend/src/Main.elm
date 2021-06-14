@@ -390,7 +390,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
             , Cmd.none
             )
 
-        OnCopyEntranceLink link ->
+        OnShareEntrance link ->
             ( Normal model
             , port_CopyEntranceLink link
             )
