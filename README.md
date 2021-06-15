@@ -26,7 +26,7 @@ And replace Bob with the mass population. The people.
 
 # Use Cases
 1. Hideout is useful when you want to have a private conversation with your friends, but you are currently using a service that violates user's privacy, e.g. Facebook Messenger, Discord, Gmail, and so on. By using Hideout, the conversation is simply moved away from the unprivate service, leaving it nothing to collect and spy on.
-2. Hideout is particularly useful if you want a chat room that's persistent, yet still private, which you and your friends can bookmark and keep going back to.
+2. Hideout is particularly useful if you want a private chat room that can be bookmarked and accessed one-click from the browser. The persistent chat section below explains how it's implemented.
 3. Hideout is useful if your friends are scattered across multiple messaging apps. Someone on Snapchat can't talk to someone on Signal. But they can convene in a Hideout chat room.
 
 # Threat Model
