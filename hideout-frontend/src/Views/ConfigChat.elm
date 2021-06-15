@@ -6,6 +6,7 @@ import Common.Contents exposing
     , borderedButton
     , footer
     , italicText
+    , link
     , plainPara
     , posIntInputHint
     , underlinedText
@@ -34,6 +35,7 @@ import Utils.Types exposing
     , PosIntInput
     , posIntInputToStr
     )
+import Views.About
 
 
 view : Model -> Element Msg
@@ -42,50 +44,13 @@ view model =
         [ widthConstraint ]
         [ Element.paragraph
             []
-            [ Element.text "A "
-            , italicText "disposable"
+            [ italicText "Persistent"
             , Element.text
                 """
-                 chat is a good default option. Only you and your friends can join. The server deletes the chat when the room is empty.
+                 chat is Hideout's own invention. It's a private chat room between you and your friends, that can be accessed one-click from your browser. Learn more 
                 """
-            ]
-        , numParticipantsInput DispChatMaxJoinCountInput model.dispChatMaxJoinCountInput
-        , posIntInputHint model.dispChatMaxJoinCountInput
-        , Element.el
-            [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-            ( borderedButton SpawnDispChat "Start a disposable chat!" )
-        , let
-            padding =
-                Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
-          in
-          case model.spawnDispChatResp of
-            NotSpawned_Disp ->
-                Element.none
-    
-            Waiting_Disp ->
-                Element.paragraph
-                    [ padding ]
-                    [ Element.text "Waiting for response from the server..." ]
-
-            GotError_Disp err ->
-                Element.paragraph
-                    [ padding
-                    , Font.color red
-                    ]
-                    [ Element.text "Error reaching server!" ]
-
-            GotChatId _ ->
-                Element.none
-
-
-        , Element.paragraph
-            [ Element.paddingEach { top = 200, bottom = 0, left = 0, right = 0 } ]
-            [ Element.text "A "
-            , italicText "persistent"
-            , Element.text
-                """
-                 chat is more convenient. You can bookmark the chat, and send private messages to your contacts without having to make a new chat every time. This especially helps if you need to circumvent censorship. Sharing too many Hideout links may draw unwanted attention.
-                """
+            , link ( Views.About.sectionToUrl Views.About.Persist_Chat ) "here"
+            , Element.text "."
             ]
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
@@ -154,7 +119,46 @@ view model =
                                 Copying entrance link to clipboard failed. Are you using an old browser like IE?
                                 """
                     ]
-        , footer 120 SameTab
+
+        , -- Disposable chat
+          Element.paragraph
+            [ Element.paddingEach { top = 200, bottom = 0, left = 0, right = 0 } ]
+            [ Element.text "A "
+            , italicText "disposable"
+            , Element.text
+                """
+                 chat is a private chat room that can be only used once. You may have seen similar services somewhere else.
+                """
+            ]
+        , numParticipantsInput DispChatMaxJoinCountInput model.dispChatMaxJoinCountInput
+        , posIntInputHint model.dispChatMaxJoinCountInput
+        , Element.el
+            [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
+            ( borderedButton SpawnDispChat "Start a disposable chat!" )
+        , let
+            padding =
+                Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+          in
+          case model.spawnDispChatResp of
+            NotSpawned_Disp ->
+                Element.none
+    
+            Waiting_Disp ->
+                Element.paragraph
+                    [ padding ]
+                    [ Element.text "Waiting for response from the server..." ]
+
+            GotError_Disp err ->
+                Element.paragraph
+                    [ padding
+                    , Font.color red
+                    ]
+                    [ Element.text "Error reaching server!" ]
+
+            GotChatId _ ->
+                Element.none
+
+        , footer 320 SameTab
         ]
 
 

@@ -75,20 +75,17 @@ view status =
                         []
                         [ Element.text
                             """
-                            You are invited to a Hideout persistent chat room! After you enter the room, 
+                            You are invited to a Hideout persistent chat room! This page is the entrance. After you enter the room, 
                             """
                         , underlinedText "bookmark the room page"
-                        , Element.text
-                            """
-                            . Then you'll have a private chat room with your friends, that is accessible one-click in your browser.
-                            """
+                        , Element.text ". Then you'll have a private chat room with your friends, that is accessible one-click in your browser."
                         ]
                     , Element.column
                         [ lineSpacing ]
                         [ plainPara "Two important things:"
                         , plainPara
                             """
-                            * Don't share the link to the room itself on any unprivate platform. That will make the room no longer private.
+                            * Don't share the link to the room page on any unprivate platform. That will make the room no longer private.
                             """
                         , plainPara
                             """

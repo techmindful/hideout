@@ -62,6 +62,8 @@ port port_WsReady : ( String -> msg ) -> Sub msg
 port port_WsError : ( () -> msg ) -> Sub msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
 
+port port_NewTab : String -> Cmd msg
+
 port port_DebugLog : String -> Cmd msg
 
 
@@ -395,7 +397,7 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
 
                 Ok chatIdStr ->
                     ( Normal { model | spawnDispChatResp = GotChatId chatIdStr }
-                    , Nav.pushUrl model.navKey <| frontendChatUrl <| unquote chatIdStr
+                    , port_NewTab <| frontendChatUrl <| unquote chatIdStr
                     )
 
 
@@ -560,53 +562,53 @@ viewModel model =
                     Root ->
                         Element.textColumn
                             []
-                            [ plainPara "Welcome to Hideout - A Service for Disposable Messages!"
+                            [ plainPara "Welcome to Hideout - A private chat service!"
                             , Element.textColumn
                                 [ Element.paddingXY 0 40
-                                , Element.spacingXY 0 10
+                                , Element.spacingXY 0 20
                                 ]
                                 [ Element.link
-                                    []
-                                    { url = frontendWriteLetterUrl
-                                    , label = Element.text "> Write a letter."
-                                    }
-                                , Element.link
                                     []
                                     { url = configChatUrl 
                                     , label = Element.text "> Start a chat."
                                     }
-                                , Element.row
-                                    [ Element.paddingXY 0 10 ]
-                                    [ Element.text "> Join a chat: "
-                                    , Input.text
-                                        [ Element.width <| Element.px 400
-                                        , Element.height <| Element.maximum 40 Element.fill
-                                        , Background.color bgColor
-                                        ]
-                                        { onChange = JoinChatInput
-                                        , text = model.joinChatInput
-                                        , placeholder = Just <|
-                                            Input.placeholder
-                                                [] <|
-                                                Element.text "Room ID"
-                                        , label = Input.labelHidden ""
-                                        }
-                                    , Element.el
-                                        [ Element.paddingXY 10 0
-                                        ] <|
-                                        Input.button
-                                            [ Element.padding 5
-                                            , Border.width 2
-                                            , Border.rounded 6
-                                            ]
-                                            { onPress = Just JoinChat
-                                            , label = Element.text "Join"
-                                            }
-                                    ]
+                                , Element.link
+                                    []
+                                    { url = frontendWriteLetterUrl
+                                    , label = Element.text "> Write a letter."
+                                    }
+                                --, Element.row
+                                --    [ Element.paddingXY 0 10 ]
+                                --    [ Element.text "> Join a chat: "
+                                --    , Input.text
+                                --        [ Element.width <| Element.px 400
+                                --        , Element.height <| Element.maximum 40 Element.fill
+                                --        , Background.color bgColor
+                                --        ]
+                                --        { onChange = JoinChatInput
+                                --        , text = model.joinChatInput
+                                --        , placeholder = Just <|
+                                --            Input.placeholder
+                                --                [] <|
+                                --                Element.text "Room ID"
+                                --        , label = Input.labelHidden ""
+                                --        }
+                                --    , Element.el
+                                --        [ Element.paddingXY 10 0
+                                --        ] <|
+                                --        Input.button
+                                --            [ Element.padding 5
+                                --            , Border.width 2
+                                --            , Border.rounded 6
+                                --            ]
+                                --            { onPress = Just JoinChat
+                                --            , label = Element.text "Join"
+                                --            }
+                                --    ]
                                 , Element.link
                                     []
                                     { url = aboutUrl
-                                    , label = Element.text "> How does it work?"
+                                    , label = Element.text "> About Hideout"
                                     }
                                 ]
                             ]

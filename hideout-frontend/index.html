@@ -111,6 +111,14 @@
         }
       );
 
+      elmApp.ports.port_NewTab.subscribe
+      (
+        function( url )
+        {
+          window.open( url );
+        }
+      );
+
       // Simply clears new messages notification in tab name.
       window.addEventListener( "focus", function( event )
         {
