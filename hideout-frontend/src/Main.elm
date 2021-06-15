@@ -36,7 +36,12 @@ import Time exposing
 import Url exposing (Url)
 import Url.Parser
 import Utils.Markdown
-import Utils.Types exposing ( PosIntInput(..), posIntInputToStr, strToPosIntInput )
+import Utils.Types exposing
+    ( PosIntInput(..)
+    , Trio(..)
+    , posIntInputToStr
+    , strToPosIntInput
+    )
 import Utils.Utils as Utils
 import Views.About
 import Views.Chat
@@ -46,12 +51,17 @@ import Views.ReadLetter
 import Views.WriteLetter
 
 
-port port_CopyEntranceLink: String -> Cmd msg
-port port_OnCopyEntranceLinkResult: ( Bool -> msg ) -> Sub msg
+port port_CopyEntranceLink : String -> Cmd msg
+port port_OnCopyEntranceLinkResult : ( Bool -> msg ) -> Sub msg
+port port_CopyLetterLink : String -> Cmd msg
+port port_OnCopyLetterLinkResult : ( Bool -> msg ) -> Sub msg
+
+-- Chat ws
 port port_InitWs : String -> Cmd msg
 port port_WsReady : ( String -> msg ) -> Sub msg
 port port_WsError : ( () -> msg ) -> Sub msg
 port port_RecvWsMsg : ( String -> msg ) -> Sub msg
+
 port port_DebugLog : String -> Cmd msg
 
 
@@ -59,6 +69,7 @@ subscriptions : State -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ port_OnCopyEntranceLinkResult OnCopyEntranceLinkResult
+        , port_OnCopyLetterLinkResult   OnCopyLetterLinkResult
 
         , port_WsReady <| ChatElmMsg << Chat.OnWsReady
         , port_WsError ( \_ -> ChatElmMsg Chat.OnWsError )
@@ -302,15 +313,16 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                         newModel = case result of
                             Err err ->
                                 Normal { model | letterStatus =
-                                    { letterStatus | write = Letter.GotResp <| Err err }
+                                    { letterStatus | write = Letter.GotError err }
                                 }
 
                             Ok letterId ->
                                 Normal { model | letterStatus =
                                     { letterStatus | write =
-                                        Letter.GotResp <| Ok
+                                        Letter.GotResp
                                             { id = letterId
                                             , maxReadCount = info.maxReadCount
+                                            , copyToClipboardResult = Empty
                                             }
                                     }
                                 }
@@ -323,6 +335,35 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                     ( Normal model
                     , Cmd.none
                     )
+
+        OnUserSharesLetter link ->
+            ( Normal model
+            , port_CopyLetterLink link
+            )
+
+        OnCopyLetterLinkResult succeeded ->
+            ( case model.letterStatus.write of
+                Letter.GotResp { id, maxReadCount, copyToClipboardResult } ->
+                    Normal
+                        { model | letterStatus =
+                            { letterStatus | write =
+                                Letter.GotResp
+                                    { id = id
+                                    , maxReadCount = maxReadCount
+                                    , copyToClipboardResult =
+                                        if succeeded then Positive else Negative
+                                    }
+                            }
+                        }
+
+                _ ->
+                    LogicError
+                        """
+                        OnCopyLetterLinkResult happened but model.letterStatus.write isn't GotResp?
+                        """
+
+            , Cmd.none
+            )
 
         DispChatMaxJoinCountInput str ->
             ( Normal { model | dispChatMaxJoinCountInput = str }
@@ -388,25 +429,29 @@ updateModel msg ( { letterRawInput, letterStatus, chatStatus } as model ) =
                                 GotError_Persist err
                                 
                             Ok entranceId ->
-                                GotEntranceId ( entranceId, NotCopied )
+                                GotEntranceId
+                                    { entranceId = entranceId
+                                    , copyToClipboardResult = Empty
+                                    }
                 }
             , Cmd.none
             )
 
-        OnShareEntrance link ->
+        OnUserSharesEntrance link ->
             ( Normal model
             , port_CopyEntranceLink link
             )
 
         OnCopyEntranceLinkResult succeeded ->
             ( case model.spawnPersistChatResp of
-                GotEntranceId ( entranceId, _ ) ->
+                GotEntranceId { entranceId, copyToClipboardResult } ->
                     Normal
                         { model | spawnPersistChatResp =
                             GotEntranceId
-                                ( entranceId
-                                , if succeeded then Succeeded else Failed
-                                )
+                                { entranceId = entranceId
+                                , copyToClipboardResult =
+                                    if succeeded then Positive else Negative
+                                }
                         }
 
                 _ ->

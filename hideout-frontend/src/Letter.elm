@@ -3,7 +3,11 @@ module Letter exposing (..)
 import Http
 import Json.Decode as JDec
 import Json.Decode exposing ( field, string, int )
-import Utils.Types exposing ( PosIntInput(..), strToPosIntInput )
+import Utils.Types exposing
+    ( PosIntInput(..)
+    , Trio(..)
+    , strToPosIntInput
+    )
 
 
 type alias Status =
@@ -22,11 +26,12 @@ type WriteStatus
     = NotSent
     | Sent
         { maxReadCount : Int }
-    | GotResp ( Result Http.Error
+    | GotError Http.Error
+    | GotResp
         { id : String
         , maxReadCount : Int
+        , copyToClipboardResult : Trio
         }
-      )
 
 
 type alias Letter =

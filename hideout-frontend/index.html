@@ -45,6 +45,10 @@
         ( elmApp.ports.port_CopyEntranceLink
         , elmApp.ports.port_OnCopyEntranceLinkResult
         );
+      setupCopyToClipboard
+        ( elmApp.ports.port_CopyLetterLink
+        , elmApp.ports.port_OnCopyLetterLinkResult
+        );
 
       var socket = null;
       var portSendWsMsgHandler = null

@@ -21,7 +21,6 @@ import CoreTypes exposing
     , Msg(..)
     , SpawnDispChatResp(..)
     , SpawnPersistChatResp(..)
-    , CopyToClipboardResult(..)
     )
 import Element exposing ( Element )
 import Element.Background as Background
@@ -30,7 +29,11 @@ import Element.Font as Font
 import Element.Input as Input
 import String.Extra exposing ( unquote )
 import Url.Builder
-import Utils.Types exposing ( PosIntInput, posIntInputToStr )
+import Utils.Types exposing
+    ( Trio(..)
+    , PosIntInput
+    , posIntInputToStr
+    )
 
 
 view : Model -> Element Msg
@@ -109,14 +112,14 @@ view model =
                     ]
                     [ Element.text "Error reaching server!" ]
 
-            GotEntranceId ( entranceId, copyToClipboardResult ) ->
+            GotEntranceId { entranceId, copyToClipboardResult } ->
                 let
                     entranceLink =
                         model.origin ++
                         ( frontendEntranceUrl <| unquote entranceId )
 
                     shareEntranceButton =
-                        borderedButton ( OnShareEntrance entranceLink ) "Share Entrance"
+                        borderedButton ( OnUserSharesEntrance entranceLink ) "Share Entrance"
 
                     accessEntranceButton =
                         Element.newTabLink
@@ -143,9 +146,9 @@ view model =
                         , accessEntranceButton
                         ]
                     , case copyToClipboardResult of
-                        NotCopied -> Element.none
-                        Succeeded -> Element.text "Entrance link is copied!"
-                        Failed    ->
+                        Empty    -> Element.none
+                        Positive -> Element.text "Entrance link is copied!"
+                        Negative ->
                             plainPara
                                 """
                                 Copying entrance link to clipboard failed. Are you using an old browser like IE?

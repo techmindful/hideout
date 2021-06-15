@@ -6,6 +6,8 @@ import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Common.Colors exposing (..)
 import Common.Contents exposing
+    ( borderedButton )
+import Common.Contents exposing
     ( Tabness(..)
     , footer
     , plainPara
@@ -32,7 +34,11 @@ import Url exposing (Url)
 import Url.Parser
 import Utils.Errors exposing ( httpErrToStr )
 import Utils.Markdown
-import Utils.Types exposing ( PosIntInput(..), posIntInputToStr )
+import Utils.Types exposing
+    ( PosIntInput(..)
+    , Trio(..)
+    , posIntInputToStr
+    )
 
 
 view : Model -> Element Msg
@@ -130,30 +136,46 @@ view model =
                             "Letter is sent. Waiting for the letter ID from server..."
                         ]
 
-                Letter.GotResp result ->
-                    case result of
-                        Err err ->
-                            plainPara <| httpErrToStr err
+                Letter.GotError err ->
+                    plainPara <| httpErrToStr err
 
-                        Ok info ->
-                            Element.textColumn
-                                [ Element.width Element.fill
-                                , lineSpacing
-                                , Element.padding 10
-                                , Border.width 2
-                                , Border.rounded 6
+                Letter.GotResp { id, maxReadCount, copyToClipboardResult } ->
+                    let
+                        letterLink =
+                            model.origin ++ 
+                            ( frontendReadLetterUrl <| unquote id )
+                    in
+                    Element.column
+                        ( [ Element.width Element.fill ] ++
+                          roundedBorder 10
+                        )
+                        [ Element.column
+                            [ lineSpacing ]
+                            [ Element.paragraph
+                                []
+                                [ Element.text "Your letter can be read "
+                                , Element.text <| String.fromInt maxReadCount
+                                , Element.text " times, at:"
                                 ]
-                                [ Element.paragraph
-                                    []
-                                    [ Element.text "Your letter can be read "
-                                    , Element.text <| String.fromInt info.maxReadCount
-                                    , Element.text " times, at:"
-                                    ]
-                                , plainPara <|
-                                    model.origin ++ 
-                                    frontendReadLetterUrl ++ "/" ++
-                                    unquote info.id
-                                ]
+                            , plainPara letterLink
+                            ]
+                        , Element.column
+                            [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
+                            , Element.spacingXY 0 10
+                            ]
+                            [ Element.el
+                                [ Element.width Element.shrink ]
+                                ( borderedButton ( OnUserSharesLetter letterLink ) "Share Letter" )
+
+                            , case copyToClipboardResult of
+                                Empty    -> Element.none
+                                Positive -> Element.text "Letter link is copied!"
+                                Negative -> Element.text
+                                    """
+                                    Copying letter link to clipboard failed. Are you using an old browser like IE?
+                                    """
+                            ]
+                        ]
             , divider
             , preview
             ]
@@ -162,10 +184,9 @@ view model =
                 Element.el
                     [ Element.paddingEach
                         { top = 20, bottom = 0, left = 0, right = 0 }
-                    ]
-                <|
+                    ] <|
                     Input.button
-                        (buttonStyle 5)
+                        ( buttonStyle 5 )
                         { onPress = Just LetterSend
                         , label = Element.text "Send"
                         }

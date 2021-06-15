@@ -11,7 +11,10 @@ import Letter exposing ( LetterMeta )
 import Route exposing (..)
 import Time
 import Url exposing (Url)
-import Utils.Types exposing ( PosIntInput )
+import Utils.Types exposing
+    ( PosIntInput
+    , Trio
+    )
 import Views.About
 import Views.Entrance
 
@@ -46,15 +49,9 @@ type SpawnPersistChatResp
     | Waiting_Persist
     | GotError_Persist Http.Error
     | GotEntranceId
-        ( String
-        , CopyToClipboardResult
-        )
-
-
-type CopyToClipboardResult
-    = NotCopied
-    | Succeeded
-    | Failed
+        { entranceId : String
+        , copyToClipboardResult : Trio
+        }
 
 
 type alias Model =
@@ -76,12 +73,13 @@ type alias Model =
 
     , entranceStatus : Views.Entrance.Status
 
-    , letterRawInput : Letter.RawInput
-    , letterPersistInput : Bool
-    , letterStatus : Letter.Status
     , dispChatMaxJoinCountInput : String
     , persistChatMaxJoinCountInput : String
     , chatStatus : Chat.Status
+
+    , letterRawInput : Letter.RawInput
+    , letterPersistInput : Bool
+    , letterStatus : Letter.Status
 
     , isShiftHeld : Bool
 
@@ -108,6 +106,8 @@ type Msg
     | LetterPersistInput Bool
     | LetterSend
     | GotLetterSendResp ( Result Http.Error String )
+    | OnUserSharesLetter String
+    | OnCopyLetterLinkResult Bool
 
     -- Config disp chat
     | DispChatMaxJoinCountInput String
@@ -118,7 +118,7 @@ type Msg
     | PersistChatMaxJoinCountInput String
     | SpawnPersistChat
     | GotSpawnPersistChatResp ( Result Http.Error String )
-    | OnShareEntrance String
+    | OnUserSharesEntrance String
     | OnCopyEntranceLinkResult Bool
 
     | GotEntranceResp ( Result Http.Error String )

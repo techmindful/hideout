@@ -14,7 +14,7 @@ rootUrl = absolute [] []
 aboutUrl = absolute [ "about" ] []
 
 
-frontendReadLetterUrl = absolute [ "read-letter" ] []
+frontendReadLetterUrl letterId = absolute [ "read-letter", letterId ] []
 backendReadLetterUrl  = mkBackendUrl [ "read-letter" ] []
 
 

@@ -1,6 +1,12 @@
 module Utils.Types exposing (..)
 
 
+type Trio
+    = Empty
+    | Positive
+    | Negative
+
+
 type PosIntInput
     = Good Int
     | Bad  String
