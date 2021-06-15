@@ -30,7 +30,7 @@ And replace Bob with the mass population. The people.
 3. Hideout is useful if your friends are scattered across multiple messaging apps. Someone on Snapchat can't talk to someone on Signal. But they can convene in a Hideout chat room.
 
 # Threat Model
-Hideout assumes your communication on the unprivate service isn't compromised. If you want a private conversation without it being logged by the unprivate service, Hideout can help. If your communication on the unprivate service is being actively monitored and tampered with, you'll need to establish a new private communication channel with your friends, preferably in person.
+Hideout assumes your communication on the unprivate service isn't compromised. If you want a private conversation without it being logged by the unprivate service, Hideout can help. If your communication on the unprivate service is already being actively monitored and tampered with, there's nothing you can do except establishing a new private communication channel with your friends, preferably in person.
 
 # How is Hideout private?
 - Hideout is designed to be self-hosted. The idea is that the more privacy-aware and tech-savvy person among a friend group will host the server, to use with their friends. So trust is already a given. The user trusts the server as much as they trust the person hosting.
