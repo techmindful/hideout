@@ -59,7 +59,8 @@ It's getting extremely fast and simple to install a new app, sign up, and start 
 That's when I started to work on Hideout. A chat service that requires no sign up, and no installation. You can create a chat room and send it to your contacts on unprivate platforms. But the conversation will remain private.
 
 # Feature-richness
-Hideout plans to implement emojis, file sharing, and voice/video chats. It plans to be as feature-rich as possible.
+Hideout plans to be as feature-rich as possible. Emojis is already here. It just needs some polishing for ease of use. File-sharing and voice/vidoe chat are on the roadmap.
+
 
 # Hideout is designed to be self-hosted.
 Hideout is designed to be self-hosted. The idea is that the more privacy-minded and tech-savvy person among a friend group can set up a Hideout server, for them and their friends to use. The server is naturally trusted, as the owner is a friend.
