@@ -357,12 +357,12 @@ persist_chat model =
                     """
                 , plainPara
                     """
-                    Here are the details of how it's automated. A person creates a persistent chat room, and sets the number of participants to 4, for example. This makes Hideout generate a chat room that can be joined infinitely on the server. Then, Hideout generates a disposable letter, which contains the room ID. The disposable letter can only be accessed 4 times. The person shares the link to this letter (not the chat!) to their 3 friends. The 4 of them each opens the letter, retrieves the room ID, and uses it to join the chat on Hideout's home page. Hideout deletes the letter after all 4 people have read it. So nothing else can get the room ID. But the 4 people now have a persistent chat room that they can always go back into.
+                    Here are the details of how it's automated. A person creates a persistent chat room, and sets the number of participants to 4, for example. This makes Hideout generate a chat room that can be joined infinitely on the server. Then, Hideout generates an \"entrance\", which contains the room ID. The entrance can only be accessed 4 times. The person shares the link to this entrance (not the chat!) to their 3 friends. The 4 of them each opens the entrance, and joins the room from there. Hideout deletes the entrance after all 4 people have accessed it. So nothing else can get the room ID. But the 4 people now have a persistent chat room that they can always go back into.
                     """
 
                 , plainPara
                     """
-                    Persistent chat is of great value for people who are in situations where it's improper to repeatedly create and share disposable chat room links, as doing so draws unwanted attention. Sure, you can create and send 1000 room links on Discord in the United States per day. But that's not the same in a lot of other places on the planet.
+                    Besides convenience, persistent chat is of great value for people who are in situations where it's improper to repeatedly create and share disposable chat room links, as doing so draws unwanted attention. In some countries, you can create and send 1000 room links on Discord every day, without the authority paying you a visit. But that's not the same in a lot of other places on the planet.
                     """
                 ]
     in
@@ -389,7 +389,7 @@ self_hosting model =
                     , underlinedText "physically owns"
                     , Element.text
                         """
-                        . To protect the server operator's IP address, the server should be run behind a VPN. I've experimented and confirmed that it's very practical. Mullvad VPN has an open-source VPN client, and offers the ability of port-forwarding. The Hideout server I ran ended up having a URL followed by a port number, like https://www.myhideout.com:12345. Not a big deal since the URL can be bookmarked in the browser. Currently the only inconvenience is that Mullvad's port-forwarding is under development. I couldn't get more than 1 port forwarded. So I couldn't really SSH into my server etc.
+                        . To protect the server operator's IP address, the server should be run behind a VPN. I've experimented and confirmed that it's very practical. Mullvad VPN has an open-source VPN client, and offers the ability of port-forwarding. The Hideout server I ran ended up having a URL followed by a port number, like https://www.myhideout.com:12345. Not a big deal since the URL can be bookmarked in the browser. Currently the only inconvenience is that Mullvad's port-forwarding is under development. I couldn't get more than 1 port forwarded. So I couldn't really SSH into my server at the same time.
                         """
                     ]
 

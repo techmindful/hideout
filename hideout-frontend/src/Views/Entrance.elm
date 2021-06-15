@@ -71,10 +71,18 @@ view status =
             GotRoomId roomId ->
                 Element.column
                     [ paraSpacing ]
-                    [ plainPara
-                        """
-                        You are invited to a Hideout persistent chat room! After you enter the room, bookmark the room page. Then you'll have a private chat room with your friends, that is accessible one-click in your browser.
-                        """
+                    [ Element.paragraph
+                        []
+                        [ Element.text
+                            """
+                            You are invited to a Hideout persistent chat room! After you enter the room, 
+                            """
+                        , underlinedText "bookmark the room page"
+                        , Element.text
+                            """
+                            . Then you'll have a private chat room with your friends, that is accessible one-click in your browser.
+                            """
+                        ]
                     , Element.column
                         [ lineSpacing ]
                         [ plainPara "Two important things:"
@@ -94,7 +102,7 @@ view status =
                         [ Element.newTabLink
                             ( buttonStyle 5 )
                             { url = frontendChatUrl roomId
-                            , label = Element.text "Join"
+                            , label = Element.text "Enter the chat room"
                             }
                         ]
                     , footer 100 NewTab
