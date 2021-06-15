@@ -140,11 +140,20 @@ view screenWidth model =
     in
     Element.column
         [ Element.width <| Element.maximum 1000 Element.fill
+        , Element.height Element.fill
         , sectionSpacing
         ] <|
-        [ link rootUrl "<< Hideout Home"
-        ] ++
-        sectionViews
+        [ link rootUrl "<< Hideout Home" ] ++
+        sectionViews ++
+        [ Element.newTabLink
+            [ Element.alignBottom
+            , Font.size 24
+            , Font.underline
+            ]
+            { url = "https://github.com/techmindful/hideout"
+            , label = Element.text "GitHub"
+            }
+        ]
 
 
 why_privacy : Model -> Element Msg
@@ -280,12 +289,7 @@ hideout_vs_apps model =
                             []
                             [ Element.text
                                 """
-                                That's when I started to work on Hideout. A chat service that requires no sign up, and no installation. You can just bookmark the website, start a disposable chat, and give the link to your contacts, over 
-                                """
-                            , underlinedText "any"
-                            , Element.text
-                                """
-                                 platform, be it Gmail, Facebook, Snapchat, Discord... Or you can create and bookmark a persistent chat room, and message your contacts from your browser at any time. Hideout offers the guarantee that nobody else can spy on your conversation.
+                                That's when I started to work on Hideout. A chat service that requires no sign up, and no installation. You can create a chat room and send it to your contacts on unprivate platforms. But the conversation will remain private.
                                 """
                             ]
                     ]
@@ -366,7 +370,7 @@ persist_chat model =
                     """
                 ]
     in
-    mkSection Persist_Chat "Persistent Chat: Where Hideout truly shines!" body model
+    mkSection Persist_Chat "Persistent Chat: Hideout's own invention" body model
 
 
 self_hosting : Model -> Element Msg
