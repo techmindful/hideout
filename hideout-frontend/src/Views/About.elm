@@ -38,14 +38,15 @@ import Url.Builder
 
 
 type Section
-    = Why_Privacy
+    = What_Is_Hideout
+    | Why_Privacy
     | Use_Cases
     | Threat_Model
     | How_Private
     | Persist_Chat
     | Troubleshooting
     | Hideout_Vs_Apps
-    | Why_Another_Disp
+    | Feature_Richness
     | Self_Hosting
     | Func_Prog
     | None
@@ -54,14 +55,15 @@ type Section
 urlFragAndSectionAssoc : Dict String Section
 urlFragAndSectionAssoc =
     AssocList.fromList
-        [ ( "why-privacy", Why_Privacy )
+        [ ( "what-is-hideout", What_Is_Hideout )
+        , ( "why-privacy", Why_Privacy )
         , ( "use-cases", Use_Cases )
         , ( "threat-model", Threat_Model )
         , ( "how-private", How_Private )
         , ( "persist-chat", Persist_Chat )
         , ( "troubleshooting", Troubleshooting )
         , ( "hideout-vs-apps", Hideout_Vs_Apps )
-        , ( "why-another-disp", Why_Another_Disp )
+        , ( "feature-richness", Feature_Richness )
         , ( "self-hosting", Self_Hosting )
         , ( "func-prog", Func_Prog )
         ]
@@ -126,14 +128,15 @@ view screenWidth model =
         sectionViews =
             List.map
                 ( \ sectionView -> sectionView model )
-                [ why_privacy
+                [ what_is_hideout
+                , why_privacy
                 , use_cases
                 , threat_model
                 , how_private
                 , persist_chat
                 , troubleshooting
                 , hideout_vs_apps
-                , why_another_disp
+                , feature_richness
                 , self_hosting
                 , func_prog
                 ]
@@ -154,6 +157,15 @@ view screenWidth model =
             , label = Element.text "GitHub"
             }
         ]
+
+
+what_is_hideout : Model -> Element Msg
+what_is_hideout model =
+    let
+        body = Body <|
+            plainPara "Hideout is a private chat service."
+    in
+    mkSection What_Is_Hideout "What is Hideout?" body model
 
 
 why_privacy : Model -> Element Msg
@@ -198,10 +210,8 @@ use_cases model =
                     [ Font.color green ]
                     [ Element.text
                         """
-                        2. Hideout is particularly useful if you want a chat room that's persistent, yet still private, which you and your friends can bookmark and keep going back to. Learn more 
+                        2. Hideout is particularly useful if you want a private chat room that can be bookmarked and accessed one-click from the browser. The persistent chat section below explains how it's implemented.
                         """
-                    , link ( sectionToUrl Persist_Chat ) "here"
-                    , Element.text "."
                     ]
                 , plainPara
                     """
@@ -220,7 +230,7 @@ threat_model model =
                 [ paraSpacing ]
                 [ plainPara
                     """
-                    Hideout assumes your communication on the unprivate service isn't compromised. If you want a private conversation without it being logged by the unprivate service, Hideout can help. If your communication on the unprivate service is being actively monitored and tampered with, you'll need to establish a new private communication channel with your friends, preferably in person.
+                    Hideout assumes your communication on the unprivate service isn't compromised. If you want a private conversation without it being logged by the unprivate service, Hideout can help. If your communication on the unprivate service is already being actively monitored and tampered with, there's nothing you can do except establishing a new private communication channel with your friends, preferably in person.
                     """
                 ]
     in
@@ -303,46 +313,16 @@ hideout_vs_apps model =
         model
 
 
-why_another_disp : Model -> Element Msg
-why_another_disp model =
+feature_richness : Model -> Element Msg
+feature_richness model =
     let
         body = Body <|
-            Element.column
-                [ paraSpacing ]
-                [ plainPara
-                    """
-                    Disposable chat is not a new idea. But the concept is in need of a new, good enough implementation. Before I made Hideout, I first looked up on search engines to find a disposable chat service that can serve my needs. But none satisfied me. Several aspects that I see are lacking:
-                    """
-                , Element.column
-                    [ lineSpacing
-                    , Element.paddingEach { left = 40, right = 0, top = 0, bottom = 0 }
-                    ]
-                    [ plainPara
-                        """
-                        1. Some services aren't open source. It's just a website run by someone I don't know. Why should I trust them?
-                        """
-                    , plainPara
-                        """
-                        2. Some services aren't served over HTTPS. Even a script kiddie can spy on, or even modify, my conversations.
-                        """
-                    , plainPara
-                        """
-                        3. Some services don't have many features. Hideout plans to implement emojis, file sharing, and voice/video chats. It plans to be as feature-rich as possible.
-                        """
-                    , Element.paragraph
-                        []
-                        [ Element.text
-                            """
-                            4. Some services are "time-based". A spying adversary can easily view the messages before it expires, and there will be no way of knowing. Learn more about Hideout's "access-based" approach in
-                            """
-                        , link
-                            ( sectionToUrl How_Private )
-                            "How are chats private on Hideout?"
-                        ]
-                    ]
-                ]
+            plainPara
+                """
+                Hideout plans to be as feature-rich as possible. Emojis is already here. It just needs some polishing for ease of use. File-sharing and voice/vidoe chat are on the roadmap.
+                """
     in
-    mkSection Why_Another_Disp "Why make yet another disposable chat service?" body model
+    mkSection Feature_Richness "Feature-richness" body model
 
 
 persist_chat : Model -> Element Msg
@@ -393,7 +373,12 @@ self_hosting model =
                     , underlinedText "physically owns"
                     , Element.text
                         """
-                        . To protect the server operator's IP address, the server should be run behind a VPN. I've experimented and confirmed that it's very practical. Mullvad VPN has an open-source VPN client, and offers the ability of port-forwarding. The Hideout server I ran ended up having a URL followed by a port number, like https://www.myhideout.com:12345. Not a big deal since the URL can be bookmarked in the browser. Currently the only inconvenience is that Mullvad's port-forwarding is under development. I couldn't get more than 1 port forwarded. So I couldn't really SSH into my server at the same time.
+                        . To protect the server operator's IP address, the server should be run behind a VPN. I've experimented and confirmed that it's very practical. 
+                        """
+                    , newTabLink "https://mullvad.net" "Mullvad VPN" 
+                    , Element.text
+                        """
+                         has an open-source VPN client, and offers the ability of port-forwarding. The Hideout server I ran ended up having a URL followed by a port number, like https://www.myhideout.com:12345. Not a big deal since the URL can be bookmarked in the browser. Currently the only inconvenience is that Mullvad's port-forwarding is under development. I couldn't get more than 1 port forwarded. So I couldn't really SSH into my server at the same time.
                         """
                     ]
 
