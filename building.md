@@ -8,7 +8,7 @@ elm make src/Main.elm --optimize --output=main.js
 ```
 This compiles Elm code into `main.js`.
 
-Enter `hideout-backend` directory and do:
+Enter `hideout-backend/` and do:
 ```
 stack install
 ```
