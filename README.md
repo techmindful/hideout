@@ -1,6 +1,6 @@
 Hideout is a private chat service.
 
-[Wiki](https://github.com/techmindful/hideout/wiki) explains how to build and host Hideout.
+See [hosting.md](https://github.com/techmindful/hideout/blob/main/hosting.md) for hosting Hideout, [building.md](https://github.com/techmindful/hideout/blob/main/building.md) for building Hideout from source and developing Hideout.
 
 The text below explains what Hideout is about.
 
