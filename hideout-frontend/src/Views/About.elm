@@ -163,7 +163,7 @@ what_is_hideout : Model -> Element Msg
 what_is_hideout model =
     let
         body = Body <|
-            plainPara "Hideout is a private chat service."
+            plainPara "Hideout is a self-hosted service that makes private, persistent chat rooms possible. It requires no installation or account creation. Unlike disposable chat, a Hideout room preserves privacy without expiring."
     in
     mkSection What_Is_Hideout "What is Hideout?" body model
 
@@ -249,7 +249,7 @@ how_private model =
                     """
                 , plainPara
                     """
-                    - Disposable letters can't be read after a max read limit is reached. A disposable chat room can't be joined after the max join limit is reached. This "access-based" approach gives a stronger guarantee of privacy than the "time-based" approach. If a message or chat room is set to be deleted after 15 minutes, nothing stops it from being viewed by unwanted parties at the 14th minute.
+                    - Although Hideout's key feature is a persistent private chat room, it's based on the idea of disposable messages. Disposable letters can't be read after a max read limit is reached. A disposable chat room can't be joined after the max join limit is reached. The entrance to a persistent chat room can't be accessed after the max access limit is reached. This "access-based" approach gives a stronger guarantee of privacy than the "time-based" approach. If a message or chat room is set to be deleted after 15 minutes, nothing stops it from being viewed by unwanted parties at the 14th minute.
                     """
                 ]
     in
@@ -333,7 +333,7 @@ persist_chat model =
                 [ paraSpacing ]
                 [ plainPara
                     """
-                    Persistent chat rooms is a simple yet powerful idea. It's a private chat room that doesn't expire, so the participants can keep going back to it, without having to create a new room every time they talk. Hideout achieves this in a very simple way.
+                    Persistent chat rooms is a simple yet powerful idea. It's a private chat room that doesn't need to expire. By bookmarking it in the browser, the participants can keep going back to the room, without having to create a new room every time they talk. Hideout achieves this in a very simple way.
                     """
                 , plainPara
                     """
