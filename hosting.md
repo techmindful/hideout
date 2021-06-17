@@ -73,7 +73,7 @@ server {
 ```
 Change your `server_name` and `root` based on your domain name, and file location.
 
-Now if you start nginx with `sudo nginx`, you should see Hideout running at `localhost`.
+Now if you start nginx with `sudo nginx`, you should see Hideout's frontend running at `localhost`.
 
 Now is the time to setup domain name, DNS, and HTTPS. I'm going to switch to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
 
