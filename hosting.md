@@ -73,9 +73,9 @@ server {
 ```
 Change your `server_name` and `root` based on your domain name, and file location.
 
-Now if you start nginx with `sudo nginx`, you should see Hideout's frontend running at `localhost`. This is also a good time to make sure Hideout can be accessed by visiting your public IP in your browser. You may need to configure your router and firewall for the traffic to be forwarded.
+Now if you start nginx with `sudo nginx`, you should see Hideout's frontend running at `localhost`. This is also a good time to make sure Hideout can be accessed by visiting your public IP in your browser. You will need to configure port-forwarding for port 80 and 443 on your router and firewall for the traffic to be forwarded.
 
-Now we need to setup domain name, DNS, and HTTPS. I'm going to switch to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
+Now we need to setup domain name, DNS, and HTTPS. I'm switching to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
 
 I got my domain name at Njalla: https://njal.la/, a "privacy-aware domain service". For the domain's DNS, I added an A record, fill in its name with "www", and its content with my public IP. I gave the record a short TTL. I didn't continue until I tested to see that I can reach Hideout by visiting `http://www.hideout-demo.com`. Note that it only works over HTTP, not HTTPS, at this point.
 
@@ -112,8 +112,8 @@ server {
 }
 
 # The traditional redirection from HTTP to HTTPS,
-# Is not needed here. Because user only has 1 option for the port,
-# If the server is behind Mullvad VPN.
+# Is not needed here, because port 80 won't be available
+# Through Mullvad anyway.
 #server {
 #
 #  server_name hideout-demo.com
@@ -128,4 +128,4 @@ server {
 #
 #}
 ```
-At this point, I've successfully hosted Hideout on a computer I physically own, over HTTPS, behind a VPN. I can access it in browser at `https://www.hideout-demo.com:50000`. Note that no piece of the URL can be left out. I need to specify all of `https`, `www`, and port number `50000`.
+At this point, I've successfully hosted Hideout on a computer I physically own, over HTTPS, behind a VPN. I can access it in browser at `https://www.hideout-demo.com:50000`. Note that no piece of the URL can be left out. I need to specify `https`, because `http` isn't available. I need to specify `www`, because the DNS only has one record, which translates IP for `www`. I can't add some DNS redirect, because DNS isn't aware of port numbers. Finally, I need to specify the port number `50000` as well.
