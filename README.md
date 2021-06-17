@@ -5,7 +5,7 @@ See [hosting.md](https://github.com/techmindful/hideout/blob/main/hosting.md) fo
 The text below explains what Hideout is about.
 
 # What is Hideout?
-Hideout gives you a private, persistent chat room. It requires no installation or account creation. Unlike disposable chat, a Hideout room preserves privacy without expiring.
+Hideout is a self-hosted service that makes private, persistent chat rooms possible. It requires no installation or account creation. Unlike disposable chat, a Hideout room preserves privacy without expiring.
 
 # Why Privacy?
 I always like to use this analogy.
