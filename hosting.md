@@ -73,15 +73,17 @@ server {
 ```
 Change your `server_name` and `root` based on your domain name, and file location.
 
-Now if you start nginx with `sudo nginx`, you should see Hideout's frontend running at `localhost`.
+Now if you start nginx with `sudo nginx`, you should see Hideout's frontend running at `localhost`. This is also a good time to make sure Hideout can be accessed by visiting your public IP in your browser. You may need to configure your router and firewall for the traffic to be forwarded.
 
-Now is the time to setup domain name, DNS, and HTTPS. I'm going to switch to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
+Now we need to setup domain name, DNS, and HTTPS. I'm going to switch to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
 
-In my case, I'm hosting Hideout behind Mullvad VPN: https://mullvad.net. With its (open-source) app, port-forwarding through VPN becomes possible. It's an easy process, and I don't need to setup port-forwarding elsewhere. If you are hosting Hideout without a VPN, you probably need to setup port-forwarding on your router and firewall. A caveat is that Mullvad assigns me a random port number. Let's assume it's 50000 in this guide. This requires me to change the `listen 80` in `hideout-demo.com.conf` to `listen 50000`.
+I got my domain name at Njalla: https://njal.la/, a "privacy-aware domain service". For the domain's DNS, I added an A record, fill in its name with "www", and its content with my public IP. I gave the record a short TTL. I didn't continue until I tested to see that I can reach Hideout by visiting `http://www.hideout-demo.com`. Note that it only works over HTTP, not HTTPS, at this point.
 
-I get my domain name at Njalla: https://njal.la/, a "privacy-aware domain service". For the domain's DNS, I add an A record, fill in its name with "www", and its content with the "Out" IP shown on my Mullvad app. I give the record a short TTL. I don't continue until I test to see that I can reach Hideout by visiting `http://www.hideout-demo.com:50000`.
+The next step is to enable HTTPS. Unlike domain and VPN, an HTTPS certificate can be acquired freely with EFF's Certbot: https://certbot.eff.org/. The instruction there is pretty simple to follow. Certbot modified my `/etc/nginx/conf.d/hideout-demo.com.conf` to handle HTTPS traffic, and redirect HTTP traffic to HTTPS.
 
-The next step is to enable HTTPS. Unlike domain and VPN, an HTTPS certificate can be acquired freely with EFF's Certbot: https://certbot.eff.org/. The instruction there is pretty simple to follow. I let Certbot modify my nginx config, and the final `hideout-demo.com.conf` looks like this:
+I decided to test if I can access Hideout over HTTPS, and if I'll be redirected when I attempt HTTP connection. I found the website timing out. After checking every corner, it turned out that on my firewall, I've only setup port-forwarding for port 80, but not port 443. After I forwarded port 443, the HTTPS connection and redirection worked immediately.
+
+At this point, I've successfully hosted a working instance of Hideout on my laptop. But if I'm to send a Hideout link to others, I'd expose the public IP of my home to both the recipients, and the unprivate platform where I send the link. So I need to host Hideout behind a VPN. Fortunately, port-forwarding is supported by Mullvad VPN: https://mullvad.net. I installed its open-source app on my laptop, and followed Mullvad's port-forwarding guide: https://mullvad.net/en/help/port-forwarding-and-mullvad/. It was a rather simple process. I didn't need to touch my router or firewall. I also disabled the port-forwarding on my firewall for port 80 and 443, because the port-forwarding doesn't happen on the firewall anymore. It's handled by Mullvad. A caveat is that Mullvad assigns me a random port number. Let's assume it's 50000 in this guide. This requires me to change the `listen 443 ssl` in `hideout-demo.com.conf` to `listen 50000 ssl`. Below is the final config. Notice the commented block at the end too.
 ```
 server {
 
