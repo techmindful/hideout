@@ -8,11 +8,11 @@ This guide assumes:
 * Hideout will be hosted at `/home/user/hideout-1.0.0`. Your version number may be different.
 * Domain name will be `ourhideout.xyz`.
 
-To host hideout, first download the latest release from the release page: https://github.com/techmindful/hideout/releases
+To host Hideout, first download the latest release from the release page: https://github.com/techmindful/hideout/releases
 
 Unzip it to `/home/user/hideout-1.0.0`.
 
-We need nginx for the server. Get it here: https://nginx.org/
+We need nginx for the server. Get it here: https://nginx.org/en/docs/install.html
 
 We need to config nginx. You can skip this part if you are familiar with nginx. I'm no expert. I left nginx's default config at `/etc/nginx/nginx.conf` pretty much untouched:
 ```
