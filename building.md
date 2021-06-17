@@ -26,7 +26,7 @@ To host Hideout, see [hosting.md](https://github.com/techmindful/hideout/blob/ma
 
 To develop Hideout, you further need:
 * nginx: https://nginx.org/en/docs/install.html, for a working local server.
-* nvm: https://github.com/nvm-sh/nvm, because `elm-live` needs npm. Before you try to install `node` and `npm` yourself, there are apparently right ways and wrong ways to do it. To save you an afternoon or two of your time, I feel morally obligated to point out that `nvm` is the proper way, or at least the least painful way, to get `node` and `npm`.
+* nvm: https://github.com/nvm-sh/nvm, because `elm-live` needs npm. Before you try to install `node` and `npm` yourself, there are apparently right ways and wrong ways to do it. To save you an afternoon or two of your time, I feel morally obligated to point out that `nvm` is the proper way, or at least the least painful way, to get `node` and `npm`. Use the install script on `nvm`'s GitHub to install `nvm`. Then do `nvm install node` to install `node` and `npm`.
 * elm-live: https://github.com/wking-io/elm-live, for hot-reloading.
 
 I usually enter `hideout-frontend/` and do:
