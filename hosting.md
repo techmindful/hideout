@@ -14,7 +14,7 @@ Unzip it to `/home/user/hideout-1.0.0`.
 
 We need nginx for the server. Get it here: https://nginx.org/en/docs/install.html
 
-We need to config nginx. You can skip this part if you are familiar with nginx. I'm no expert. I left nginx's default config at `/etc/nginx/nginx.conf` pretty much untouched:
+We need to config nginx. You can skip this part if you are familiar with nginx. I'm no expert. I left nginx's default config at `/etc/nginx/nginx.conf` untouched:
 ```
 
 user  nginx;
