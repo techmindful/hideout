@@ -40,7 +40,7 @@ Nginx requires that server files are all "accessible". Specifically, try to `sta
 ```
 stat ~/Projects/hideout/hideout-frontend/main.js
 ```
-If it gives you some statistics, then it's all set. If it says "permission denied", then you need to use `chmod` to give `x` permission to all the directories leading to Hideout. In my case, I needed to do `chmod +x ~`. This is from a StackOverflow answer here: https://stackoverflow.com/a/43686446
+If it gives you some statistics, then it's all set. If it says "permission denied", then you need to use `chmod` to give `x` permission to all the directories leading to Hideout. In my case, I needed to do `chmod +x ~`. This is from a StackOverflow answer here: https://stackoverflow.com/a/43686446.
 
 If your repo is at a different location than `/home/user/Projects/hideout`, then you need to modify the `root` directive at [this line](https://github.com/techmindful/hideout/blob/cb206c46f7e3191fec2d37ca05c4aa93534769f9/nginx.conf#L7) in your `nginx.conf`, to point to your location of `hideout-frontend/`.
 
