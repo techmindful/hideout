@@ -7,6 +7,7 @@ Hideout is tested to work on Debian. Testing on other distros is very welcomed.
 This guide assumes:
 * Hideout will be hosted at `/home/user/hideout-1.0.0`. Your version number may be different.
 * Domain name will be `hideout-demo.com`.
+* You are using a device you own to host Hideout. If you decide to choose the less ideal option with rented VPS, the process will be similar and simpler. Port-forwarding is likely already handled by the VPS provider, and you won't need to care about VPN either.
 
 To host Hideout, first download the latest release from the release page: https://github.com/techmindful/hideout/releases
 
