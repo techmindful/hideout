@@ -3,7 +3,7 @@ Hideout is a self-hosted service that makes private, persistent chat rooms possi
 
 See [hosting.md](https://github.com/techmindful/hideout/blob/main/hosting.md) for hosting Hideout, [CONTRIBUTING.md](https://github.com/techmindful/hideout/blob/main/CONTRIBUTING.md) for the contribution guideline, [building.md](https://github.com/techmindful/hideout/blob/main/building.md) for building Hideout from source and developing Hideout.
 
-A demo instance is running at [hideout-demo.com](hideout-demo.com). Uptime is expected to be unstable. Do not trust it for private conversations. 
+A demo instance is running at [hideout-demo.com](hideout-demo.com). Uptime is expected to be unstable. Do not trust it for your private conversations. 
 
 The text below is an introduction.
 
