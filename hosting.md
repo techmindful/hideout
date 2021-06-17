@@ -75,7 +75,7 @@ Change your `server_name` and `root` based on your domain name, and file locatio
 
 Now if you start nginx with `sudo nginx`, you should see Hideout's frontend running at `localhost`. This is also a good time to make sure Hideout can be accessed by visiting your public IP in your browser. You will need to configure port-forwarding for port 80 and 443 on your router and firewall for the traffic to be forwarded.
 
-Now we need to setup domain name, DNS, and HTTPS. I'm switching to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
+Now we need to setup domain name, DNS, and HTTPS. I'm switching to my perspective here, as there are multiple ways to make it work. I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
 
 I got my domain name at Njalla: https://njal.la/, a "privacy-aware domain service". For the domain's DNS, I added an A record, fill in its name with "www", and its content with my public IP. I gave the record a short TTL. I didn't continue until I tested to see that I can reach Hideout by visiting `http://www.hideout-demo.com`. Note that it only works over HTTP, not HTTPS, at this point.
 
