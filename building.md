@@ -2,7 +2,9 @@ To build Hideout, you need:
 * Elm: https://elm-lang.org/
 * Haskell Stack: https://docs.haskellstack.org/en/stable/README/
 
-After cloning the repo, enter `hideout-frontend/` and do:
+Clone the repo. This guide assumes it'll be at `/home/user/Projects/hideout/`.
+
+Enter `hideout-frontend/` and do:
 ```
 elm make src/Main.elm --optimize --output=main.js
 ```
@@ -32,8 +34,23 @@ elm-live src/Main.elm --pushstate -- --output=main.js
 ```
 And keep a browser tab open at `localhost:8000`. This allows me to see compiler errors on a full screen, rather than a small tmux pane.
 
-But `elm-live` can't get Hideout working locally. For that, we need nginx. Under `hideout/`, do:
+But `elm-live` can't get Hideout working locally. For that, we need nginx.
+
+Nginx requires that server files are all "accessible". Specifically, try to `stat` into Hideout's directory, like:
+```
+stat ~/Projects/hideout/hideout-frontend/main.js
+```
+If it gives you some statistics, then it's all set. If it says "permission denied", then you need to use `chmod` to give `x` permission to all the directories leading to Hideout. In my case, I needed to do `chmod +x ~`.
+
+Under `hideout/`, do:
 ```
 sudo nginx -c $(pwd)/nginx.conf
 ```
 This starts an nginx server, using a config provided by the repo.
+
+Finally, run `~/.local/bin/hideout-backend-exe`. If `~/.local/bin` is on your `$PATH`, you can just do:
+```
+hideout-backend-exe
+```
+
+The server is now running on `localhost`.
