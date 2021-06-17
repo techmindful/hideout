@@ -6,7 +6,7 @@ Hideout is tested to work on Debian. Testing on other distros is very welcomed.
 
 This guide assumes:
 * Hideout will be hosted at `/home/user/hideout-1.0.0`. Your version number may be different.
-* Domain name will be `ourhideout.xyz`.
+* Domain name will be `hideout-demo.com`.
 
 To host Hideout, first download the latest release from the release page: https://github.com/techmindful/hideout/releases
 
@@ -46,14 +46,14 @@ http {
 
     #gzip  on;
 
-    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/conf.d/hideout-demo.com.conf;
 }
 ```
-Notice the last line `include /etc/nginx/conf.d/*.conf;`. It brings in all the extra configs stored in `/etc/nginx/conf.d`. So let's rename the default `/etc/nginx/conf.d/default.conf` into something with a different postfix, like `/etc/nginx/conf.d/default.conf_default`, so that it won't be included. Then let's create a config for Hideout at `/etc/nginx/conf.d/ourhideout.xyz.conf`:
+Notice the last line `include /etc/nginx/conf.d/hideout-demo.com.conf;`. It brings in the site-specific config at `/etc/nginx/conf.d/hideout-demo.com.conf`. So let's create a config for Hideout at `/etc/nginx/conf.d/hideout-demo.com.conf`:
 ```
 server {
 
-  server_name www.ourhideout.xyz;
+  server_name www.hideout-demo.com;
 
   root /home/user/hideout-1.0.0/;
 
@@ -77,15 +77,15 @@ Now if you start nginx with `sudo nginx`, you should see Hideout running at `loc
 
 Now is the time to setup domain name, DNS, and HTTPS. I'm going to switch to my perspective here, because there are multiple ways to make it work, and I don't want to sound like a sales associate by saying things like "okay now you should get a domain from Njalla and buy Mullvad VPN".
 
-In my case, I'm hosting Hideout behind Mullvad VPN: https://mullvad.net. With its (open-source) app, port-forwarding through VPN becomes possible. It's an easy process, and I don't need to setup port-forwarding elsewhere. If you are hosting Hideout without a VPN, you probably need to setup port-forwarding on your router and firewall. A caveat is that Mullvad assigns me a random port number. Let's assume it's 50000 in this guide. This requires me to change the `listen 80` in `ourhideout.xyz.conf` to `listen 50000`.
+In my case, I'm hosting Hideout behind Mullvad VPN: https://mullvad.net. With its (open-source) app, port-forwarding through VPN becomes possible. It's an easy process, and I don't need to setup port-forwarding elsewhere. If you are hosting Hideout without a VPN, you probably need to setup port-forwarding on your router and firewall. A caveat is that Mullvad assigns me a random port number. Let's assume it's 50000 in this guide. This requires me to change the `listen 80` in `hideout-demo.com.conf` to `listen 50000`.
 
-I get my domain name at Njalla: https://njal.la/, a "privacy-aware domain service". For the domain's DNS, I add an A record, fill in its name with "www", and its content with the "Out" IP shown on my Mullvad app. I give the record a short TTL. I don't continue until I test to see that I can reach Hideout by visiting `http://www.ourhideout.xyz:50000`.
+I get my domain name at Njalla: https://njal.la/, a "privacy-aware domain service". For the domain's DNS, I add an A record, fill in its name with "www", and its content with the "Out" IP shown on my Mullvad app. I give the record a short TTL. I don't continue until I test to see that I can reach Hideout by visiting `http://www.hideout-demo.com:50000`.
 
-The next step is to enable HTTPS. Unlike domain and VPN, an HTTPS certificate can be acquired freely with EFF's Certbot: https://certbot.eff.org/. The instruction there is pretty simple to follow. I let Certbot modify my nginx config, and the final `ourhideout.xyz.conf` looks like this:
+The next step is to enable HTTPS. Unlike domain and VPN, an HTTPS certificate can be acquired freely with EFF's Certbot: https://certbot.eff.org/. The instruction there is pretty simple to follow. I let Certbot modify my nginx config, and the final `hideout-demo.com.conf` looks like this:
 ```
 server {
 
-  server_name www.ourhideout.xyz;
+  server_name www.hideout-demo.com;
 
   root /home/user/hideout-1.0.0/;
 
@@ -102,8 +102,8 @@ server {
 
   # SSL cert
   listen 50000 ssl;
-  ssl_certificate /etc/letsencrypt/live/www.ourhideout.xyz/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/www.ourhideout.xyz/privkey.pem;
+  ssl_certificate /etc/letsencrypt/live/www.hideout-demo.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/www.hideout-demo.com/privkey.pem;
   include /etc/letsencrypt/options-ssl-nginx.conf;
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -114,9 +114,9 @@ server {
 # If the server is behind Mullvad VPN.
 #server {
 #
-#  server_name www.ourhideout.xyz
+#  server_name hideout-demo.com
 #
-#  if ($host = www.ourhideout.xyz) {
+#  if ($host = www.hideout-demo.com) {
 #    return 301 https://$host$request_uri;
 #  }
 #
@@ -128,4 +128,4 @@ server {
 ```
 I modified it further after Certbot's operation. See the commented out block at the end. Make sure that the port number being listened on is 50000, with this line `listen 50000 ssl;`.
 
-At this point, I've successfully hosted Hideout on a computer I physically own, behind VPN, over HTTPS. I can access it in browser at `https://www.ourhideout.xyz:50000`. Note that no piece of the URL can be left out. I need to specify all of `https`, `www`, and port number `50000`.
+At this point, I've successfully hosted Hideout on a computer I physically own, behind VPN, over HTTPS. I can access it in browser at `https://www.hideout-demo.com:50000`. Note that no piece of the URL can be left out. I need to specify all of `https`, `www`, and port number `50000`.
