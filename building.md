@@ -23,7 +23,7 @@ The pieces to run Hideout are
 To host Hideout, see [hosting.md](https://github.com/techmindful/hideout/blob/main/hosting.md)
 
 To develop Hideout, you further need:
-* nginx: https://nginx.org/, for a working local server.
+* nginx: https://nginx.org/en/docs/install.html, for a working local server.
 * elm-live: https://github.com/wking-io/elm-live, for hot-reloading.
 
 I usually enter `hideout-frontend/` and do:
