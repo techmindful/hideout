@@ -37,3 +37,7 @@ However, I will open an issue myself, for each such feature, to start a discussi
 So yeah, I'm saving the fun parts for myself, and leaving the boring stuff for others 😨 But the reality is, nobody can take the fun away. You can always fork the repo and play with it however you want! It's just that, you may start out not caring about your fork, but in case you end up implementing an entire shiny feature like end-to-end encrypted voice/video chat, you may really want it merged. Be very careful of the expectation of having your code merged creeping up on you.
 
 In summary, don't let me stop you from having fun with implementing new features on your fork. Just know that if you did it, it may still not be merged. On the plus side, you had fun doing it and learned a lot! Even better, you can provide everyone with advice and caution about implementing that feature. These will surely be merged, with the mind 💡
+
+# Outro
+
+Thank you for considering making contribution to Hideout. I'm really feeling the saying of "tech is the easy part". In the end it's about community. The community of Hideout. The community of privacy. I'm still a novice when it comes to open source and free software, and there's a lot for me to learn.
