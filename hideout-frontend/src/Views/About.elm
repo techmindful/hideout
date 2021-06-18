@@ -172,13 +172,14 @@ what_is_hideout model =
                     [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
                     [ Element.text "Here's a video demo:" ]
                 , Element.el
-                    [ -- TODO: Hardcoded width. Element.maximum doesn't auto-resize here.
-                      Element.width <| Element.maximum 520 Element.fill
-                    , Element.paddingEach { top = 30, bottom = 0, left = 0, right = 0 }
+                    [ Element.paddingEach { top = 30, bottom = 0, left = 0, right = 0 }
                     ] <|
                     Element.html <|
                         Html.video
-                            [ Html.Attributes.controls True ]
+                            [ Html.Attributes.controls True
+                            , Html.Attributes.width 520
+                            , Html.Attributes.height 292
+                            ]
                             [ Html.source
                                 [ Html.Attributes.src "/static/videos/intro.mp4"
                                 , Html.Attributes.type_
