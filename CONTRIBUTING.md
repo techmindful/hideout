@@ -1,6 +1,10 @@
 # Welcome
 
-Hideout welcomes your contribution! It's a project of moderate complexity, and has the ambition of competing with popular chat services. It's unlikely I can give it the feature-richness and robustness it deserves on my own. In order for us to work together better, let's look at some guidelines on contribution and communication.
+Hideout welcomes your contribution! It's a project of moderate complexity, and has the ambition of competing with popular chat services. It's unlikely I can give it the robustness it deserves on my own. In order for us to work together better, let's look at some guidelines on communication and contribution.
+
+# Communication
+
+The communication rule I'd like to follow is that, if a contribution you want to make will take a non-trivial amount of effort, talk to me first. Read further on contributing, to see how this rule applies.
 
 # Contributing
 
@@ -14,7 +18,7 @@ Every bug you find is of immense value! Just make sure you've checked if it's al
 
 ### Automated Tests
 
-It really is no fun checking if the basic messaging works, every time the code is rebuilt. I'm not very experienced with automated testing yet. So any help on that part will save me a lot of sanity 🙏
+It really is no fun checking if the basic messaging works, every time the code is rebuilt. I'm not very experienced with automated testing yet. So any help on that part will save me a lot of sanity 🙏 But before you write a new automated test, talk to me first by opening an issue. What's the issue here? You think there lacks a certain automated test! Since writing a test will take some time, let's discuss whether it's needed, how it should be done, who should write it, before committing to the effort.
 
 ### Feature Improvement
 
