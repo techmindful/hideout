@@ -1,6 +1,8 @@
 # What is Hideout?
 Hideout is a self-hosted service that makes private, persistent chat rooms possible. It requires no installation or account creation. Unlike disposable chat, a Hideout room preserves privacy without expiring.
 
+A video demo can be watched here: https://vimeo.com/564494164. Alternatively, the video is available [here](https://github.com/techmindful/hideout/blob/main/hideout-frontend/static/videos/intro.mp4), or on the about page of a running instance.
+
 See [hosting.md](https://github.com/techmindful/hideout/blob/main/hosting.md) for hosting Hideout, [CONTRIBUTING.md](https://github.com/techmindful/hideout/blob/main/CONTRIBUTING.md) for the contribution guideline, [building.md](https://github.com/techmindful/hideout/blob/main/building.md) for building Hideout from source and developing Hideout.
 
 A demo instance is running at [hideout-demo.com](hideout-demo.com). Uptime is expected to be unstable. Do not trust it for your own private conversations. 
