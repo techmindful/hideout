@@ -31,6 +31,8 @@ import Common.Urls exposing
 import Element exposing ( Element )
 import Element.Font as Font
 import Element.Input as Input
+import Html
+import Html.Attributes
 import List
 import List.Extra as List
 import Set exposing ( Set )
@@ -109,7 +111,7 @@ type Msg
 
 
 init : Model
-init = { sectionToShow = None }
+init = { sectionToShow = What_Is_Hideout }
 
 
 update : Msg -> Model -> Model
@@ -163,7 +165,28 @@ what_is_hideout : Model -> Element Msg
 what_is_hideout model =
     let
         body = Body <|
-            plainPara "Hideout is a self-hosted service that makes private, persistent chat rooms possible. It requires no installation or account creation. Unlike disposable chat, a Hideout room preserves privacy without expiring."
+            Element.column
+                []
+                [ plainPara "Hideout is a self-hosted service that makes private, persistent chat rooms possible. It requires no installation or account creation. Unlike disposable chat, a Hideout room preserves privacy without expiring."
+                , Element.paragraph
+                    [ Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 } ]
+                    [ Element.text "Here's a video demo:" ]
+                , Element.el
+                    [ -- TODO: Hardcoded width. Element.maximum doesn't auto-resize here.
+                      Element.width <| Element.maximum 520 Element.fill
+                    , Element.paddingEach { top = 30, bottom = 0, left = 0, right = 0 }
+                    ] <|
+                    Element.html <|
+                        Html.video
+                            [ Html.Attributes.controls True ]
+                            [ Html.source
+                                [ Html.Attributes.src "/static/videos/intro.mp4"
+                                , Html.Attributes.type_
+                                    "video/mp4"
+                                ]
+                                []
+                            ]
+                ]
     in
     mkSection What_Is_Hideout "What is Hideout?" body model
 
