@@ -10,17 +10,20 @@ import Element.Font as Font
 {-| Calculate window edge padding based on current window width,
 and a preferred ratio that's tested on a 2560px wide monitor.
 -}
-windowPaddingPx windowWidth = 60 / 2560 * windowWidth
+windowPaddingPx windowWidth =
+    60 / 2560 * windowWidth
 
 
-windowPadding windowWidth = Element.padding <| round <| windowPaddingPx windowWidth
+windowPadding windowWidth =
+    Element.padding <| round <| windowPaddingPx windowWidth
 
 
 widthConstraint =
     Element.width <| Element.maximum 750 Element.fill
 
 
-linkStyle = [ Font.underline ]
+linkStyle =
+    [ Font.underline ]
 
 
 roundedBorder padding =
@@ -30,7 +33,8 @@ roundedBorder padding =
     ]
 
 
-buttonStyle = roundedBorder
+buttonStyle =
+    roundedBorder
 
 
 lineSpacing =
@@ -41,7 +45,7 @@ paraSpacing =
     Element.spacingXY 0 20
 
 
-inlineInputStyle : List ( Element.Attribute msg )
+inlineInputStyle : List (Element.Attribute msg)
 inlineInputStyle =
     [ Element.width <| Element.px 100
     , Element.height <| Element.maximum 40 Element.fill

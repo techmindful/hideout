@@ -4,23 +4,25 @@ module Views.Entrance exposing
     , view
     )
 
-import Common.Contents exposing
-    ( Tabness(..)
-    , footer
-    , newTabLink
-    , plainPara
-    , underlinedText
-    )
-import Common.Styles exposing
-    ( buttonStyle
-    , lineSpacing
-    , paraSpacing
-    , widthConstraint
-    )
+import Common.Contents
+    exposing
+        ( Tabness(..)
+        , footer
+        , newTabLink
+        , plainPara
+        , underlinedText
+        )
+import Common.Styles
+    exposing
+        ( buttonStyle
+        , lineSpacing
+        , paraSpacing
+        , widthConstraint
+        )
 import Common.Urls exposing (..)
-import Element exposing ( Element )
+import Element exposing (Element)
 import Http
-import Utils.Errors exposing ( httpErrToStr )
+import Utils.Errors exposing (httpErrToStr)
 import Views.About
 
 
@@ -38,7 +40,8 @@ type alias Model =
 view : Status -> Element msg
 view status =
     Element.el
-        [ widthConstraint ] <|
+        [ widthConstraint ]
+    <|
         case status of
             NotEntering ->
                 plainPara "Not entering an entrance. Probably a logic error."
@@ -58,7 +61,7 @@ view status =
                                     You were invited to a Hideout persistent chat room! But the entrance ID isn't found. Learn more about what this implies 
                                     """
                                 , newTabLink
-                                    ( Views.About.sectionToUrl Views.About.Troubleshooting )
+                                    (Views.About.sectionToUrl Views.About.Troubleshooting)
                                     "here"
                                 , Element.text "."
                                 ]
@@ -97,11 +100,10 @@ view status =
                         , Element.spacingXY 0 20
                         ]
                         [ Element.newTabLink
-                            ( buttonStyle 5 )
+                            (buttonStyle 5)
                             { url = frontendChatUrl roomId
                             , label = Element.text "Enter the chat room"
                             }
                         ]
                     , footer 100 NewTab
                     ]
-

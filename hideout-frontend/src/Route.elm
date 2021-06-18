@@ -7,7 +7,7 @@ import Views.About
 
 type Route
     = Root
-    | About ( Views.About.Section )
+    | About Views.About.Section
     | ReadLetter String
     | WriteLetter
     | ConfigChat

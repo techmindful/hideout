@@ -5,36 +5,60 @@ import Url.Builder exposing (..)
 
 mkBackendUrl : List String -> List QueryParameter -> String
 mkBackendUrl pathSegments queryParams =
-    absolute ( "api" :: pathSegments ) queryParams
+    absolute ("api" :: pathSegments) queryParams
 
 
-rootUrl = absolute [] []
+rootUrl =
+    absolute [] []
 
 
-aboutUrl = absolute [ "about" ] []
+aboutUrl =
+    absolute [ "about" ] []
 
 
-frontendReadLetterUrl letterId = absolute [ "read-letter", letterId ] []
-backendReadLetterUrl  = mkBackendUrl [ "read-letter" ] []
+frontendReadLetterUrl letterId =
+    absolute [ "read-letter", letterId ] []
 
 
-frontendWriteLetterUrl = absolute [ "write-letter" ] []
-backendWriteLetterUrl  = mkBackendUrl [ "write-letter" ] []
+backendReadLetterUrl =
+    mkBackendUrl [ "read-letter" ] []
 
 
-configChatUrl = absolute [ "config-chat" ] []
+frontendWriteLetterUrl =
+    absolute [ "write-letter" ] []
 
 
-backendSpawnDispChatUrl = mkBackendUrl [ "spawn-disposable-chat" ] []
-backendSpawnPersistChatUrl = mkBackendUrl [ "spawn-persistent-chat" ] []
+backendWriteLetterUrl =
+    mkBackendUrl [ "write-letter" ] []
 
 
-frontendEntranceUrl entranceId = absolute [ "persist-chat-entrance", entranceId ] []
-backendEntranceUrl  entranceId = mkBackendUrl [ "persist-chat-entrance", entranceId ] []
+configChatUrl =
+    absolute [ "config-chat" ] []
 
 
-frontendChatUrl chatId = absolute [ "chat", chatId ] []
-backendChatUrl chatId = mkBackendUrl [ "chat", chatId ] []
+backendSpawnDispChatUrl =
+    mkBackendUrl [ "spawn-disposable-chat" ] []
 
 
-sendMessageUrl chatId = mkBackendUrl [ "send-message", chatId ] []
+backendSpawnPersistChatUrl =
+    mkBackendUrl [ "spawn-persistent-chat" ] []
+
+
+frontendEntranceUrl entranceId =
+    absolute [ "persist-chat-entrance", entranceId ] []
+
+
+backendEntranceUrl entranceId =
+    mkBackendUrl [ "persist-chat-entrance", entranceId ] []
+
+
+frontendChatUrl chatId =
+    absolute [ "chat", chatId ] []
+
+
+backendChatUrl chatId =
+    mkBackendUrl [ "chat", chatId ] []
+
+
+sendMessageUrl chatId =
+    mkBackendUrl [ "send-message", chatId ] []

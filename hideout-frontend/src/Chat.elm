@@ -12,31 +12,30 @@ module Chat exposing
     , NameChangeStatus(..)
     , Status(..)
     , TypingStatus(..)
+    , WsMsg(..)
     , autoScrollMargin
+    , chatMsgMetaDecoder
     , isMetaBundle
-    , mkJoinMsg
     , mkContentMsg
+    , mkJoinMsg
     , mkMsgBundles
     , mkNameChangeMsg
     , mkTypeHintMsg
-    , chatMsgMetaDecoder
-    , WsMsg(..)
     , wsMsgDecoder
     )
 
 import Browser.Dom as Dom
-import Common.Contents exposing ( plainPara )
-import Dict exposing ( Dict )
-import Element
-import Element exposing ( Element )
+import Common.Contents exposing (plainPara)
+import Dict exposing (Dict)
+import Element exposing (Element)
 import Http
 import Json.Decode as JDec
 import Json.Decode.Extra as JDec
 import Json.Encode as JEnc
 import List.Extra as List
-import Tagged exposing ( Tagged, tag, untag )
+import Tagged exposing (Tagged, tag, untag)
 import Time
-import Utils.Utils as Utils exposing ( is )
+import Utils.Utils as Utils exposing (is)
 
 
 type NameChangeStatus
@@ -45,31 +44,25 @@ type NameChangeStatus
 
 
 type TypingStatus
-    = Typing Time.Posix  -- Last input time
+    = Typing Time.Posix -- Last input time
     | NotTyping
 
 
 type alias Model =
     { chatId : ChatId
     , myUserId : Int
-
     , input : MsgBody
     , nameChangeStatus : NameChangeStatus
     , typingStatus : TypingStatus
-
     , hasManualScrolledUp : Bool
     , shouldHintNewMsg : Bool
-
     , emojisBuffer : List String
     , isEmojiOpened : Bool
-
     , msgs : List ChatMsgMeta
     , users : Dict Int String
     , typingUsers : List Int
-
     , maxJoinCount : Maybe Int
     , joinCount : Int
-
     , isInputFocused : Bool
     , isShiftHeld : Bool
     }
@@ -87,31 +80,29 @@ type Status
 type ElmMsg
     = MessageInput String
     | MessageSend
-
-    -- Name Change
+      -- Name Change
     | OnBeginNameChange
     | OnNewNameInput String
-    | OnFinishNameChange Bool  -- True means confirmed, False means cancelled.
-
+    | OnFinishNameChange Bool -- True means confirmed, False means cancelled.
     | GotInputTime Time.Posix
-
     | OnMsgsViewEvent MsgsViewEvent
     | OnChatInputFocal Bool
-
     | OnEmojiToggled
     | OnEmojiChosen String
     | OnEmojiScrolled
-    | GotEmojiViewport ( Result Dom.Error Dom.Viewport )
-
+    | GotEmojiViewport (Result Dom.Error Dom.Viewport)
     | OnWsReady String
     | OnWsError
     | OnWsMsg String
-
     | GotTime Time.Posix
 
 
-type ChatIdTag = ChatIdTag
-type alias ChatId = Tagged ChatIdTag String
+type ChatIdTag
+    = ChatIdTag
+
+
+type alias ChatId =
+    Tagged ChatIdTag String
 
 
 type MsgType
@@ -122,61 +113,93 @@ type MsgType
     | Leave
 
 
-type MsgBodyTag = MsgBodyTag
-type alias MsgBody = Tagged MsgBodyTag String
+type MsgBodyTag
+    = MsgBodyTag
+
+
+type alias MsgBody =
+    Tagged MsgBodyTag String
 
 
 type alias MsgFromClient =
     { msgType : MsgType
     , msgBody : MsgBody
     }
+
+
 msgFromClientDecoder : JDec.Decoder MsgFromClient
 msgFromClientDecoder =
     JDec.map2
         MsgFromClient
-        ( JDec.field "msgType" JDec.string
+        (JDec.field "msgType" JDec.string
             |> JDec.andThen
-                ( \str ->
-                    if str == "content" then JDec.succeed Content
-                    else if str == "join" then JDec.succeed Join
-                    else if str == "nameChange" then JDec.succeed NameChange
-                    else if str == "typeHint" then JDec.succeed TypeHint
-                    else if str == "leave" then JDec.succeed Leave
-                    else JDec.fail "Invalid MsgType"
+                (\str ->
+                    if str == "content" then
+                        JDec.succeed Content
+
+                    else if str == "join" then
+                        JDec.succeed Join
+
+                    else if str == "nameChange" then
+                        JDec.succeed NameChange
+
+                    else if str == "typeHint" then
+                        JDec.succeed TypeHint
+
+                    else if str == "leave" then
+                        JDec.succeed Leave
+
+                    else
+                        JDec.fail "Invalid MsgType"
                 )
         )
-        ( JDec.map tag <| JDec.field "msgBody" JDec.string )
+        (JDec.map tag <| JDec.field "msgBody" JDec.string)
 
 
 type CtrlMsg
     = Err_ Err
 
+
 type Err
     = MaxJoined
     | NotFound
 
-ctrlMsgTypeDecoder : JDec.Decoder String
-ctrlMsgTypeDecoder = JDec.field "msgType" JDec.string
 
-type CtrlMsgBodyTag = CtrlMsgBodyTag
-type alias CtrlMsgBody = Tagged CtrlMsgBodyTag String
+ctrlMsgTypeDecoder : JDec.Decoder String
+ctrlMsgTypeDecoder =
+    JDec.field "msgType" JDec.string
+
+
+type CtrlMsgBodyTag
+    = CtrlMsgBodyTag
+
+
+type alias CtrlMsgBody =
+    Tagged CtrlMsgBodyTag String
+
 
 errCtrlMsgDecoder : JDec.Decoder CtrlMsg
 errCtrlMsgDecoder =
     JDec.map Err_
-        ( JDec.field "msgBody" JDec.string
+        (JDec.field "msgBody" JDec.string
             |> JDec.andThen
-                ( \str ->
-                    if str == "maxJoined" then JDec.succeed MaxJoined
-                    else if str == "notFound" then JDec.succeed NotFound
-                    else JDec.fail "Invalid error ctrl msg type"
+                (\str ->
+                    if str == "maxJoined" then
+                        JDec.succeed MaxJoined
+
+                    else if str == "notFound" then
+                        JDec.succeed NotFound
+
+                    else
+                        JDec.fail "Invalid error ctrl msg type"
                 )
         )
+
 
 ctrlMsgDecoder : JDec.Decoder CtrlMsg
 ctrlMsgDecoder =
     JDec.oneOf
-        [ JDec.when ctrlMsgTypeDecoder ( is "err" ) errCtrlMsgDecoder ]
+        [ JDec.when ctrlMsgTypeDecoder (is "err") errCtrlMsgDecoder ]
 
 
 type alias ChatMsgMeta =
@@ -184,46 +207,58 @@ type alias ChatMsgMeta =
     , userId : Int
 
     -- Without this field, username in previous messages goes unfound when user leaves.
-    , username : String  
-
+    , username : String
     , posixTimeSec : Int
     }
+
+
 chatMsgMetaDecoder : JDec.Decoder ChatMsgMeta
 chatMsgMetaDecoder =
-      JDec.map4
+    JDec.map4
         ChatMsgMeta
-        ( JDec.field "msgFromClient" msgFromClientDecoder )
-        ( JDec.field "userId" JDec.int )
-        ( JDec.field "username" JDec.string )
-        ( JDec.field "posixTimeSec" JDec.int )
+        (JDec.field "msgFromClient" msgFromClientDecoder)
+        (JDec.field "userId" JDec.int)
+        (JDec.field "username" JDec.string)
+        (JDec.field "posixTimeSec" JDec.int)
 
 
 type alias MsgHistory =
-    { msgs  : List ChatMsgMeta 
+    { msgs : List ChatMsgMeta
     , users : Dict Int String
     , maxJoinCount : Maybe Int
     }
+
+
 msgHistoryDecoder : JDec.Decoder MsgHistory
 msgHistoryDecoder =
     JDec.map3
         MsgHistory
-        ( JDec.field "msgs"  <| JDec.list chatMsgMetaDecoder )
-        ( JDec.field "users" <| JDec.dict2 JDec.int JDec.string )
-        ( JDec.maybe <| JDec.field "maxJoinCount" JDec.int )
+        (JDec.field "msgs" <| JDec.list chatMsgMetaDecoder)
+        (JDec.field "users" <| JDec.dict2 JDec.int JDec.string)
+        (JDec.maybe <| JDec.field "maxJoinCount" JDec.int)
 
 
-type alias UserIdMsg = { yourUserId : Int }
+type alias UserIdMsg =
+    { yourUserId : Int }
+
+
 userIdMsgDecoder : JDec.Decoder UserIdMsg
-userIdMsgDecoder = JDec.map UserIdMsg <| JDec.field "yourUserId" JDec.int
+userIdMsgDecoder =
+    JDec.map UserIdMsg <| JDec.field "yourUserId" JDec.int
+
 
 
 -- A type for conveniently JSON-decoding an incoming ws string
 -- Into various possible Elm types.
+
+
 type WsMsg
     = ChatMsgMeta_ ChatMsgMeta
     | CtrlMsg_ CtrlMsg
     | MsgHistory_ MsgHistory
     | UserIdMsg_ UserIdMsg
+
+
 wsMsgDecoder : JDec.Decoder WsMsg
 wsMsgDecoder =
     JDec.oneOf
@@ -235,47 +270,65 @@ wsMsgDecoder =
 
 
 mkJoinMsg : ChatId -> String
-mkJoinMsg = mkWsMsg Join << tag << untag
+mkJoinMsg =
+    mkWsMsg Join << tag << untag
 
 
 mkContentMsg : MsgBody -> String
-mkContentMsg = mkWsMsg Content
+mkContentMsg =
+    mkWsMsg Content
 
 
 mkNameChangeMsg : MsgBody -> String
-mkNameChangeMsg = mkWsMsg NameChange
+mkNameChangeMsg =
+    mkWsMsg NameChange
 
 
 mkTypeHintMsg : Bool -> String
 mkTypeHintMsg isTyping =
     let
-        bodyStr = case isTyping of
-            True  -> "start"
-            False -> "stop"
+        bodyStr =
+            case isTyping of
+                True ->
+                    "start"
+
+                False ->
+                    "stop"
     in
-    mkWsMsg TypeHint ( tag bodyStr )
+    mkWsMsg TypeHint (tag bodyStr)
 
 
 mkWsMsg : MsgType -> MsgBody -> String
 mkWsMsg msgType msgBody =
     let
-        msgTypeStr = case msgType of
-            Content -> "content"
-            Join -> "join"
-            NameChange -> "nameChange"
-            TypeHint -> "typeHint"
-            Leave -> "leave"
+        msgTypeStr =
+            case msgType of
+                Content ->
+                    "content"
+
+                Join ->
+                    "join"
+
+                NameChange ->
+                    "nameChange"
+
+                TypeHint ->
+                    "typeHint"
+
+                Leave ->
+                    "leave"
     in
-    JEnc.encode 0 <| JEnc.object
-        [ ( "msgType", JEnc.string msgTypeStr )
-        , ( "msgBody", JEnc.string <| untag msgBody )
-        ]
+    JEnc.encode 0 <|
+        JEnc.object
+            [ ( "msgType", JEnc.string msgTypeStr )
+            , ( "msgBody", JEnc.string <| untag msgBody )
+            ]
 
 
 {-| A list of messages that a user has sent continuously, to be displayed together, without adding a username header at each message.
 -}
 type alias MsgBundle =
-    { userId : Int  -- Compare with this, not username.
+    { userId : Int -- Compare with this, not username.
     , username : String
     , msgs : List ChatMsgMeta
     , time : Time.Posix
@@ -293,31 +346,34 @@ mkMsgBundles chatMsgMetas =
                     , username = msg.username
                     , msgs = [ msg ]
                     , time = Utils.posixSecToPosix msg.posixTimeSec
-                    } :: bundles
+                    }
+                        :: bundles
             in
             case
                 Maybe.map2 Tuple.pair
-                    ( List.head bundles )
-                    ( List.tail bundles ) of
-
+                    (List.head bundles)
+                    (List.tail bundles)
+            of
                 Just ( headBundle, tailBundles ) ->
-                    if isMetaMsg msg ||
-                       ( Maybe.withDefault False <| Maybe.map isMetaMsg <| List.head headBundle.msgs )
-                    then appended
+                    if
+                        isMetaMsg msg
+                            || (Maybe.withDefault False <| Maybe.map isMetaMsg <| List.head headBundle.msgs)
+                    then
+                        appended
+
+                    else if msg.userId == headBundle.userId then
+                        let
+                            updatedHeadBundle =
+                                { headBundle | msgs = msg :: headBundle.msgs }
+                        in
+                        updatedHeadBundle :: tailBundles
+
                     else
-                        if msg.userId == headBundle.userId then
-                            let
-                                updatedHeadBundle = 
-                                    { headBundle | msgs = msg :: headBundle.msgs }
-                            in
-                            updatedHeadBundle :: tailBundles
-                        else
-                            appended
+                        appended
 
                 -- Empty bundle list
                 Nothing ->
                     appended
-
     in
     List.foldr combine [] chatMsgMetas
 
@@ -325,21 +381,27 @@ mkMsgBundles chatMsgMetas =
 isMetaBundle : MsgBundle -> Bool
 isMetaBundle bundle =
     case Maybe.map isMetaMsg <| List.head bundle.msgs of
-        Just True -> True
-        _ -> False
+        Just True ->
+            True
+
+        _ ->
+            False
 
 
 isMetaMsg : ChatMsgMeta -> Bool
 isMetaMsg msg =
     case msg.msgFromClient.msgType of
-        Content -> False
-        _ -> True
+        Content ->
+            False
+
+        _ ->
+            True
 
 
 type MsgsViewEvent
-    = TriedSnapScroll ( Result Dom.Error () )
+    = TriedSnapScroll (Result Dom.Error ())
     | OnManualScrolled
-    | GotViewport ( Result Dom.Error Dom.Viewport )
+    | GotViewport (Result Dom.Error Dom.Viewport)
     | OnNewMsgHintClicked
 
 
@@ -349,7 +411,8 @@ then allow auto scrolling when new chat messages come in.
 Tested with Main's logViewport. One scroll wheel was 53.
 
 This is also good for floating point comparison.
+
 -}
 autoScrollMargin : Float
-autoScrollMargin = 30
-
+autoScrollMargin =
+    30

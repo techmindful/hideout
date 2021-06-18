@@ -7,14 +7,15 @@ import Browser.Navigation as Nav
 import Chat
 import Http
 import Json.Decode as JDec
-import Letter exposing ( LetterMeta )
+import Letter exposing (LetterMeta)
 import Route exposing (..)
 import Time
 import Url exposing (Url)
-import Utils.Types exposing
-    ( PosIntInput
-    , Trio
-    )
+import Utils.Types
+    exposing
+        ( PosIntInput
+        , Trio
+        )
 import Views.About
 import Views.Entrance
 
@@ -29,12 +30,14 @@ type alias InitFlag =
     { protocol : String
     , host : String
     }
+
+
 initFlagDecoder : JDec.Decoder InitFlag
 initFlagDecoder =
     JDec.map2
         InitFlag
-            ( JDec.field "protocol" JDec.string )
-            ( JDec.field "host" JDec.string )
+        (JDec.field "protocol" JDec.string)
+        (JDec.field "host" JDec.string)
 
 
 type SpawnDispChatResp
@@ -59,32 +62,22 @@ type alias Model =
     , host : String
     , origin : String
     , route : Route
-
     , viewport : Dom.Viewport
     , navKey : Nav.Key
     , windowVisibility : Browser.Events.Visibility
-
     , aboutPageModel : Views.About.Model
-
     , joinChatInput : String
-
     , spawnDispChatResp : SpawnDispChatResp
     , spawnPersistChatResp : SpawnPersistChatResp
-
     , entranceStatus : Views.Entrance.Status
-
     , dispChatMaxJoinCountInput : String
     , persistChatMaxJoinCountInput : String
     , chatStatus : Chat.Status
-
     , letterRawInput : Letter.RawInput
     , letterPersistInput : Bool
     , letterStatus : Letter.Status
-
     , isShiftHeld : Bool
-
     , time : Time.Posix
-
     , tempResp : String
     }
 
@@ -93,46 +86,33 @@ type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | GotViewport Dom.Viewport
-
     | AboutPageMsg Views.About.Msg
-
     | JoinChatInput String
     | JoinChat
-
-    -- Letter
-    | GotReadLetterResp ( Result Http.Error LetterMeta )
+      -- Letter
+    | GotReadLetterResp (Result Http.Error LetterMeta)
     | LetterInput String
     | LetterMaxReadCountInput String
     | LetterPersistInput Bool
     | LetterSend
-    | GotLetterSendResp ( Result Http.Error String )
+    | GotLetterSendResp (Result Http.Error String)
     | OnUserSharesLetter String
     | OnCopyLetterLinkResult Bool
-
-    -- Config disp chat
+      -- Config disp chat
     | DispChatMaxJoinCountInput String
     | SpawnDispChat
-    | GotSpawnDispChatResp ( Result Http.Error String )
- 
-    -- Config persist chat
+    | GotSpawnDispChatResp (Result Http.Error String)
+      -- Config persist chat
     | PersistChatMaxJoinCountInput String
     | SpawnPersistChat
-    | GotSpawnPersistChatResp ( Result Http.Error String )
+    | GotSpawnPersistChatResp (Result Http.Error String)
     | OnUserSharesEntrance String
     | OnCopyEntranceLinkResult Bool
-
-    | GotEntranceResp ( Result Http.Error String )
-
+    | GotEntranceResp (Result Http.Error String)
     | ChatElmMsg Chat.ElmMsg
-
     | OnWindowResized
-
     | OnVisibilityChange Browser.Events.Visibility
-
     | OnKeyDown String
-    | OnKeyUp   String
-
+    | OnKeyUp String
     | GotTime Time.Posix
-
     | Nop
-

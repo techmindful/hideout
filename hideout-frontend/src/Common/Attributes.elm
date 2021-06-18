@@ -1,6 +1,6 @@
 module Common.Attributes exposing (..)
 
-import Element exposing ( Element )
+import Element exposing (Element)
 import Html.Events
 import Json.Decode as JDec
 
@@ -14,10 +14,10 @@ enterKeyDecoder : msg -> JDec.Decoder msg
 enterKeyDecoder m =
     Html.Events.keyCode
         |> JDec.andThen
-            ( \ keyCode ->
+            (\keyCode ->
                 if keyCode == 13 then
                     JDec.succeed m
+
                 else
                     JDec.fail "Not enter key"
             )
-

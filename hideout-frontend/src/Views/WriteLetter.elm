@@ -1,44 +1,43 @@
-module Views.WriteLetter exposing ( view )
-
+module Views.WriteLetter exposing (view)
 
 import Browser
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Common.Colors exposing (..)
-import Common.Contents exposing
-    ( borderedButton )
-import Common.Contents exposing
-    ( Tabness(..)
-    , footer
-    , plainPara
-    , posIntInputHint
-    )
+import Common.Contents
+    exposing
+        ( Tabness(..)
+        , borderedButton
+        , footer
+        , plainPara
+        , posIntInputHint
+        )
 import Common.Styles exposing (..)
 import Common.Urls exposing (..)
 import CoreTypes exposing (..)
-import Element
-import Element exposing ( Element )
+import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html
 import Http
-import Json.Encode
 import Json.Decode as JDec
+import Json.Encode
 import Letter exposing (..)
 import Route exposing (..)
 import String.Extra exposing (unquote)
 import Task
 import Url exposing (Url)
 import Url.Parser
-import Utils.Errors exposing ( httpErrToStr )
+import Utils.Errors exposing (httpErrToStr)
 import Utils.Markdown
-import Utils.Types exposing
-    ( PosIntInput(..)
-    , Trio(..)
-    , posIntInputToStr
-    )
+import Utils.Types
+    exposing
+        ( PosIntInput(..)
+        , Trio(..)
+        , posIntInputToStr
+        )
 
 
 view : Model -> Element Msg
@@ -63,7 +62,7 @@ view model =
                 [ Element.paddingEach { top = 40, bottom = 10, left = 0, right = 0 }
                 , Element.spacingXY 10 0
                 ]
-                [ Element.text "This letter can be read " 
+                [ Element.text "This letter can be read "
                 , Input.text
                     inlineInputStyle
                     { onChange = LetterMaxReadCountInput
@@ -83,13 +82,17 @@ view model =
                 , label = Input.labelRight [] <| Element.text "Disk Persistence"
                 }
 
-        windowWidth = model.viewport.viewport.width
+        windowWidth =
+            model.viewport.viewport.width
+
         letterInputWidthConstraint =
-            Element.width <| Element.maximum
-                ( round <|
-                    ( windowWidth - 2 * ( windowPaddingPx windowWidth ) - dividerWidth ) / 2
-                )
-                Element.fill
+            Element.width <|
+                Element.maximum
+                    (round <|
+                        (windowWidth - 2 * windowPaddingPx windowWidth - dividerWidth)
+                            / 2
+                    )
+                    Element.fill
 
         letterInputBox =
             Input.multiline
@@ -110,7 +113,8 @@ view model =
                 [ letterInputWidthConstraint
                 , Utils.Markdown.viewSpacing
                 , Element.alignTop
-                ] <|
+                ]
+            <|
                 Utils.Markdown.render model.letterRawInput.body
     in
     Element.column
@@ -122,7 +126,6 @@ view model =
             , posIntInputHint model.letterRawInput.maxReadCount
             , persistInput
             ]
-
         , Element.row
             [ Element.width Element.fill ]
             [ case model.letterStatus.write of
@@ -142,12 +145,12 @@ view model =
                 Letter.GotResp { id, maxReadCount, copyToClipboardResult } ->
                     let
                         letterLink =
-                            model.origin ++ 
-                            ( frontendReadLetterUrl <| unquote id )
+                            model.origin
+                                ++ (frontendReadLetterUrl <| unquote id)
                     in
                     Element.column
-                        ( [ Element.width Element.fill ] ++
-                          roundedBorder 10
+                        ([ Element.width Element.fill ]
+                            ++ roundedBorder 10
                         )
                         [ Element.column
                             [ lineSpacing ]
@@ -165,13 +168,17 @@ view model =
                             ]
                             [ Element.el
                                 [ Element.width Element.shrink ]
-                                ( borderedButton ( OnUserSharesLetter letterLink ) "Share Letter" )
-
+                                (borderedButton (OnUserSharesLetter letterLink) "Share Letter")
                             , case copyToClipboardResult of
-                                Empty    -> Element.none
-                                Positive -> Element.text "Letter link is copied!"
-                                Negative -> Element.text
-                                    """
+                                Empty ->
+                                    Element.none
+
+                                Positive ->
+                                    Element.text "Letter link is copied!"
+
+                                Negative ->
+                                    Element.text
+                                        """
                                     Copying letter link to clipboard failed. Are you using an old browser like IE?
                                     """
                             ]
@@ -184,16 +191,16 @@ view model =
                 Element.el
                     [ Element.paddingEach
                         { top = 20, bottom = 0, left = 0, right = 0 }
-                    ] <|
+                    ]
+                <|
                     Input.button
-                        ( buttonStyle 5 )
+                        (buttonStyle 5)
                         { onPress = Just LetterSend
                         , label = Element.text "Send"
                         }
 
             _ ->
                 Element.none
-
         , footer 200 SameTab
         ]
 
@@ -203,4 +210,5 @@ divider =
     Element.el [ Element.width <| Element.px dividerWidth ] Element.none
 
 
-dividerWidth = 100
+dividerWidth =
+    100

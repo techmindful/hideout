@@ -3,11 +3,11 @@ module Utils.Markdown exposing
     , viewSpacing
     )
 
-{-| Copied a lot from https://ellie-app.com/bQLgjtbgdkZa1 -}
+{-| Copied a lot from <https://ellie-app.com/bQLgjtbgdkZa1>
+-}
 
-import Common.Contents exposing
-    ( plainPara )
-import Element exposing ( Element )
+import Common.Contents exposing (plainPara)
+import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -18,76 +18,84 @@ import Html
 import Html.Attributes
 import List
 import List.Extra as List
-import Markdown.Block exposing
-    ( Block
-    , Inline
-    , ListItem(..)
-    , Task(..)
-    , walkInlines
-    )
+import Markdown.Block
+    exposing
+        ( Block
+        , Inline
+        , ListItem(..)
+        , Task(..)
+        , walkInlines
+        )
 import Markdown.Html
-import Markdown.Parser exposing ( deadEndToString, parse )
+import Markdown.Parser exposing (deadEndToString, parse)
 import Markdown.Renderer
-import Parser exposing
-    ( Parser
-    , Step(..)
-    , backtrackable
-    , chompIf
-    , chompUntil
-    , chompUntilEndOr
-    , chompWhile
-    , getChompedString
-    , succeed
-    , symbol
-    , (|.)
-    , (|=)
-    )
-import Regex exposing ( Regex )
+import Parser
+    exposing
+        ( (|.)
+        , (|=)
+        , Parser
+        , Step(..)
+        , backtrackable
+        , chompIf
+        , chompUntil
+        , chompUntilEndOr
+        , chompWhile
+        , getChompedString
+        , succeed
+        , symbol
+        )
+import Regex exposing (Regex)
 import String.Extra as String
 import Tuple
 
 
-render : String -> List ( Element msg )
+render : String -> List (Element msg)
 render str =
     let
         result =
-            str |> Markdown.Parser.parse
+            str
+                |> Markdown.Parser.parse
                 |> Result.map handleEmojis_Blocks
                 |> Result.mapError
-                    ( \error -> error |> List.map Markdown.Parser.deadEndToString |> String.join "\n" )
+                    (\error -> error |> List.map Markdown.Parser.deadEndToString |> String.join "\n")
                 |> Result.andThen (Markdown.Renderer.render renderer)
     in
     case result of
-        Err errStr  -> [ plainPara errStr ]
-        Ok rendered -> rendered
+        Err errStr ->
+            [ plainPara errStr ]
+
+        Ok rendered ->
+            rendered
 
 
 viewSpacing : Element.Attribute msg
-viewSpacing = Element.spacingXY 0 15
+viewSpacing =
+    Element.spacingXY 0 15
 
 
 handleEmojis_Blocks : List Block -> List Block
 handleEmojis_Blocks =
     List.map <|
-        ( \ block ->
+        \block ->
             case block of
                 Markdown.Block.Paragraph inlines ->
                     Markdown.Block.Paragraph <| handleEmojis_Inlines inlines
 
-                _ -> block
-        )
+                _ ->
+                    block
 
 
 handleEmojis_Inlines : List Inline -> List Inline
 handleEmojis_Inlines inlines =
     inlines
         |> List.map
-            ( \inline ->
+            (\inline ->
                 case inline of
                     Markdown.Block.Text str ->
                         replaceEmojis str
 
-                    _ -> [ inline ]
+                    _ ->
+                        [ inline ]
             )
         |> List.concat
 
@@ -96,13 +104,14 @@ replaceEmojis : String -> List Inline
 replaceEmojis str =
     let
         colonIndices : List Int
-        colonIndices = String.indices ":" str
+        colonIndices =
+            String.indices ":" str
 
         firstColonPair : Maybe ( Int, Int )
         firstColonPair =
             Maybe.map2 Tuple.pair
-                ( List.getAt 0 colonIndices )
-                ( List.getAt 1 colonIndices )
+                (List.getAt 0 colonIndices)
+                (List.getAt 1 colonIndices)
     in
     case firstColonPair of
         -- No pair of colons. No emojis.
@@ -111,27 +120,33 @@ replaceEmojis str =
 
         Just pair ->
             let
-                firstColonIndex = Tuple.first pair
-                secondColonIndex = Tuple.second pair
+                firstColonIndex =
+                    Tuple.first pair
+
+                secondColonIndex =
+                    Tuple.second pair
 
                 possibleEmojiName =
-                    String.slice ( firstColonIndex + 1 ) secondColonIndex str
+                    String.slice (firstColonIndex + 1) secondColonIndex str
 
-                isEmoji = List.member possibleEmojiName Emoji.allHex
+                isEmoji =
+                    List.member possibleEmojiName Emoji.allHex
             in
             -- Has colon of pairs, but it doesn't match an emoji name.
             if not isEmoji then
-                ( Markdown.Block.Text <| String.left secondColonIndex str ) ::
-                ( replaceEmojis <| String.dropLeft secondColonIndex str )
-            -- Found a emoji.
+                (Markdown.Block.Text <| String.left secondColonIndex str)
+                    :: (replaceEmojis <| String.dropLeft secondColonIndex str)
+                -- Found a emoji.
+
             else
                 [ Markdown.Block.Text <| String.left firstColonIndex str
                 , Markdown.Block.Image
-                    ( Emoji.hexToPath possibleEmojiName )
+                    (Emoji.hexToPath possibleEmojiName)
                     Nothing
                     []
-                ] ++
-                ( replaceEmojis <| String.dropLeft ( secondColonIndex + 1 ) str )
+                ]
+                    ++ (replaceEmojis <| String.dropLeft (secondColonIndex + 1) str)
+
 
 
 --emojisParser : Parser ( List Inline )
@@ -178,7 +193,7 @@ replaceEmojis str =
 --    Parser.loop [] step
 
 
-renderer : Markdown.Renderer.Renderer ( Element msg )
+renderer : Markdown.Renderer.Renderer (Element msg)
 renderer =
     { heading = heading
     , paragraph =
@@ -203,7 +218,6 @@ renderer =
                         body
                 }
     , hardLineBreak = Html.br [] [] |> Element.html
-
     , image =
         \image ->
             Element.image
@@ -211,7 +225,6 @@ renderer =
                 { src = image.src
                 , description = image.alt
                 }
-
     , blockQuote =
         \children ->
             Element.paragraph
@@ -287,7 +300,7 @@ renderer =
     }
 
 
-renderEmojiTag : String -> List ( Element msg ) -> Element msg
+renderEmojiTag : String -> List (Element msg) -> Element msg
 renderEmojiTag emojiName rendererdChildren =
     Element.image
         []

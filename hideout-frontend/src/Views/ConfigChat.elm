@@ -1,40 +1,44 @@
-module Views.ConfigChat exposing ( view )
+module Views.ConfigChat exposing (view)
 
-import Common.Colors exposing ( bgColor, red )
-import Common.Contents exposing
-    ( Tabness(..)
-    , borderedButton
-    , footer
-    , italicText
-    , link
-    , plainPara
-    , posIntInputHint
-    , underlinedText
-    )
-import Common.Styles exposing
-    ( buttonStyle
-    , inlineInputStyle
-    , widthConstraint
-    )
+import Common.Colors exposing (bgColor, red)
+import Common.Contents
+    exposing
+        ( Tabness(..)
+        , borderedButton
+        , footer
+        , italicText
+        , link
+        , plainPara
+        , posIntInputHint
+        , underlinedText
+        )
+import Common.Styles
+    exposing
+        ( buttonStyle
+        , inlineInputStyle
+        , widthConstraint
+        )
 import Common.Urls exposing (..)
-import CoreTypes exposing
-    ( Model
-    , Msg(..)
-    , SpawnDispChatResp(..)
-    , SpawnPersistChatResp(..)
-    )
-import Element exposing ( Element )
+import CoreTypes
+    exposing
+        ( Model
+        , Msg(..)
+        , SpawnDispChatResp(..)
+        , SpawnPersistChatResp(..)
+        )
+import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import String.Extra exposing ( unquote )
+import String.Extra exposing (unquote)
 import Url.Builder
-import Utils.Types exposing
-    ( Trio(..)
-    , PosIntInput
-    , posIntInputToStr
-    )
+import Utils.Types
+    exposing
+        ( PosIntInput
+        , Trio(..)
+        , posIntInputToStr
+        )
 import Views.About
 
 
@@ -49,20 +53,20 @@ view model =
                 """
                  chat is Hideout's own invention. It's a private chat room between you and your friends, that can be accessed one-click from your browser. Learn more 
                 """
-            , link ( Views.About.sectionToUrl Views.About.Persist_Chat ) "here"
+            , link (Views.About.sectionToUrl Views.About.Persist_Chat) "here"
             , Element.text "."
             ]
         , numParticipantsInput PersistChatMaxJoinCountInput model.persistChatMaxJoinCountInput
         , posIntInputHint model.persistChatMaxJoinCountInput
         , Element.el
-             [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-             ( borderedButton SpawnPersistChat "Start a persistent chat!" )
+            [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
+            (borderedButton SpawnPersistChat "Start a persistent chat!")
         , let
             padding =
                 Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
           in
           case model.spawnPersistChatResp of
-            NotSpawned_Persist -> 
+            NotSpawned_Persist ->
                 Element.none
 
             Waiting_Persist ->
@@ -80,15 +84,15 @@ view model =
             GotEntranceId { entranceId, copyToClipboardResult } ->
                 let
                     entranceLink =
-                        model.origin ++
-                        ( frontendEntranceUrl <| unquote entranceId )
+                        model.origin
+                            ++ (frontendEntranceUrl <| unquote entranceId)
 
                     shareEntranceButton =
-                        borderedButton ( OnUserSharesEntrance entranceLink ) "Share Entrance"
+                        borderedButton (OnUserSharesEntrance entranceLink) "Share Entrance"
 
                     accessEntranceButton =
                         Element.newTabLink
-                            ( buttonStyle 5 )
+                            (buttonStyle 5)
                             { url = entranceLink
                             , label = Element.text "Access Entrance"
                             }
@@ -111,15 +115,18 @@ view model =
                         , accessEntranceButton
                         ]
                     , case copyToClipboardResult of
-                        Empty    -> Element.none
-                        Positive -> Element.text "Entrance link is copied!"
+                        Empty ->
+                            Element.none
+
+                        Positive ->
+                            Element.text "Entrance link is copied!"
+
                         Negative ->
                             plainPara
                                 """
                                 Copying entrance link to clipboard failed. Are you using an old browser like IE?
                                 """
                     ]
-
         , -- Disposable chat
           Element.paragraph
             [ Element.paddingEach { top = 200, bottom = 0, left = 0, right = 0 } ]
@@ -134,7 +141,7 @@ view model =
         , posIntInputHint model.dispChatMaxJoinCountInput
         , Element.el
             [ Element.paddingEach { top = 10, bottom = 0, left = 0, right = 0 } ]
-            ( borderedButton SpawnDispChat "Start a disposable chat!" )
+            (borderedButton SpawnDispChat "Start a disposable chat!")
         , let
             padding =
                 Element.paddingEach { top = 20, bottom = 0, left = 0, right = 0 }
@@ -142,7 +149,7 @@ view model =
           case model.spawnDispChatResp of
             NotSpawned_Disp ->
                 Element.none
-    
+
             Waiting_Disp ->
                 Element.paragraph
                     [ padding ]
@@ -157,12 +164,11 @@ view model =
 
             GotChatId _ ->
                 Element.none
-
         , footer 320 SameTab
         ]
 
 
-numParticipantsInput : ( String -> Msg ) -> String -> Element Msg
+numParticipantsInput : (String -> Msg) -> String -> Element Msg
 numParticipantsInput msg input =
     Element.row
         [ Element.paddingXY 0 20 ]
@@ -175,4 +181,3 @@ numParticipantsInput msg input =
             , label = Input.labelHidden ""
             }
         ]
-

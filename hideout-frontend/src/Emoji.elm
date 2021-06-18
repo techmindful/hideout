@@ -3,9 +3,11 @@ module Emoji exposing
     , hexToPath
     )
 
+
 hexToPath : String -> String
 hexToPath hex =
     "/static/OpenMoji/48x48/" ++ hex ++ ".png"
+
 
 allHex : List String
 allHex =

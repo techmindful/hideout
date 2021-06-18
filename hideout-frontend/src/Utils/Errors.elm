@@ -9,7 +9,8 @@ httpErrToStr err =
         Http.BadUrl str ->
             "Bad URL " ++ str
 
-        Http.Timeout -> "Timeout"
+        Http.Timeout ->
+            "Timeout"
 
         Http.NetworkError ->
             """
@@ -20,11 +21,10 @@ httpErrToStr err =
             """
             Bad status code: 
             """
-            ++ String.fromInt code
+                ++ String.fromInt code
 
         Http.BadBody str ->
             """
             Bad response body: 
             """
-            ++ str
-
+                ++ str
