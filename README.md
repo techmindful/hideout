@@ -41,7 +41,7 @@ Hideout assumes your communication on the unprivate service isn't compromised. I
 - Although Hideout's key feature is a persistent private chat room, it's based on the idea of disposable messages. Disposable letters can't be read after a max read limit is reached. A disposable chat room can't be joined after the max join limit is reached. The entrance to a persistent chat room can't be accessed after the max access limit is reached. This "access-based" approach gives a stronger guarantee of privacy than the "time-based" approach. If a message or chat room is set to be deleted after 15 minutes, nothing stops it from being viewed by unwanted parties at the 14th minute.
 
 # Persistent Chat: Hideout's own invention!
-Persistent chat rooms is a simple yet powerful idea. It's a private chat room that doesn't need to expire. By bookmarking it in the browser, the participants can keep going back to the room, without having to create a new room every time they talk. Hideout achieves this in a very simple way.
+Persistent chat rooms is a simple yet powerful idea. It's a private chat room that doesn't need to expire. By bookmarking it in the browser (or more securely, saving the link in a password manager), the participants can keep going back to the room, without having to create a new room every time they talk. Hideout achieves this in a very simple way.
 
 Imagine you have already created a disposable chat room and you are chatting with your friends. Everything you say in this room is private. If you go ahead and create a second chat room, you can share the link of this new room privately with your friends. Since only you and your friends know about this new room, it doesn't have to expire. Hideout just automates this process.
 
