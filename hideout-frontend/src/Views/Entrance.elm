@@ -30,7 +30,6 @@ type Status
     = NotEntering
     | WaitingForRoomId
     | GotError Http.Error
-    | GotRoomId String
 
 
 type alias Model =
@@ -70,40 +69,3 @@ view status =
 
                     _ ->
                         plainPara <| httpErrToStr err
-
-            GotRoomId roomId ->
-                Element.column
-                    [ paraSpacing ]
-                    [ Element.paragraph
-                        []
-                        [ Element.text
-                            """
-                            You are invited to a Hideout persistent chat room! This page is the entrance. After you enter the room, 
-                            """
-                        , underlinedText "bookmark the room page"
-                        , Element.text ". Then you'll have a private chat room with your friends, that is accessible one-click in your browser."
-                        ]
-                    , Element.column
-                        [ lineSpacing ]
-                        [ plainPara "Two important things:"
-                        , plainPara
-                            """
-                            * Don't share the link to the room page on any unprivate platform. That will make the room no longer private.
-                            """
-                        , plainPara
-                            """
-                            * Don't access this entrance page more than once, like refreshing the page or so on. That will block other participants' access.
-                            """
-                        ]
-                    , Element.column
-                        [ Element.paddingXY 0 20
-                        , Element.spacingXY 0 20
-                        ]
-                        [ Element.newTabLink
-                            (buttonStyle 5)
-                            { url = frontendChatUrl roomId
-                            , label = Element.text "Enter the chat room"
-                            }
-                        ]
-                    , footer 100 NewTab
-                    ]

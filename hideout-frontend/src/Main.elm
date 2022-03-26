@@ -503,9 +503,8 @@ updateModel msg ({ letterRawInput, letterStatus, chatStatus } as model) =
         GotEntranceResp result ->
             case result of
                 Ok roomId ->
-                    ( Normal
-                        { model | entranceStatus = Views.Entrance.GotRoomId <| unquote roomId }
-                    , Cmd.none
+                    ( Normal model
+                    , Nav.load <| frontendChatUrl <| unquote roomId
                     )
 
                 Err err ->
