@@ -60,9 +60,13 @@ import           Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict ( Map(..) )
 import           Data.Pool ( Pool )
-import           Data.Text ( Text )
+import qualified Data.Text as Text
+import           Data.Text ( Text, lines )
+import qualified Data.Text.IO as TextIO
+import           Data.Text.IO ( readFile )
 import           Data.Time.Clock.POSIX ( getPOSIXTime )
 import           GHC.Generics ( Generic )
+import           Prelude hiding ( readFile, lines )
 
 
 data AppState = AppState
@@ -70,6 +74,7 @@ data AppState = AppState
   , letterMetas :: TVar ( Map String LetterMeta )
   , entrances :: TVar ( Map String Entrance )
   , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
+  , wordlist :: [ Text ]
   } deriving ( Generic )
 
 
@@ -549,6 +554,7 @@ initApp = do
 
       rooms = fmap mkRoom dbChats
 
+  wordlist <- fmap lines $ readFile "eff-wordlist.txt"
   initLetterMetas <- atomically $ newTVar $ Map.fromList idLetterMetaPairs
   initEntrances   <- atomically $ newTVar $ Map.fromList entrances
   initRooms       <- atomically $ newTVar $ Map.fromList rooms
@@ -557,6 +563,7 @@ initApp = do
     , letterMetas  = initLetterMetas
     , entrances    = initEntrances
     , chats        = initRooms
+    , wordlist     = wordlist
     }
   return initAppState
 
