@@ -42,7 +42,7 @@ import           Database.Persist.Sqlite ( createSqlitePool )
 import           Control.Error.Util ( failWith )
 import           Control.Exception ( finally )
 import           Control.Lens ( (^.), (.~), (%~) )
-import           Control.Monad ( forever, forM_ )
+import           Control.Monad ( forever, forM, forM_ )
 import           Control.Monad.Except ( ExceptT, runExceptT )
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger ( runStderrLoggingT )
@@ -136,25 +136,24 @@ mkNewLetter letter = do
 
   appState <- ask
 
-  letterId <- liftIO $ do
+  liftIO $ do
 
     oldLetterMetas <- atomically $ readTVar ( appState & letterMetas )
 
-    hash <- getRandomHash
+    randomWords <- getRandomWords 6 $ appState ^. #wordlist
+    let letterId = Text.intercalate "-" randomWords
 
     -- Create a new LetterMeta, and insert it into AppState.
     let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
-        newLetterMetas = Map.insert hash newLetterMeta oldLetterMetas
+        newLetterMetas = Map.insert (Text.unpack letterId) newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
     if letter ^. #persist then
-      runSqlPool ( Persist.insert_ $ DbLetterMeta hash newLetterMeta ) ( appState ^. #dbConnPool )
+      runSqlPool ( Persist.insert_ $ DbLetterMeta (Text.unpack letterId) newLetterMeta ) ( appState ^. #dbConnPool )
     else
       return ()
 
-    return hash
-
-  return letterId
+    pure $ Text.unpack letterId
 
 
 spawnDispChat :: String -> ReaderT AppState Servant.Handler String
@@ -472,9 +471,15 @@ getRandomWord :: [ Text ] -> IO Text
 getRandomWord wordlist = do
   seedInteger <- fmap seedToInteger seedNew
   let indexInteger = seedInteger `mod` (toInteger $ length wordlist)
+      -- Coercion should be safe because the modulus result should be small?
       index = fromIntegral indexInteger
   -- Okay to use !! because it's guaranteed to get an element?
   return $ wordlist !! index
+
+
+getRandomWords :: Int -> [ Text ]-> IO [ Text ]
+getRandomWords n wordlist =
+  forM [1..n] (\_ -> getRandomWord wordlist)
 
 
 getRandomHash :: IO String
