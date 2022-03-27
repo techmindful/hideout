@@ -29,6 +29,7 @@ import           Database.Persist.TH
 
 import qualified Data.Aeson as Aeson
 import           Data.Aeson ( FromJSON, ToJSON )
+import           Data.Text ( Text )
 import           GHC.Generics ( Generic )
 
 
@@ -41,7 +42,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     deriving Show
 
   DbEntrance
-    entranceId String
+    entranceId Text
     val Entrance
     UniqueEntranceId entranceId
 

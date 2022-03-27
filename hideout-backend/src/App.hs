@@ -72,7 +72,7 @@ import           Prelude hiding ( readFile, lines )
 data AppState = AppState
   { dbConnPool :: Pool SqlBackend
   , letterMetas :: TVar ( Map String LetterMeta )
-  , entrances :: TVar ( Map String Entrance )
+  , entrances :: TVar ( Map Text Entrance )
   , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
   , wordlist :: [ Text ]
   } deriving ( Generic )
@@ -83,8 +83,8 @@ type API = "api" :> "read-letter"  :> Capture "letterId" String :> Get '[ Servan
       :<|> "api" :> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] String
                                             :> Put '[ Servant.JSON ] String
       :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
-                                            :> Put '[ Servant.JSON ] String
-      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" String :> Get '[ Servant.JSON ] String
+                                            :> Put '[ Servant.JSON ] Text
+      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" Text :> Get '[ Servant.JSON ] String
       :<|> "api" :> "chat" :> Capture "chatId" String :> WebSocket
 
 
@@ -140,8 +140,7 @@ mkNewLetter letter = do
 
     oldLetterMetas <- atomically $ readTVar ( appState & letterMetas )
 
-    randomWords <- getRandomWords 6 $ appState ^. #wordlist
-    let letterId = Text.intercalate "-" randomWords
+    letterId <- mkRandomId ( appState ^. #wordlist )
 
     -- Create a new LetterMeta, and insert it into AppState.
     let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
@@ -172,7 +171,7 @@ spawnDispChat maxJoinCountInput = do
     Nothing -> Servant.throwError Servant.err400
 
 
-spawnPersistChat :: String -> ReaderT AppState Servant.Handler String
+spawnPersistChat :: String -> ReaderT AppState Servant.Handler Text
 spawnPersistChat maxJoinCountInput = do
 
   appState <- ask
@@ -188,7 +187,7 @@ spawnPersistChat maxJoinCountInput = do
           , sendHistory = True
           }
 
-      newEntranceId <- liftIO $ getRandomHash
+      newEntranceId <- liftIO $ mkRandomId ( appState ^. #wordlist )
 
       -- Save new entrance.
       liftIO $ do
@@ -258,7 +257,7 @@ isMaxJoined chat =
     _ -> False
 
 
-persistChatEntrance :: String -> ReaderT AppState Servant.Handler String
+persistChatEntrance :: Text -> ReaderT AppState Servant.Handler String
 persistChatEntrance entranceId = do
 
   appState <- ask
@@ -482,6 +481,12 @@ getRandomWords n wordlist =
   forM [1..n] (\_ -> getRandomWord wordlist)
 
 
+mkRandomId :: [ Text ] -> IO Text
+mkRandomId wordlist = do
+  randomWords <- getRandomWords 6 wordlist
+  pure $ Text.intercalate "-" randomWords
+
+
 getRandomHash :: IO String
 getRandomHash = do
   seed <- seedNew
@@ -544,7 +549,7 @@ initApp = do
 
   let dbEntrances = fmap Persist.entityVal dbEntranceEnts
 
-      splitEntrance :: DbEntrance -> ( String, Entrance )
+      splitEntrance :: DbEntrance -> ( Text, Entrance )
       splitEntrance dbEntrance =
         ( dbEntrance & dbEntranceEntranceId
         , dbEntrance & dbEntranceVal
