@@ -468,6 +468,15 @@ chatHandler chatIdStr conn = do
           flip finally removeUser $ loopAndHandleError $ loop $ appState ^. #chats
 
 
+getRandomWord :: [ Text ] -> IO Text
+getRandomWord wordlist = do
+  seedInteger <- fmap seedToInteger seedNew
+  let indexInteger = seedInteger `mod` (toInteger $ length wordlist)
+      index = fromIntegral indexInteger
+  -- Okay to use !! because it's guaranteed to get an element?
+  return $ wordlist !! index
+
+
 getRandomHash :: IO String
 getRandomHash = do
   seed <- seedNew
