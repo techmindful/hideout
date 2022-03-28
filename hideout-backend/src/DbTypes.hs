@@ -36,7 +36,7 @@ import           GHC.Generics ( Generic )
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 
   DbLetterMeta
-    letterId String
+    letterId Text
     val LetterMeta
     UniqueLetterId letterId  -- Uniqueness Constraint
     deriving Show

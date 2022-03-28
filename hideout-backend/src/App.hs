@@ -71,24 +71,24 @@ import           Prelude hiding ( readFile, lines )
 
 data AppState = AppState
   { dbConnPool :: Pool SqlBackend
-  , letterMetas :: TVar ( Map String LetterMeta )
+  , letterMetas :: TVar ( Map Text LetterMeta )
   , entrances :: TVar ( Map Text Entrance )
   , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
   , wordlist :: [ Text ]
   } deriving ( Generic )
 
 
-type API = "api" :> "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
-      :<|> "api" :> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
-      :<|> "api" :> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] String
+type API = "api" :> "read-letter"  :> Capture "letterId" Text :> Get '[ Servant.JSON ] LetterMeta
+      :<|> "api" :> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] Text
+      :<|> "api" :> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] Text
                                             :> Put '[ Servant.JSON ] Text
-      :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
+      :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] Text
                                             :> Put '[ Servant.JSON ] Text
       :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" Text :> Get '[ Servant.JSON ] Text
       :<|> "api" :> "chat" :> Capture "chatId" Text :> WebSocket
 
 
-readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
+readLetter :: Text -> ReaderT AppState Servant.Handler LetterMeta
 readLetter letterId = do
 
   appState <- ask
@@ -127,11 +127,11 @@ readLetter letterId = do
       return newLetterMeta
 
 
-writeLetter :: Letter -> ReaderT AppState Servant.Handler String
+writeLetter :: Letter -> ReaderT AppState Servant.Handler Text
 writeLetter letter = mkNewLetter letter
 
 
-mkNewLetter :: Letter -> ReaderT AppState Servant.Handler String
+mkNewLetter :: Letter -> ReaderT AppState Servant.Handler Text
 mkNewLetter letter = do
 
   appState <- ask
@@ -144,18 +144,18 @@ mkNewLetter letter = do
 
     -- Create a new LetterMeta, and insert it into AppState.
     let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
-        newLetterMetas = Map.insert (Text.unpack letterId) newLetterMeta oldLetterMetas
+        newLetterMetas = Map.insert letterId newLetterMeta oldLetterMetas
     atomically $ writeTVar ( appState & letterMetas ) newLetterMetas
 
     if letter ^. #persist then
-      runSqlPool ( Persist.insert_ $ DbLetterMeta (Text.unpack letterId) newLetterMeta ) ( appState ^. #dbConnPool )
+      runSqlPool ( Persist.insert_ $ DbLetterMeta letterId newLetterMeta ) ( appState ^. #dbConnPool )
     else
       return ()
 
-    pure $ Text.unpack letterId
+    pure letterId
 
 
-spawnDispChat :: String -> ReaderT AppState Servant.Handler Text
+spawnDispChat :: Text -> ReaderT AppState Servant.Handler Text
 spawnDispChat maxJoinCountInput = do
 
   case readPosInt maxJoinCountInput of
@@ -172,7 +172,7 @@ spawnDispChat maxJoinCountInput = do
     Nothing -> Servant.throwError Servant.err400
 
 
-spawnPersistChat :: String -> ReaderT AppState Servant.Handler Text
+spawnPersistChat :: Text -> ReaderT AppState Servant.Handler Text
 spawnPersistChat maxJoinCountInput = do
 
   appState <- ask
@@ -365,7 +365,7 @@ chatHandler chatIdText conn = do
                   -- Don't broadcast to disconnected users. That blocks the whole thing.
                   broadcast ( Map.elems newUsers ) $ Aeson.encode chatMsgMeta
 
-        let loop :: TVar ( Map ChatId ( Chat, Map Int User ) ) -> ExceptT String IO ()
+        let loop :: TVar ( Map ChatId ( Chat, Map Int User ) ) -> ExceptT Text IO ()
             loop chatsTvar = do
               -- Check for incoming message.
               -- THIS BLOCKS THE THREAD!!!
@@ -438,10 +438,10 @@ chatHandler chatIdText conn = do
               liftIO $ loopAndHandleError $ loop chatsTvar
 
 
-            loopAndHandleError :: ExceptT String IO () -> IO ()
+            loopAndHandleError :: ExceptT Text IO () -> IO ()
             loopAndHandleError loop =
               runExceptT loop >>= \case
-                Left errStr -> putStrLn errStr
+                Left errStr -> TextIO.putStrLn errStr
                 Right _     -> return ()
 
 
@@ -486,12 +486,12 @@ mkRandomId wordlist = do
   pure $ Text.intercalate "-" randomWords
 
 
-getRandomHash :: IO String
+getRandomHash :: IO Text
 getRandomHash = do
   seed <- seedNew
   let seedStr = show $ seedToInteger seed
       hash    = show $ hashWith SHA256 $ ByteStrC8.pack seedStr
-  return hash
+  pure $ Text.pack hash
 
 
 server :: Servant.ServerT API ( ReaderT AppState Servant.Handler )
@@ -535,7 +535,7 @@ initApp = do
 
   let dbLetterMetas = fmap Persist.entityVal dbLetterMetaEnts
 
-      splitLetterMeta :: DbLetterMeta -> ( String, LetterMeta )
+      splitLetterMeta :: DbLetterMeta -> ( Text, LetterMeta )
       splitLetterMeta dbLetterMeta =
         ( dbLetterMeta & dbLetterMetaLetterId
         , dbLetterMeta & dbLetterMetaVal
