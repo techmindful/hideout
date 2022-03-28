@@ -72,7 +72,7 @@ import           Prelude hiding ( readFile, lines )
 data AppState = AppState
   { dbConnPool :: Pool SqlBackend
   , letterMetas :: TVar ( Map LetterId LetterMeta )
-  , entrances :: TVar ( Map Text Entrance )
+  , entrances :: TVar ( Map EntranceId Entrance )
   , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
   , wordlist :: [ Text ]
   } deriving ( Generic )
@@ -84,7 +84,7 @@ type API = "api" :> "read-letter"  :> Capture "letterId" LetterId :> Get '[ Serv
                                             :> Put '[ Servant.JSON ] Text
       :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] Text
                                             :> Put '[ Servant.JSON ] Text
-      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" Text :> Get '[ Servant.JSON ] Text
+      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" EntranceId :> Get '[ Servant.JSON ] Text
       :<|> "api" :> "chat" :> Capture "chatId" Text :> WebSocket
 
 
@@ -184,10 +184,10 @@ spawnPersistChat maxJoinCountInput = do
           , sendHistory = True
           }
 
-      newEntranceId <- liftIO $ mkRandomId ( appState ^. #wordlist )
-
       -- Save new entrance.
       liftIO $ do
+
+        newEntranceId <- fmap EntranceId $ mkRandomId ( appState ^. #wordlist )
 
         oldEntrances <- atomically $ readTVar $ appState ^. #entrances
 
@@ -205,7 +205,7 @@ spawnPersistChat maxJoinCountInput = do
           ( Persist.insert_ $ DbEntrance newEntranceId newEntrance )
           ( appState ^. #dbConnPool )
 
-        return newEntranceId
+        pure $ unEntranceId newEntranceId
 
 
 mkNewChat :: Chat.Config -> ReaderT AppState Servant.Handler ChatId
@@ -252,7 +252,7 @@ isMaxJoined chat =
     _ -> False
 
 
-persistChatEntrance :: Text -> ReaderT AppState Servant.Handler Text
+persistChatEntrance :: EntranceId -> ReaderT AppState Servant.Handler Text
 persistChatEntrance entranceId = do
 
   appState <- ask
@@ -544,7 +544,7 @@ initApp = do
 
   let dbEntrances = fmap Persist.entityVal dbEntranceEnts
 
-      splitEntrance :: DbEntrance -> ( Text, Entrance )
+      splitEntrance :: DbEntrance -> ( EntranceId, Entrance )
       splitEntrance dbEntrance =
         ( dbEntrance & dbEntranceEntranceId
         , dbEntrance & dbEntranceVal

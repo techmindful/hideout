@@ -42,7 +42,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
     deriving Show
 
   DbEntrance
-    entranceId Text
+    entranceId EntranceId
     val Entrance
     UniqueEntranceId entranceId
 

@@ -1,19 +1,19 @@
 {-# language DeriveGeneric #-}
 {-# language DuplicateRecordFields #-}
+{-# language InstanceSigs #-}
 {-# language OverloadedLabels #-}
 {-# language TemplateHaskell #-}
 
 module Chat where
 
-import qualified Network.WebSockets as WebSock
-
-import           Database.Persist.TH ( derivePersistField )
-
 import           Control.Lens ( (^.), (.~), (%~) )
 import           Data.Aeson ( FromJSON, ToJSON )
 import           Data.Map.Strict ( Map )
 import           Data.Text ( Text )
+import           Database.Persist.TH ( derivePersistField )
 import           GHC.Generics ( Generic )
+import qualified Network.WebSockets as WebSock
+import qualified Servant
 
 
 data MsgFromClient = MsgFromClient
@@ -70,6 +70,16 @@ data Expiry
   | Never
   deriving ( Generic, Read, Show )
 instance FromJSON Expiry
+
+
+newtype EntranceId = EntranceId { unEntranceId :: Text }
+  deriving ( Eq, Generic, Ord, Read, Show )
+instance FromJSON EntranceId
+instance ToJSON   EntranceId
+derivePersistField "EntranceId"
+instance Servant.FromHttpApiData EntranceId where
+  parseUrlPiece :: Text -> Either Text EntranceId
+  parseUrlPiece = Right . EntranceId
 
 
 data Entrance = Entrance
