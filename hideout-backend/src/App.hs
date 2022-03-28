@@ -71,14 +71,14 @@ import           Prelude hiding ( readFile, lines )
 
 data AppState = AppState
   { dbConnPool :: Pool SqlBackend
-  , letterMetas :: TVar ( Map Text LetterMeta )
+  , letterMetas :: TVar ( Map LetterId LetterMeta )
   , entrances :: TVar ( Map Text Entrance )
   , chats :: TVar ( Map ChatId ( Chat, Map Int User ) )
   , wordlist :: [ Text ]
   } deriving ( Generic )
 
 
-type API = "api" :> "read-letter"  :> Capture "letterId" Text :> Get '[ Servant.JSON ] LetterMeta
+type API = "api" :> "read-letter"  :> Capture "letterId" LetterId :> Get '[ Servant.JSON ] LetterMeta
       :<|> "api" :> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] Text
       :<|> "api" :> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] Text
                                             :> Put '[ Servant.JSON ] Text
@@ -88,7 +88,7 @@ type API = "api" :> "read-letter"  :> Capture "letterId" Text :> Get '[ Servant.
       :<|> "api" :> "chat" :> Capture "chatId" Text :> WebSocket
 
 
-readLetter :: Text -> ReaderT AppState Servant.Handler LetterMeta
+readLetter :: LetterId -> ReaderT AppState Servant.Handler LetterMeta
 readLetter letterId = do
 
   appState <- ask
@@ -128,11 +128,7 @@ readLetter letterId = do
 
 
 writeLetter :: Letter -> ReaderT AppState Servant.Handler Text
-writeLetter letter = mkNewLetter letter
-
-
-mkNewLetter :: Letter -> ReaderT AppState Servant.Handler Text
-mkNewLetter letter = do
+writeLetter letter = do
 
   appState <- ask
 
@@ -140,7 +136,7 @@ mkNewLetter letter = do
 
     oldLetterMetas <- atomically $ readTVar ( appState & letterMetas )
 
-    letterId <- mkRandomId ( appState ^. #wordlist )
+    letterId <- fmap LetterId $ mkRandomId ( appState ^. #wordlist )
 
     -- Create a new LetterMeta, and insert it into AppState.
     let newLetterMeta  = LetterMeta { letter = letter, readCount = 0 }
@@ -152,7 +148,7 @@ mkNewLetter letter = do
     else
       return ()
 
-    pure letterId
+    pure $ unLetterId letterId
 
 
 spawnDispChat :: Text -> ReaderT AppState Servant.Handler Text
@@ -535,7 +531,7 @@ initApp = do
 
   let dbLetterMetas = fmap Persist.entityVal dbLetterMetaEnts
 
-      splitLetterMeta :: DbLetterMeta -> ( Text, LetterMeta )
+      splitLetterMeta :: DbLetterMeta -> ( LetterId, LetterMeta )
       splitLetterMeta dbLetterMeta =
         ( dbLetterMeta & dbLetterMetaLetterId
         , dbLetterMeta & dbLetterMetaVal
