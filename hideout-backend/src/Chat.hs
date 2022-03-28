@@ -12,6 +12,7 @@ import           Database.Persist.TH ( derivePersistField )
 import           Control.Lens ( (^.), (.~), (%~) )
 import           Data.Aeson ( FromJSON, ToJSON )
 import           Data.Map.Strict ( Map )
+import           Data.Text ( Text )
 import           GHC.Generics ( Generic )
 
 
@@ -41,7 +42,7 @@ instance FromJSON CtrlMsg
 instance ToJSON   CtrlMsg
 
 
-newtype ChatId = ChatId { unChatId :: String }
+newtype ChatId = ChatId { unChatId :: Text }
   deriving ( Eq, Generic, Ord, Read, Show )
 instance FromJSON ChatId
 instance ToJSON   ChatId
@@ -72,7 +73,7 @@ instance FromJSON Expiry
 
 
 data Entrance = Entrance
-  { chatId       :: String
+  { chatId       :: Text
   , maxViewCount :: Int
   , viewCount    :: Int
   } deriving ( Generic, Read, Show )

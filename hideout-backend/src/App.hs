@@ -81,11 +81,11 @@ data AppState = AppState
 type API = "api" :> "read-letter"  :> Capture "letterId" String :> Get '[ Servant.JSON ] LetterMeta
       :<|> "api" :> "write-letter" :> ReqBody '[ Servant.JSON ] Letter :> Put '[ Servant.JSON ] String
       :<|> "api" :> "spawn-disposable-chat" :> ReqBody '[ Servant.PlainText ] String
-                                            :> Put '[ Servant.JSON ] String
+                                            :> Put '[ Servant.JSON ] Text
       :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] String
                                             :> Put '[ Servant.JSON ] Text
-      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" Text :> Get '[ Servant.JSON ] String
-      :<|> "api" :> "chat" :> Capture "chatId" String :> WebSocket
+      :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" Text :> Get '[ Servant.JSON ] Text
+      :<|> "api" :> "chat" :> Capture "chatId" Text :> WebSocket
 
 
 readLetter :: String -> ReaderT AppState Servant.Handler LetterMeta
@@ -155,18 +155,19 @@ mkNewLetter letter = do
     pure $ Text.unpack letterId
 
 
-spawnDispChat :: String -> ReaderT AppState Servant.Handler String
+spawnDispChat :: String -> ReaderT AppState Servant.Handler Text
 spawnDispChat maxJoinCountInput = do
 
   case readPosInt maxJoinCountInput of
     Just int -> do
-      mkNewChat $
+      chatId <- mkNewChat $
         Chat.Config {
           maxJoinCount = Just int 
         , expiry = MaxJoined
         , persist = False
         , sendHistory = True
         }
+      pure $ unChatId chatId
 
     Nothing -> Servant.throwError Servant.err400
 
@@ -179,7 +180,7 @@ spawnPersistChat maxJoinCountInput = do
   case readPosInt maxJoinCountInput of
     Nothing -> Servant.throwError Servant.err400
     Just maxJoinCount -> do
-      newChatIdStr <- mkNewChat $
+      newChatId <- mkNewChat $
         Chat.Config
           { maxJoinCount = Nothing
           , expiry = Never
@@ -195,7 +196,7 @@ spawnPersistChat maxJoinCountInput = do
         oldEntrances <- atomically $ readTVar $ appState ^. #entrances
 
         let newEntrance = Entrance {
-              chatId = newChatIdStr
+              chatId = unChatId newChatId
             , maxViewCount = maxJoinCount
             , viewCount = 0
             }
@@ -211,20 +212,20 @@ spawnPersistChat maxJoinCountInput = do
         return newEntranceId
 
 
-mkNewChat :: Chat.Config -> ReaderT AppState Servant.Handler String
+mkNewChat :: Chat.Config -> ReaderT AppState Servant.Handler ChatId
 mkNewChat config = do
 
   appState <- ask
 
-  newChatIdStr <- liftIO $ do
-    
+  liftIO $ do
+
     oldChats <- atomically $ readTVar ( appState ^. #chats )
 
-    newChatIdStr <- getRandomHash
+    randomId <- mkRandomId ( appState ^. #wordlist )
 
     -- Create and insert new Chat into AppState.
 
-    let newChatId = ChatId newChatIdStr
+    let newChatId = ChatId randomId
     
     let newChat = Chat {
           msgs = []
@@ -242,9 +243,7 @@ mkNewChat config = do
     else
       return ()
 
-    return newChatIdStr
-
-  return newChatIdStr
+    pure newChatId
 
 
 isMaxJoined :: Chat -> Bool
@@ -257,7 +256,7 @@ isMaxJoined chat =
     _ -> False
 
 
-persistChatEntrance :: Text -> ReaderT AppState Servant.Handler String
+persistChatEntrance :: Text -> ReaderT AppState Servant.Handler Text
 persistChatEntrance entranceId = do
 
   appState <- ask
@@ -286,17 +285,17 @@ persistChatEntrance entranceId = do
         atomically $ writeTVar ( appState ^. #entrances ) newEntrances
         runSqlPool ( Persist.deleteBy $ UniqueEntranceId entranceId ) ( appState ^. #dbConnPool )
         
-      return $ entrance ^. #chatId
+      pure $ entrance ^. #chatId
 
 
-chatHandler :: String -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
-chatHandler chatIdStr conn = do
+chatHandler :: Text -> WebSock.Connection -> ReaderT AppState Servant.Handler ()
+chatHandler chatIdText conn = do
 
   appState <- ask
 
   let getChats = atomically $ readTVar ( appState ^. #chats )
 
-  let chatId = ChatId chatIdStr
+  let chatId = ChatId chatIdText
 
   chatsBeforeJoin <- liftIO getChats
 
