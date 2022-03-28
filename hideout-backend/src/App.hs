@@ -196,7 +196,7 @@ spawnPersistChat maxJoinCountInput = do
         oldEntrances <- atomically $ readTVar $ appState ^. #entrances
 
         let newEntrance = Entrance {
-              chatId = unChatId newChatId
+              chatId = newChatId
             , maxViewCount = maxJoinCount
             , viewCount = 0
             }
@@ -285,7 +285,7 @@ persistChatEntrance entranceId = do
         atomically $ writeTVar ( appState ^. #entrances ) newEntrances
         runSqlPool ( Persist.deleteBy $ UniqueEntranceId entranceId ) ( appState ^. #dbConnPool )
         
-      pure $ entrance ^. #chatId
+      pure $ unChatId $ entrance ^. #chatId
 
 
 chatHandler :: Text -> WebSock.Connection -> ReaderT AppState Servant.Handler ()

@@ -73,7 +73,7 @@ instance FromJSON Expiry
 
 
 data Entrance = Entrance
-  { chatId       :: Text
+  { chatId       :: ChatId
   , maxViewCount :: Int
   , viewCount    :: Int
   } deriving ( Generic, Read, Show )
