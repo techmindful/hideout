@@ -90,6 +90,13 @@ data Entrance = Entrance
 derivePersistField "Entrance"
 
 
+data SpawnEntranceParams = SpawnEntranceParams
+  { chatId :: ChatId
+  , maxViewCount :: Int
+  } deriving ( Generic )
+instance FromJSON SpawnEntranceParams
+
+
 data Chat = Chat
   { msgs :: [ ChatMsgMeta ]
   , joinCount :: Int

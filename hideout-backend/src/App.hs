@@ -85,6 +85,8 @@ type API = "api" :> "read-letter"  :> Capture "letterId" LetterId :> Get '[ Serv
       :<|> "api" :> "spawn-persistent-chat" :> ReqBody '[ Servant.PlainText ] Text
                                             :> Put '[ Servant.JSON ] Text
       :<|> "api" :> "persist-chat-entrance" :> Capture "entranceId" EntranceId :> Get '[ Servant.JSON ] Text
+      :<|> "api" :> "spawn-entrance" :> ReqBody '[ Servant.JSON ] SpawnEntranceParams
+                                     :> Put '[ Servant.JSON ] Text
       :<|> "api" :> "chat" :> Capture "chatId" Text :> WebSocket
 
 
@@ -185,6 +187,13 @@ spawnPersistChat maxJoinCountInput = do
           }
       entranceId <- liftIO $ spawnEntrance newChatId maxJoinCount appState
       pure $ unEntranceId entranceId
+
+
+spawnEntranceHandler :: SpawnEntranceParams -> ReaderT AppState Servant.Handler Text
+spawnEntranceHandler params = do
+  appState <- ask
+  entranceId <- liftIO $ spawnEntrance ( params ^. #chatId ) ( params ^. #maxViewCount ) appState
+  pure $ unEntranceId entranceId
 
 
 spawnEntrance :: ChatId -> Int -> AppState -> IO EntranceId
@@ -499,6 +508,7 @@ server = readLetter
     :<|> spawnDispChat
     :<|> spawnPersistChat
     :<|> persistChatEntrance
+    :<|> spawnEntranceHandler
     :<|> chatHandler
 
 
