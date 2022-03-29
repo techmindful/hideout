@@ -183,29 +183,32 @@ spawnPersistChat maxJoinCountInput = do
           , persist = True
           , sendHistory = True
           }
+      entranceId <- liftIO $ spawnEntrance newChatId maxJoinCount appState
+      pure $ unEntranceId entranceId
 
-      -- Save new entrance.
-      liftIO $ do
 
-        newEntranceId <- fmap EntranceId $ mkRandomId ( appState ^. #wordlist )
+spawnEntrance :: ChatId -> Int -> AppState -> IO EntranceId
+spawnEntrance chatId maxViewCount appState = do
 
-        oldEntrances <- atomically $ readTVar $ appState ^. #entrances
+    newEntranceId <- fmap EntranceId $ mkRandomId ( appState ^. #wordlist )
 
-        let newEntrance = Entrance {
-              chatId = newChatId
-            , maxViewCount = maxJoinCount
-            , viewCount = 0
-            }
-            
-            newEntrances = Map.insert newEntranceId newEntrance oldEntrances
+    oldEntrances <- atomically $ readTVar $ appState ^. #entrances
 
-        atomically $ writeTVar ( appState ^. #entrances ) newEntrances
+    let newEntrance = Entrance {
+          chatId = chatId
+        , maxViewCount = maxViewCount
+        , viewCount = 0
+        }
+        
+        newEntrances = Map.insert newEntranceId newEntrance oldEntrances
 
-        runSqlPool
-          ( Persist.insert_ $ DbEntrance newEntranceId newEntrance )
-          ( appState ^. #dbConnPool )
+    atomically $ writeTVar ( appState ^. #entrances ) newEntrances
 
-        pure $ unEntranceId newEntranceId
+    runSqlPool
+      ( Persist.insert_ $ DbEntrance newEntranceId newEntrance )
+      ( appState ^. #dbConnPool )
+
+    pure newEntranceId
 
 
 mkNewChat :: Chat.Config -> ReaderT AppState Servant.Handler ChatId
